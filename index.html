@@ -1,0 +1,2706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capital Markets Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:        #0e1117;
+  --bg2:       #141920;
+  --bg3:       #1a2030;
+  --bg4:       #1f2638;
+  --bg5:       #242c40;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --border3:   rgba(255,255,255,0.18);
+  --text:      #e8e2d9;
+  --text2:     #8a8fa8;
+  --text3:     #4a5068;
+  --amber:     #d4a44c;
+  --amber2:    #f0c060;
+  --amber-dim: rgba(212,164,76,0.12);
+  --blue:      #4a90d9;
+  --blue-dim:  rgba(74,144,217,0.12);
+  --green:     #4caf82;
+  --green-dim: rgba(76,175,130,0.1);
+  --red:       #e05555;
+  --red-dim:   rgba(224,85,85,0.1);
+  --purple:    #7c6fcd;
+  --teal:      #3ab8a8;
+  --mono:      'IBM Plex Mono', monospace;
+  --sans:      'DM Sans', sans-serif;
+  --nav-w:     248px;
+  --header-h:  56px;
+  --radius:    4px;
+}
+
+html, body {
+  height: 100%; overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+button { cursor: pointer; border: none; background: none; color: inherit; font-family: inherit; font-size: inherit; }
+input  { font-family: inherit; color: inherit; background: none; border: none; outline: none; }
+a      { color: inherit; text-decoration: none; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── App Shell ───────────────────────────────────────────────────────── */
+#app { display: grid; grid-template-rows: var(--header-h) 1fr; height: 100vh; overflow: hidden; }
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+#header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 0 0 16px;
+  grid-column: 1 / -1;
+  z-index: 200;
+  gap: 0;
+}
+.header-logo {
+  font-family: var(--mono);
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  white-space: nowrap;
+  padding-right: 20px;
+  border-right: 1px solid var(--border);
+  text-transform: uppercase;
+}
+.header-logo span { color: var(--text3); font-weight: 300; margin-left: 6px; }
+.header-tickers {
+  display: flex; align-items: center;
+  flex: 1; overflow: hidden;
+  padding: 0 16px; gap: 0;
+}
+.htick {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 0 16px;
+  border-right: 1px solid var(--border);
+  min-width: 100px;
+}
+.htick:first-child { padding-left: 0; }
+.htick-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+.htick-val   { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--text); }
+.htick-chg   { font-family: var(--mono); font-size: 10px; }
+.up   { color: var(--green); }
+.dn   { color: var(--red); }
+.flat { color: var(--text2); }
+.header-right {
+  margin-left: auto;
+  display: flex; align-items: center;
+  height: 100%;
+  border-left: 1px solid var(--border);
+}
+.header-ts {
+  font-family: var(--mono); font-size: 10px; color: var(--text3);
+  padding: 0 14px;
+  border-right: 1px solid var(--border);
+}
+.btn-login {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 18px; height: 100%;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+  color: var(--amber); cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-login:hover { background: var(--amber-dim); }
+.btn-login svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+/* ── Body ─────────────────────────────────────────────────────────────── */
+#body { display: grid; grid-template-columns: var(--nav-w) 1fr; overflow: hidden; min-height: 0; }
+
+/* ── Nav ──────────────────────────────────────────────────────────────── */
+#nav {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#nav-search-wrap {
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+}
+#nav-search-wrap svg {
+  position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+  width: 12px; height: 12px; stroke: var(--text3); fill: none; stroke-width: 1.5;
+  pointer-events: none;
+}
+#nav-search {
+  width: 100%; background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 5px 8px 5px 28px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text);
+}
+#nav-search::placeholder { color: var(--text3); }
+#nav-list { overflow-y: auto; flex: 1; padding: 6px 0 20px; }
+.nav-section { margin-bottom: 4px; }
+.nav-section-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 10px 4px;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.1em; color: var(--text3);
+  text-transform: uppercase; user-select: none;
+  cursor: pointer; transition: color 0.15s;
+}
+.nav-section-header:hover { color: var(--text2); }
+.nav-section-arrow { margin-left: auto; font-size: 8px; transition: transform 0.2s; display: inline-block; }
+.nav-section.collapsed .nav-section-arrow { transform: rotate(-90deg); }
+.nav-section.collapsed .nav-items { display: none; }
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 10px 5px 22px;
+  font-size: 12px; color: var(--text2);
+  cursor: pointer; user-select: none;
+  transition: background 0.1s, color 0.1s;
+  border-left: 2px solid transparent;
+  margin-left: 0;
+}
+.nav-item:hover  { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--bg3); color: var(--amber); border-left-color: var(--amber); }
+.nav-item-badge  {
+  margin-left: auto;
+  font-family: var(--mono); font-size: 9px;
+  color: var(--text3); letter-spacing: 0.04em;
+}
+.nav-item.active .nav-item-badge { color: var(--amber); opacity: 0.6; }
+.nav-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.nav-item.active .nav-dot { background: var(--amber); }
+.nav-divider { height: 1px; background: var(--border); margin: 6px 10px; }
+
+/* ── Nested sub-groups inside nav (for Macro series) ─────────────────── */
+.nav-sub-group { margin-bottom: 0; }
+.nav-sub-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px 4px 14px;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.09em; color: var(--text3);
+  text-transform: uppercase; user-select: none;
+  cursor: pointer; transition: color 0.15s;
+}
+.nav-sub-header:hover { color: var(--text2); }
+.nav-sub-arrow { margin-left: auto; font-size: 7px; transition: transform 0.2s; display: inline-block; }
+.nav-sub-group.collapsed .nav-sub-arrow { transform: rotate(-90deg); }
+.nav-sub-group.collapsed .nav-sub-items { display: none; }
+/* Series items inside sub-groups — deeper indent */
+.nav-sub-items .nav-item { padding-left: 28px; font-size: 11px; }
+/* Sub-group label inside Central Banks section (U.S. tag) */
+.nav-cb-label {
+  font-family: var(--mono); font-size: 8px; letter-spacing: 0.08em;
+  color: var(--text3); text-transform: uppercase;
+  padding: 5px 10px 2px 28px;
+  display: flex; align-items: center; gap: 6px;
+}
+.nav-cb-label::before { content: ''; display: inline-block; width: 16px; height: 1px; background: var(--border2); }
+/* Nav section emoji prefix */
+.nav-section-emoji { font-size: 10px; opacity: 0.7; }
+
+/* ── Main Content ─────────────────────────────────────────────────────── */
+#main {
+  overflow: hidden;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  position: relative;
+  min-height: 0;
+}
+
+/* ── Section pages ───────────────────────────────────────────────────── */
+.section-page { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+.section-page.active { display: flex; }
+
+/* ── Page Header ──────────────────────────────────────────────────────── */
+.page-header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px 13px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-shrink: 0; gap: 16px; flex-wrap: wrap;
+}
+.page-title-group { display: flex; flex-direction: column; gap: 3px; }
+.page-title { font-size: 15px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 10px; }
+.page-title-badge {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--amber); background: var(--amber-dim);
+  padding: 2px 7px; border-radius: 2px;
+  border: 1px solid rgba(212,164,76,0.2);
+}
+.page-subtitle { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.04em; }
+.page-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+/* Pill controls */
+.pill-group {
+  display: flex; gap: 2px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 2px;
+}
+.pill {
+  font-family: var(--mono); font-size: 10px;
+  padding: 3px 9px; border-radius: 2px;
+  color: var(--text3); letter-spacing: 0.04em;
+  transition: all 0.12s; cursor: pointer;
+}
+.pill:hover { color: var(--text); }
+.pill.active { background: var(--amber); color: var(--bg); font-weight: 600; }
+.pill.active-blue { background: var(--blue); color: #fff; font-weight: 600; }
+
+/* Icon button */
+.icon-btn {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  color: var(--text2); background: var(--bg3);
+  transition: all 0.12s; cursor: pointer;
+}
+.icon-btn:hover { color: var(--text); border-color: var(--border3); }
+.icon-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+/* ── Content Padding ──────────────────────────────────────────────────── */
+.page-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; flex: 1; overflow-y: auto; }
+
+/* ── Stat Cards Row ───────────────────────────────────────────────────── */
+.stat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.stat-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 11px 13px;
+  display: flex; flex-direction: column; gap: 5px;
+  transition: border-color 0.15s;
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+.stat-val   { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text); line-height: 1; }
+.stat-chg   { font-family: var(--mono); font-size: 10px; display: flex; align-items: center; gap: 4px; }
+.stat-sub   { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+/* ── Chart Container ──────────────────────────────────────────────────── */
+.chart-container {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.chart-container-header {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.chart-container-title { font-size: 12px; font-weight: 500; color: var(--text2); letter-spacing: 0.02em; }
+.pm-chart-wrap {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); position: relative;
+  overflow: hidden; flex-shrink: 0;
+}
+.pm-chart-wrap:empty::after {
+  content: '';
+  display: block; width: 100%; height: 100%;
+  background: repeating-linear-gradient(
+    90deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px
+  ), repeating-linear-gradient(
+    180deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px
+  );
+  min-height: 180px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+@keyframes shimmer { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+
+/* ── Data Table ───────────────────────────────────────────────────────── */
+.data-table-wrap {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead th {
+  background: var(--bg3); padding: 8px 14px;
+  font-family: var(--mono); font-size: 9px; font-weight: 500;
+  color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase;
+  text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.data-table thead th:first-child { text-align: left; }
+.data-table tbody td {
+  padding: 8px 14px; border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 11px; color: var(--text2);
+  text-align: right; white-space: nowrap;
+}
+.data-table tbody td:first-child { text-align: left; color: var(--text); font-weight: 500; }
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: var(--bg3); }
+.td-up   { color: var(--green) !important; }
+.td-dn   { color: var(--red)   !important; }
+.td-flat { color: var(--text2) !important; }
+
+/* ── Grid Layouts ─────────────────────────────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+.grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
+
+/* ── Coming soon ──────────────────────────────────────────────────────── */
+.coming-soon {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; padding: 60px;
+}
+.coming-soon-icon {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text3);
+}
+.coming-soon-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.coming-soon-title { font-family: var(--mono); font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+.coming-soon-sub { font-family: var(--mono); font-size: 10px; color: var(--text3); opacity: 0.6; text-align: center; max-width: 300px; line-height: 1.6; }
+
+/* ── Login Overlay ────────────────────────────────────────────────────── */
+#login-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+}
+.login-card {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 40px 44px;
+  width: 360px; display: flex; flex-direction: column; gap: 0;
+}
+.login-logo {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.1em; color: var(--amber); text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.login-tagline { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 32px; }
+.login-label { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.login-input {
+  width: 100%; background: var(--bg3);
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  padding: 9px 12px; font-family: var(--mono); font-size: 12px;
+  color: var(--text); margin-bottom: 16px;
+  transition: border-color 0.15s;
+}
+.login-input:focus { outline: none; border-color: var(--amber); }
+.login-btn {
+  width: 100%; padding: 10px;
+  background: var(--amber); color: var(--bg);
+  border-radius: var(--radius);
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer; transition: background 0.15s; margin-top: 4px;
+}
+.login-btn:hover { background: var(--amber2); }
+.login-footer { font-family: var(--mono); font-size: 10px; color: var(--text3); text-align: center; margin-top: 20px; }
+.login-dots { display: flex; gap: 3px; justify-content: center; margin-bottom: 28px; }
+.login-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border3); }
+.login-dot.lit { background: var(--amber); }
+
+/* ── Heat Map Grid ────────────────────────────────────────────────────── */
+.heatmap-grid { display: grid; gap: 3px; }
+.heatmap-cell {
+  padding: 8px 10px; border-radius: 3px;
+  display: flex; flex-direction: column; gap: 3px;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.heatmap-cell:hover { opacity: 0.85; }
+.hm-label { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,0.7); letter-spacing: 0.05em; }
+.hm-val   { font-family: var(--mono); font-size: 13px; font-weight: 500; color: #fff; }
+.hm-strong-up   { background: #2a6b4a; }
+.hm-up          { background: #1f4d38; }
+.hm-slight-up   { background: #1a3d2e; }
+.hm-flat        { background: var(--bg4); }
+.hm-slight-dn   { background: #4d2020; }
+.hm-dn          { background: #6b2a2a; }
+.hm-strong-dn   { background: #8a2f2f; }
+
+/* ── Tools page ────────────────────────────────────────────────────────── */
+.tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.tool-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.tool-card:hover { border-color: var(--border3); background: var(--bg3); }
+.tool-card-header { display: flex; align-items: flex-start; justify-content: space-between; }
+.tool-card-icon { width: 32px; height: 32px; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tool-card-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.tool-card-badge { font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 2px; text-transform: uppercase; }
+.badge-free { background: var(--green-dim); color: var(--green); border: 1px solid rgba(76,175,130,0.2); }
+.badge-manual { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(74,144,217,0.2); }
+.tool-card-title { font-size: 13px; font-weight: 500; color: var(--text); }
+.tool-card-desc  { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.tool-card-meta  { font-family: var(--mono); font-size: 10px; color: var(--text3); display: flex; align-items: center; gap: 6px; }
+.tool-card-meta::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--text3); }
+
+/* News cards */
+.news-list { display: flex; flex-direction: column; gap: 1px; }
+.news-item {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 11px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.news-item:hover { border-color: var(--border2); }
+.news-item-header { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.news-tag {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em;
+  padding: 1px 6px; border-radius: 2px; text-transform: uppercase; flex-shrink: 0;
+}
+.news-tag-macro   { background: var(--amber-dim); color: var(--amber); }
+.news-tag-equity  { background: var(--blue-dim); color: var(--blue); }
+.news-tag-rates   { background: rgba(76,175,130,0.1); color: var(--green); }
+.news-tag-credit  { background: rgba(224,85,85,0.1); color: var(--red); }
+.news-time { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.news-headline { font-size: 12px; color: var(--text); line-height: 1.5; }
+.news-source { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+/* ── FRED / Macro page ────────────────────────────────────────────────── */
+
+/* Fred main chart area */
+.fred-main {
+  flex: 1; min-height: 0; overflow-y: auto;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+}
+
+/* Chart page layout */
+.fred-chart-page { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; min-height: 100%; }
+
+.fred-chart-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+}
+.fred-chart-meta { display: flex; flex-direction: column; gap: 4px; }
+.fred-series-name { font-size: 15px; font-weight: 500; color: var(--text); }
+.fred-series-id { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+.fred-latest { font-family: var(--mono); font-size: 26px; font-weight: 500; color: var(--amber); line-height: 1; }
+.fred-latest-sub { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
+.fred-definition { font-size: 11px; color: var(--text2); line-height: 1.5; max-width: 620px; margin: 4px 0 2px; }
+
+.fred-chart-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Period pills */
+.fred-period-pills {
+  display: flex; gap: 2px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 2px;
+}
+.fred-period-pill {
+  font-family: var(--mono); font-size: 10px; padding: 3px 9px;
+  border-radius: 2px; color: var(--text3); transition: all 0.12s; letter-spacing: 0.04em;
+}
+.fred-period-pill:hover { color: var(--text); }
+.fred-period-pill.active { background: var(--amber); color: var(--bg); font-weight: 600; }
+
+/* Transform toggle */
+.fred-transform-pills {
+  display: flex; gap: 2px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 2px;
+}
+.fred-transform-pill {
+  font-family: var(--mono); font-size: 10px; padding: 3px 8px;
+  border-radius: 2px; color: var(--text3); transition: all 0.12s;
+}
+.fred-transform-pill:hover { color: var(--text); }
+.fred-transform-pill.active { background: var(--bg4); color: var(--text); border: 1px solid var(--border2); }
+
+/* Recession toggle */
+.fred-rec-toggle {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 10px; color: var(--text3);
+  cursor: pointer; letter-spacing: 0.04em; user-select: none;
+  padding: 3px 6px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg3); transition: all 0.12s;
+}
+.fred-rec-toggle:hover { color: var(--text); border-color: var(--border2); }
+.fred-rec-toggle input { accent-color: var(--amber); cursor: pointer; }
+
+/* Export buttons */
+.fred-export-btn {
+  font-family: var(--mono); font-size: 10px; padding: 4px 10px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text3); background: var(--bg3);
+  transition: all 0.12s; letter-spacing: 0.03em;
+}
+.fred-export-btn:hover { border-color: var(--border2); color: var(--text); }
+
+/* SVG chart wrap */
+#fred-svg-wrap {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); position: relative; flex-shrink: 0;
+}
+#fred-svg-wrap svg { display: block; width: 100%; }
+
+/* Gridlines, axis labels, chart elements */
+.fred-grid-line { stroke: rgba(255,255,255,0.05); stroke-width: 1; }
+.fred-axis-label { font-family: 'IBM Plex Mono'; fill: #4a5068; font-size: 10px; }
+.fred-recession-band { fill: rgba(255,255,255,0.03); }
+.fred-chart-line { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.fred-chart-area { opacity: 0.15; }
+.fred-zero-line { stroke: rgba(255,255,255,0.15); stroke-width: 1; stroke-dasharray: 4 3; }
+
+/* Crosshair & hover dot */
+.fred-crosshair { stroke: rgba(255,255,255,0.15); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+.fred-hover-dot { fill: var(--amber); stroke: var(--bg); stroke-width: 2; }
+
+/* Tooltip */
+#fred-chart-tooltip {
+  position: absolute; pointer-events: none; opacity: 0; transition: opacity 0.1s;
+  background: var(--bg4); border: 1px solid var(--border2);
+  padding: 8px 12px; border-radius: var(--radius); white-space: nowrap;
+  font-family: var(--mono); font-size: 11px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 50;
+}
+.fred-tt-date { color: var(--text3); font-size: 10px; margin-bottom: 4px; }
+.fred-tt-val  { color: var(--amber); font-size: 14px; font-weight: 500; }
+.fred-tt-chg  { font-size: 10px; margin-top: 2px; }
+
+/* Data table */
+.fred-data-table-wrap {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.fred-data-table-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.fred-data-table-title { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; }
+.fred-data-table-toggle { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.fred-data-table-body { overflow-x: auto; }
+.fred-data-table-body table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
+.fred-data-table-body th {
+  padding: 7px 12px; text-align: left; font-size: 9px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text3);
+  border-bottom: 1px solid var(--border); font-weight: 500; white-space: nowrap;
+}
+.fred-data-table-body td { padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text2); white-space: nowrap; }
+.fred-data-table-body tr:hover td { background: var(--bg3); }
+.fred-td-date { color: var(--text3); }
+.fred-td-val { color: var(--text); font-weight: 500; }
+
+/* Loading skeleton */
+.fred-skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+  background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--radius);
+}
+.fred-skeleton-chart { height: 380px; margin: 16px; }
+
+/* State messages */
+.fred-state-msg {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 300px; gap: 10px; color: var(--text3); font-family: var(--mono); font-size: 11px;
+}
+.fred-spinner {
+  width: 18px; height: 18px; border: 1.5px solid var(--border2);
+  border-top-color: var(--amber); border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Yield Curve page ─────────────────────────────────────────────────── */
+.yc-page { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+.yc-header {
+  padding: 14px 22px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  background: var(--bg2); flex-shrink: 0;
+}
+.yc-title { font-size: 14px; font-weight: 500; }
+.yc-shape-badge {
+  font-family: var(--mono); font-size: 10px; padding: 3px 10px;
+  border-radius: 2px; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid;
+}
+.shape-normal { color: var(--green); border-color: var(--green); background: rgba(76,175,130,0.08); }
+.shape-flat   { color: var(--amber); border-color: var(--amber); background: rgba(212,164,76,0.08); }
+.shape-inv    { color: var(--red);   border-color: var(--red);   background: rgba(224,85,85,0.08); }
+.shape-humped { color: var(--purple);border-color: var(--purple);background: rgba(124,111,205,0.08); }
+
+.yc-body { display: flex; flex: 1; overflow: hidden; }
+.yc-sidebar {
+  width: 248px; flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 14px 14px; gap: 12px; overflow-y: auto;
+  background: var(--bg2);
+}
+.yc-section-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+
+.yc-date-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.yc-color-swatch { width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0; }
+.yc-date-input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 5px 8px;
+  font-family: var(--mono); font-size: 10px; color: var(--text); cursor: pointer;
+}
+.yc-date-input::-webkit-calendar-picker-indicator { filter: invert(0.3); }
+.yc-remove { color: var(--text3); font-size: 14px; padding: 2px 4px; transition: color 0.1s; }
+.yc-remove:hover { color: var(--red); }
+.yc-label-tag {
+  font-family: var(--mono); font-size: 9px; padding: 1px 5px;
+  background: var(--bg4); border-radius: 2px; color: var(--text3); white-space: nowrap;
+}
+.yc-add-btn {
+  width: 100%; padding: 6px; border: 1px dashed var(--border2); border-radius: var(--radius);
+  font-family: var(--mono); font-size: 10px; color: var(--text3);
+  transition: all 0.12s; text-align: center;
+}
+.yc-add-btn:hover { border-color: var(--amber); color: var(--amber); }
+.preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.preset-btn {
+  padding: 5px 4px; border: 1px solid var(--border); border-radius: 2px;
+  font-family: var(--mono); font-size: 9px; color: var(--text3); text-align: center;
+  transition: all 0.12s; letter-spacing: 0.02em;
+}
+.preset-btn:hover { border-color: var(--amber); color: var(--amber); background: rgba(212,164,76,0.06); }
+
+.yc-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 14px 18px; gap: 12px; overflow-y: auto; }
+#yc-chart-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); position: relative; min-height: 300px; }
+#yc-chart-wrap svg { display: block; width: 100%; }
+#yc-tooltip {
+  position: absolute; pointer-events: none; opacity: 0;
+  background: var(--bg4); border: 1px solid var(--border2);
+  padding: 8px 12px; border-radius: var(--radius); font-family: var(--mono); font-size: 11px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 50;
+}
+#yc-table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; }
+.yc-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; min-width: 700px; }
+.yc-table th {
+  padding: 8px 10px; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text3); border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap;
+}
+.yc-table th:first-child { text-align: left; }
+.yc-table td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); text-align: right; white-space: nowrap; color: var(--text2); }
+.yc-table td:first-child { text-align: left; }
+.yc-table tr:hover td { background: rgba(255,255,255,0.02); }
+.yc-td-date { display: flex; align-items: center; gap: 6px; color: var(--text); }
+.yc-td-primary { font-weight: 500; color: var(--text) !important; }
+.yc-td-higher { color: var(--red) !important; }
+.yc-td-lower  { color: var(--green) !important; }
+.yc-spreads-row td { border-top: 1px solid var(--border2); color: var(--text3); font-size: 10px; }
+
+/* ── Central Banks sub-page ───────────────────────────────────────────── */
+.cb-page { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; flex: 1; overflow-y: auto; }
+.cb-rates-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.cb-rate-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 5px;
+  transition: border-color 0.15s;
+}
+.cb-rate-card:hover { border-color: var(--border2); }
+.cb-rate-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+.cb-rate-val   { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--text); line-height: 1; }
+.cb-rate-chg   { font-family: var(--mono); font-size: 10px; }
+.cb-rate-next  { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+
+/* ── Annotation line ──────────────────────────────────────────────────── */
+.fred-annotation-line { stroke: rgba(255,255,255,0.2); stroke-width: 1; stroke-dasharray: 3 3; }
+.fred-annotation-label { fill: var(--text3); font-family: 'IBM Plex Mono'; font-size: 9px; }
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-2-1, .grid-1-2 { grid-template-columns: 1fr; }
+  .header-tickers { display: none; }
+  :root { --nav-w: 200px; }
+  .fred-nav { width: 180px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN OVERLAY ══════════════════════════════════════ -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo" style="font-size:16px">PM Dashboard</div>
+    <div class="login-tagline">// portfolio intelligence dashboard</div>
+    <div class="login-dots">
+      <div class="login-dot lit"></div><div class="login-dot lit"></div>
+      <div class="login-dot lit"></div><div class="login-dot"></div><div class="login-dot"></div>
+    </div>
+    <div class="login-label">Email</div>
+    <input class="login-input" type="email" placeholder="you@firm.com" id="login-email">
+    <div class="login-label">Password</div>
+    <input class="login-input" type="password" placeholder="••••••••••••" id="login-pass">
+    <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-footer">Access restricted to authorized users</div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP SHELL ══════════════════════════════════════════ -->
+<div id="app" style="display:none">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="header-logo">PM Dashboard</div>
+    <div class="header-tickers">
+      <div class="htick">
+        <div class="htick-label">Fed Funds</div>
+        <div class="htick-val" id="ht-ff">—</div>
+        <div class="htick-chg flat" id="ht-ff-c">—</div>
+      </div>
+      <div class="htick">
+        <div class="htick-label">10Y UST</div>
+        <div class="htick-val" id="ht-10y">—</div>
+        <div class="htick-chg flat" id="ht-10y-c">—</div>
+      </div>
+      <div class="htick">
+        <div class="htick-label">2Y UST</div>
+        <div class="htick-val" id="ht-2y">—</div>
+        <div class="htick-chg flat" id="ht-2y-c">—</div>
+      </div>
+      <div class="htick">
+        <div class="htick-label">10Y–2Y</div>
+        <div class="htick-val" id="ht-sp">—</div>
+        <div class="htick-chg flat" id="ht-sp-c">—</div>
+      </div>
+      <div class="htick">
+        <div class="htick-label">CPI YoY</div>
+        <div class="htick-val" id="ht-cpi">—</div>
+        <div class="htick-chg flat" id="ht-cpi-c">—</div>
+      </div>
+      <div class="htick">
+        <div class="htick-label">Unemp.</div>
+        <div class="htick-val" id="ht-ur">—</div>
+        <div class="htick-chg flat" id="ht-ur-c">—</div>
+      </div>
+      <div class="htick">
+        <div class="htick-label">VIX</div>
+        <div class="htick-val" id="ht-vix">—</div>
+        <div class="htick-chg flat" id="ht-vix-c">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-ts" id="header-ts">LIVE · —</div>
+      <button class="btn-login" onclick="doLogout()">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div id="body">
+
+    <!-- NAV SIDEBAR -->
+    <nav id="nav">
+      <div id="nav-search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="nav-search" type="text" placeholder="Search sections…" oninput="filterNav(this.value)">
+      </div>
+
+      <div id="nav-list">
+
+        <!-- MARKETS -->
+        <div class="nav-section open" id="ns-markets">
+          <div class="nav-section-header" onclick="toggleSection('ns-markets')">
+            <span>Markets</span><span class="nav-section-arrow">▼</span>
+          </div>
+          <div class="nav-items">
+            <div class="nav-item active" onclick="showPage('global-equities')" data-label="Global Equities">
+              <div class="nav-dot"></div>Global Equities<span class="nav-item-badge">EQ</span>
+            </div>
+            <div class="nav-item" onclick="showPage('fixed-income')" data-label="Fixed Income">
+              <div class="nav-dot"></div>Fixed Income<span class="nav-item-badge">FI</span>
+            </div>
+            <div class="nav-item" onclick="showPage('fx')" data-label="FX & Currencies">
+              <div class="nav-dot"></div>FX &amp; Currencies<span class="nav-item-badge">FX</span>
+            </div>
+            <div class="nav-item" onclick="showPage('commodities')" data-label="Commodities">
+              <div class="nav-dot"></div>Commodities<span class="nav-item-badge">CM</span>
+            </div>
+            <div class="nav-item" onclick="showPage('crypto')" data-label="Crypto">
+              <div class="nav-dot"></div>Crypto<span class="nav-item-badge">CR</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <!-- MACRO -->
+        <div class="nav-section open" id="ns-macro">
+          <div class="nav-section-header" onclick="toggleSection('ns-macro')">
+            <span>Macro</span><span class="nav-section-arrow">▼</span>
+          </div>
+          <div class="nav-items">
+
+            <!-- ── Yields & Curve ── -->
+            <div class="nav-sub-group open" id="nsg-yields">
+              <div class="nav-sub-header" onclick="toggleSubGroup('nsg-yields')">
+                <span class="nav-section-emoji">📈</span>Yields &amp; Curve<span class="nav-sub-arrow">▼</span>
+              </div>
+              <div class="nav-sub-items">
+                <div class="nav-item" onclick="showFredPage('yc')" data-label="Yield Curve Visualizer" data-series="__yc__">
+                  <div class="nav-dot"></div>Yield Curve Visualizer<span class="nav-item-badge">CURVE</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','FEDFUNDS')" data-label="Fed Funds Rate" data-series="FEDFUNDS">
+                  <div class="nav-dot"></div>Fed Funds Rate<span class="nav-item-badge">FEDFUNDS</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','SOFR')" data-label="SOFR" data-series="SOFR">
+                  <div class="nav-dot"></div>SOFR<span class="nav-item-badge">SOFR</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','DTB3')" data-label="3M Treasury" data-series="DTB3">
+                  <div class="nav-dot"></div>3M Treasury<span class="nav-item-badge">DTB3</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','DGS2')" data-label="2Y Treasury" data-series="DGS2">
+                  <div class="nav-dot"></div>2Y Treasury<span class="nav-item-badge">DGS2</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','DGS5')" data-label="5Y Treasury" data-series="DGS5">
+                  <div class="nav-dot"></div>5Y Treasury<span class="nav-item-badge">DGS5</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','DGS10')" data-label="10Y Treasury" data-series="DGS10">
+                  <div class="nav-dot"></div>10Y Treasury<span class="nav-item-badge">DGS10</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','DGS30')" data-label="30Y Treasury" data-series="DGS30">
+                  <div class="nav-dot"></div>30Y Treasury<span class="nav-item-badge">DGS30</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','T10Y2Y')" data-label="10Y-2Y Spread" data-series="T10Y2Y">
+                  <div class="nav-dot"></div>10Y–2Y Spread<span class="nav-item-badge">T10Y2Y</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','T10Y3M')" data-label="10Y-3M Spread" data-series="T10Y3M">
+                  <div class="nav-dot"></div>10Y–3M Spread<span class="nav-item-badge">T10Y3M</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Central Banks ── -->
+            <div class="nav-sub-group open" id="nsg-cb">
+              <div class="nav-sub-header" onclick="toggleSubGroup('nsg-cb')">
+                <span class="nav-section-emoji">🏦</span>Central Banks<span class="nav-sub-arrow">▼</span>
+              </div>
+              <div class="nav-sub-items">
+                <div class="nav-item" onclick="showFredPage('cb')" data-label="CB Overview" data-series="__cb__">
+                  <div class="nav-dot"></div>Overview &amp; Policy Rates<span class="nav-item-badge">CB</span>
+                </div>
+                <div class="nav-cb-label">U.S. Federal Reserve</div>
+                <div class="nav-item" onclick="showFredPage('series','WALCL')" data-label="Fed Balance Sheet" data-series="WALCL">
+                  <div class="nav-dot"></div>Balance Sheet (WALCL)<span class="nav-item-badge">WALCL</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','M2SL')" data-label="M2 Money Supply" data-series="M2SL">
+                  <div class="nav-dot"></div>M2 Money Supply<span class="nav-item-badge">M2SL</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','WRESBAL')" data-label="Bank Reserves" data-series="WRESBAL">
+                  <div class="nav-dot"></div>Bank Reserves<span class="nav-item-badge">WRESBAL</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','RRPONTSYD')" data-label="Reverse Repo" data-series="RRPONTSYD">
+                  <div class="nav-dot"></div>Reverse Repo (RRP)<span class="nav-item-badge">RRPONTSYD</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Economic Indicators ── -->
+            <div class="nav-sub-group open" id="nsg-econ">
+              <div class="nav-sub-header" onclick="toggleSubGroup('nsg-econ')">
+                <span class="nav-section-emoji">📊</span>Economic Indicators<span class="nav-sub-arrow">▼</span>
+              </div>
+              <div class="nav-sub-items">
+
+                <!-- Economic Activity & Growth -->
+                <div class="nav-sub-group open" id="nsg-growth">
+                  <div class="nav-sub-header" style="padding-left:34px;font-size:8.5px;" onclick="toggleSubGroup('nsg-growth')">
+                    Economic Activity &amp; Growth<span class="nav-sub-arrow">▼</span>
+                  </div>
+                  <div class="nav-sub-items" style="">
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','GDPC1')" data-label="Real GDP" data-series="GDPC1"><div class="nav-dot"></div>Real GDP<span class="nav-item-badge">GDPC1</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','A191RL1Q225SBEA')" data-label="GDP Growth QoQ" data-series="A191RL1Q225SBEA"><div class="nav-dot"></div>GDP Growth QoQ<span class="nav-item-badge">GDPGR</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','INDPRO')" data-label="Industrial Production" data-series="INDPRO"><div class="nav-dot"></div>Industrial Production<span class="nav-item-badge">INDPRO</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','TCU')" data-label="Capacity Utilization" data-series="TCU"><div class="nav-dot"></div>Capacity Utilization<span class="nav-item-badge">TCU</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','RSXFS')" data-label="Retail Sales" data-series="RSXFS"><div class="nav-dot"></div>Retail Sales<span class="nav-item-badge">RSXFS</span></div>
+                  </div>
+                </div>
+
+                <!-- Inflation -->
+                <div class="nav-sub-group open" id="nsg-inflation">
+                  <div class="nav-sub-header" style="padding-left:34px;font-size:8.5px;" onclick="toggleSubGroup('nsg-inflation')">
+                    Inflation<span class="nav-sub-arrow">▼</span>
+                  </div>
+                  <div class="nav-sub-items">
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','CPIAUCSL')" data-label="CPI All Items" data-series="CPIAUCSL"><div class="nav-dot"></div>CPI – All Items<span class="nav-item-badge">CPI</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','CPILFESL')" data-label="CPI Core" data-series="CPILFESL"><div class="nav-dot"></div>CPI – Core<span class="nav-item-badge">CORE</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','PCEPI')" data-label="PCE" data-series="PCEPI"><div class="nav-dot"></div>PCE<span class="nav-item-badge">PCEPI</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','PCEPILFE')" data-label="Core PCE" data-series="PCEPILFE"><div class="nav-dot"></div>Core PCE<span class="nav-item-badge">PCEPILFE</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','PPIFID')" data-label="PPI Final Demand" data-series="PPIFID"><div class="nav-dot"></div>PPI – Final Demand<span class="nav-item-badge">PPIFID</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','T5YIE')" data-label="5Y Breakeven" data-series="T5YIE"><div class="nav-dot"></div>5Y Breakeven<span class="nav-item-badge">T5YIE</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','T10YIE')" data-label="10Y Breakeven" data-series="T10YIE"><div class="nav-dot"></div>10Y Breakeven<span class="nav-item-badge">T10YIE</span></div>
+                  </div>
+                </div>
+
+                <!-- Labor Market -->
+                <div class="nav-sub-group open" id="nsg-labor">
+                  <div class="nav-sub-header" style="padding-left:34px;font-size:8.5px;" onclick="toggleSubGroup('nsg-labor')">
+                    Labor Market<span class="nav-sub-arrow">▼</span>
+                  </div>
+                  <div class="nav-sub-items">
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','UNRATE')" data-label="Unemployment Rate" data-series="UNRATE"><div class="nav-dot"></div>Unemployment Rate<span class="nav-item-badge">UNRATE</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','PAYEMS')" data-label="Nonfarm Payrolls" data-series="PAYEMS"><div class="nav-dot"></div>Nonfarm Payrolls<span class="nav-item-badge">PAYEMS</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','CIVPART')" data-label="Labor Force Participation" data-series="CIVPART"><div class="nav-dot"></div>Labor Force Part.<span class="nav-item-badge">CIVPART</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','ICSA')" data-label="Initial Jobless Claims" data-series="ICSA"><div class="nav-dot"></div>Initial Claims<span class="nav-item-badge">ICSA</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','JTSJOL')" data-label="JOLTS Job Openings" data-series="JTSJOL"><div class="nav-dot"></div>JOLTS Openings<span class="nav-item-badge">JOLTS</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','CES0500000003')" data-label="Avg Hourly Earnings" data-series="CES0500000003"><div class="nav-dot"></div>Avg Hourly Earnings<span class="nav-item-badge">AHEYOY</span></div>
+                  </div>
+                </div>
+
+                <!-- Credit & Financial Conditions -->
+                <div class="nav-sub-group open" id="nsg-credit">
+                  <div class="nav-sub-header" style="padding-left:34px;font-size:8.5px;" onclick="toggleSubGroup('nsg-credit')">
+                    Credit &amp; Financial Conditions<span class="nav-sub-arrow">▼</span>
+                  </div>
+                  <div class="nav-sub-items">
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','BAMLH0A0HYM2')" data-label="HY Credit Spread" data-series="BAMLH0A0HYM2"><div class="nav-dot"></div>HY Credit Spread<span class="nav-item-badge">HYSPR</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','BAMLC0A0CM')" data-label="IG Credit Spread" data-series="BAMLC0A0CM"><div class="nav-dot"></div>IG Credit Spread<span class="nav-item-badge">IGSPR</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','TEDRATE')" data-label="TED Spread" data-series="TEDRATE"><div class="nav-dot"></div>TED Spread<span class="nav-item-badge">TED</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','TOTCI')" data-label="C&I Loans" data-series="TOTCI"><div class="nav-dot"></div>C&amp;I Loans<span class="nav-item-badge">TOTCI</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','TOTALSL')" data-label="Consumer Credit" data-series="TOTALSL"><div class="nav-dot"></div>Consumer Credit<span class="nav-item-badge">CONSC</span></div>
+                  </div>
+                </div>
+
+                <!-- Global & Trade -->
+                <div class="nav-sub-group open" id="nsg-global">
+                  <div class="nav-sub-header" style="padding-left:34px;font-size:8.5px;" onclick="toggleSubGroup('nsg-global')">
+                    Global &amp; Trade<span class="nav-sub-arrow">▼</span>
+                  </div>
+                  <div class="nav-sub-items">
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','DTWEXBGS')" data-label="USD Index" data-series="DTWEXBGS"><div class="nav-dot"></div>USD Index (DXY)<span class="nav-item-badge">DXY</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','BOPGSTB')" data-label="Trade Balance" data-series="BOPGSTB"><div class="nav-dot"></div>Trade Balance<span class="nav-item-badge">TRADBAL</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','NETFI')" data-label="Current Account" data-series="NETFI"><div class="nav-dot"></div>Current Account<span class="nav-item-badge">CURRACCT</span></div>
+                  </div>
+                </div>
+
+                <!-- Commodities & Energy -->
+                <div class="nav-sub-group open" id="nsg-energy">
+                  <div class="nav-sub-header" style="padding-left:34px;font-size:8.5px;" onclick="toggleSubGroup('nsg-energy')">
+                    Commodities &amp; Energy<span class="nav-sub-arrow">▼</span>
+                  </div>
+                  <div class="nav-sub-items">
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','DCOILWTICO')" data-label="WTI Crude Oil" data-series="DCOILWTICO"><div class="nav-dot"></div>WTI Crude Oil<span class="nav-item-badge">WTI</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','DHHNGSP')" data-label="Natural Gas" data-series="DHHNGSP"><div class="nav-dot"></div>Natural Gas<span class="nav-item-badge">NATGAS</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','PPIACO')" data-label="Commodity PPI" data-series="PPIACO"><div class="nav-dot"></div>Commodity PPI<span class="nav-item-badge">PPIACO</span></div>
+                  </div>
+                </div>
+
+                <!-- Market & Sentiment -->
+                <div class="nav-sub-group open" id="nsg-sentiment">
+                  <div class="nav-sub-header" style="padding-left:34px;font-size:8.5px;" onclick="toggleSubGroup('nsg-sentiment')">
+                    Market &amp; Sentiment<span class="nav-sub-arrow">▼</span>
+                  </div>
+                  <div class="nav-sub-items">
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','VIXCLS')" data-label="VIX" data-series="VIXCLS"><div class="nav-dot"></div>VIX<span class="nav-item-badge">VIX</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','UMCSENT')" data-label="Consumer Sentiment" data-series="UMCSENT"><div class="nav-dot"></div>Consumer Sentiment<span class="nav-item-badge">UMCSENT</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','USSLIND')" data-label="Conference Board LEI" data-series="USSLIND"><div class="nav-dot"></div>Conf. Board LEI<span class="nav-item-badge">LEI</span></div>
+                  </div>
+                </div>
+
+              </div><!-- /nsg-econ sub-items -->
+            </div><!-- /nsg-econ -->
+
+          </div><!-- /ns-macro nav-items -->
+        </div><!-- /ns-macro -->
+
+        <div class="nav-divider"></div>
+
+        <!-- TOOLS -->
+        <div class="nav-section open" id="ns-tools">
+          <div class="nav-section-header" onclick="toggleSection('ns-tools')">
+            <span>Tools</span><span class="nav-section-arrow">▼</span>
+          </div>
+          <div class="nav-items">
+            <div class="nav-item" onclick="showPage('monte-carlo')" data-label="Monte Carlo">
+              <div class="nav-dot"></div>Monte Carlo<span class="nav-item-badge">MC</span>
+            </div>
+            <div class="nav-item" onclick="showPage('correlation')" data-label="Correlation Matrix">
+              <div class="nav-dot"></div>Correlation Matrix<span class="nav-item-badge">COR</span>
+            </div>
+            <div class="nav-item" onclick="showPage('return-assumptions')" data-label="Return Assumptions">
+              <div class="nav-dot"></div>Return Assumptions<span class="nav-item-badge">CMA</span>
+            </div>
+            <div class="nav-item" onclick="showPage('stress-test')" data-label="Stress Tester">
+              <div class="nav-dot"></div>Stress Tester<span class="nav-item-badge">ST</span>
+            </div>
+            <div class="nav-item" onclick="showPage('factor-explorer')" data-label="Factor Explorer">
+              <div class="nav-dot"></div>Factor Explorer<span class="nav-item-badge">FAC</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <!-- NEWS & FLOWS -->
+        <div class="nav-section open" id="ns-news">
+          <div class="nav-section-header" onclick="toggleSection('ns-news')">
+            <span>News &amp; Flows</span><span class="nav-section-arrow">▼</span>
+          </div>
+          <div class="nav-items">
+            <div class="nav-item" onclick="showPage('news')" data-label="News Flow">
+              <div class="nav-dot"></div>News Flow<span class="nav-item-badge">NWS</span>
+            </div>
+            <div class="nav-item" onclick="showPage('cot')" data-label="COT Positioning">
+              <div class="nav-dot"></div>COT Positioning<span class="nav-item-badge">COT</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /nav-list -->
+    </nav><!-- /nav -->
+
+    <!-- ── MAIN CONTENT ── -->
+    <main id="main">
+
+      <!-- ════════════════════════════════════════
+           PAGE: GLOBAL EQUITIES
+      ════════════════════════════════════════ -->
+      <div class="section-page active" id="page-global-equities">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Global Equities <span class="page-title-badge">Live</span></div>
+            <div class="page-subtitle">Major indices · benchmarks · regional performance</div>
+          </div>
+          <div class="page-controls">
+            <div class="pill-group" id="eq-period">
+              <div class="pill" onclick="setPill('eq-period',this)">1D</div>
+              <div class="pill" onclick="setPill('eq-period',this)">1W</div>
+              <div class="pill" onclick="setPill('eq-period',this)">1M</div>
+              <div class="pill" onclick="setPill('eq-period',this)">3M</div>
+              <div class="pill active" onclick="setPill('eq-period',this)">YTD</div>
+              <div class="pill" onclick="setPill('eq-period',this)">1Y</div>
+              <div class="pill" onclick="setPill('eq-period',this)">3Y</div>
+              <div class="pill" onclick="setPill('eq-period',this)">5Y</div>
+            </div>
+            <div class="pill-group">
+              <div class="pill active" onclick="setPill(this.parentNode,this)">Price</div>
+              <div class="pill" onclick="setPill(this.parentNode,this)">Total Ret.</div>
+            </div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="stat-row">
+            <div class="stat-card"><div class="stat-label">S&amp;P 500</div><div class="stat-val">5,308</div><div class="stat-chg up">▲ +1.24% today</div><div class="stat-sub">YTD +18.3%</div></div>
+            <div class="stat-card"><div class="stat-label">MSCI EAFE</div><div class="stat-val">2,341</div><div class="stat-chg up">▲ +0.61%</div><div class="stat-sub">YTD +8.2%</div></div>
+            <div class="stat-card"><div class="stat-label">MSCI EM</div><div class="stat-val">1,082</div><div class="stat-chg dn">▼ -0.43%</div><div class="stat-sub">YTD +4.1%</div></div>
+            <div class="stat-card"><div class="stat-label">Nasdaq 100</div><div class="stat-val">18,491</div><div class="stat-chg up">▲ +1.78%</div><div class="stat-sub">YTD +23.1%</div></div>
+            <div class="stat-card"><div class="stat-label">Russell 2000</div><div class="stat-val">2,094</div><div class="stat-chg dn">▼ -0.22%</div><div class="stat-sub">YTD +2.4%</div></div>
+            <div class="stat-card"><div class="stat-label">Stoxx 600</div><div class="stat-val">512</div><div class="stat-chg up">▲ +0.38%</div><div class="stat-sub">YTD +10.1%</div></div>
+            <div class="stat-card"><div class="stat-label">Nikkei 225</div><div class="stat-val">38,460</div><div class="stat-chg up">▲ +0.90%</div><div class="stat-sub">YTD +16.8%</div></div>
+            <div class="stat-card"><div class="stat-label">CSI 300</div><div class="stat-val">3,612</div><div class="stat-chg dn">▼ -0.15%</div><div class="stat-sub">YTD -1.2%</div></div>
+          </div>
+          <div class="grid-2-1">
+            <div class="chart-container">
+              <div class="chart-container-header">
+                <div class="chart-container-title">S&amp;P 500 — YTD Performance</div>
+              </div>
+              <div class="pm-chart-wrap" id="chart-sp500" style="height:300px"></div>
+            </div>
+            <div class="chart-container">
+              <div class="chart-container-header"><div class="chart-container-title">Regional Heat Map</div></div>
+              <div style="padding: 12px;">
+                <div class="heatmap-grid" style="grid-template-columns: 1fr 1fr; gap: 3px;">
+                  <div class="heatmap-cell hm-strong-up"><div class="hm-label">US Large Cap</div><div class="hm-val">+1.24%</div></div>
+                  <div class="heatmap-cell hm-up"><div class="hm-label">Japan</div><div class="hm-val">+0.90%</div></div>
+                  <div class="heatmap-cell hm-up"><div class="hm-label">Europe</div><div class="hm-val">+0.38%</div></div>
+                  <div class="heatmap-cell hm-slight-up"><div class="hm-label">EAFE</div><div class="hm-val">+0.61%</div></div>
+                  <div class="heatmap-cell hm-slight-dn"><div class="hm-label">EM</div><div class="hm-val">-0.43%</div></div>
+                  <div class="heatmap-cell hm-slight-dn"><div class="hm-label">US Small Cap</div><div class="hm-val">-0.22%</div></div>
+                  <div class="heatmap-cell hm-flat"><div class="hm-label">China</div><div class="hm-val">-0.15%</div></div>
+                  <div class="heatmap-cell hm-dn"><div class="hm-label">LatAm</div><div class="hm-val">-0.82%</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Index / Benchmark</th><th>Last</th><th>1D</th><th>1W</th><th>1M</th><th>YTD</th><th>1Y</th></tr></thead>
+              <tbody>
+                <tr><td>S&amp;P 500</td><td>5,308</td><td class="td-up">+1.24%</td><td class="td-up">+2.1%</td><td class="td-up">+4.8%</td><td class="td-up">+18.3%</td><td class="td-up">+26.1%</td></tr>
+                <tr><td>Nasdaq 100</td><td>18,491</td><td class="td-up">+1.78%</td><td class="td-up">+2.8%</td><td class="td-up">+6.2%</td><td class="td-up">+23.1%</td><td class="td-up">+34.2%</td></tr>
+                <tr><td>Russell 2000</td><td>2,094</td><td class="td-dn">-0.22%</td><td class="td-dn">-0.4%</td><td class="td-up">+1.1%</td><td class="td-up">+2.4%</td><td class="td-up">+11.2%</td></tr>
+                <tr><td>MSCI EAFE</td><td>2,341</td><td class="td-up">+0.61%</td><td class="td-up">+1.2%</td><td class="td-up">+2.3%</td><td class="td-up">+8.2%</td><td class="td-up">+14.4%</td></tr>
+                <tr><td>MSCI EM</td><td>1,082</td><td class="td-dn">-0.43%</td><td class="td-dn">-0.8%</td><td class="td-up">+1.4%</td><td class="td-up">+4.1%</td><td class="td-up">+6.2%</td></tr>
+                <tr><td>Stoxx 600</td><td>512</td><td class="td-up">+0.38%</td><td class="td-up">+0.6%</td><td class="td-up">+1.9%</td><td class="td-up">+10.1%</td><td class="td-up">+12.8%</td></tr>
+                <tr><td>Nikkei 225</td><td>38,460</td><td class="td-up">+0.90%</td><td class="td-up">+1.4%</td><td class="td-up">+3.8%</td><td class="td-up">+16.8%</td><td class="td-up">+22.4%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: FIXED INCOME
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-fixed-income">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Fixed Income <span class="page-title-badge">Live</span></div>
+            <div class="page-subtitle">Treasuries · credit · spreads · duration</div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="stat-row">
+            <div class="stat-card"><div class="stat-label">2Y Treasury</div><div class="stat-val">4.84%</div><div class="stat-chg up">▲ +0.02</div></div>
+            <div class="stat-card"><div class="stat-label">10Y Treasury</div><div class="stat-val">4.62%</div><div class="stat-chg up">▲ +0.04</div></div>
+            <div class="stat-card"><div class="stat-label">30Y Treasury</div><div class="stat-val">4.74%</div><div class="stat-chg up">▲ +0.03</div></div>
+            <div class="stat-card"><div class="stat-label">HY Spread</div><div class="stat-val">314 bps</div><div class="stat-chg dn">▼ -8</div></div>
+            <div class="stat-card"><div class="stat-label">IG Spread</div><div class="stat-val">102 bps</div><div class="stat-chg dn">▼ -3</div></div>
+            <div class="stat-card"><div class="stat-label">TIPS 10Y Real</div><div class="stat-val">2.14%</div><div class="stat-chg up">▲ +0.02</div></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-container-header"><div class="chart-container-title">Treasury Yields — Key Tenors</div></div>
+            <div class="pm-chart-wrap" id="chart-treasuries" style="height:280px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: FX
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-fx">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">FX &amp; Currencies <span class="page-title-badge">Live</span></div>
+            <div class="page-subtitle">Dollar index · major pairs · EM currencies</div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="stat-row">
+            <div class="stat-card"><div class="stat-label">DXY</div><div class="stat-val">104.3</div><div class="stat-chg up">▲ +0.2</div></div>
+            <div class="stat-card"><div class="stat-label">EUR/USD</div><div class="stat-val">1.0841</div><div class="stat-chg dn">▼ -0.0012</div></div>
+            <div class="stat-card"><div class="stat-label">USD/JPY</div><div class="stat-val">154.8</div><div class="stat-chg up">▲ +0.4</div></div>
+            <div class="stat-card"><div class="stat-label">GBP/USD</div><div class="stat-val">1.2694</div><div class="stat-chg flat">▬ flat</div></div>
+            <div class="stat-card"><div class="stat-label">USD/CNH</div><div class="stat-val">7.248</div><div class="stat-chg up">▲ +0.012</div></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-container-header"><div class="chart-container-title">DXY — Dollar Index</div></div>
+            <div class="pm-chart-wrap" id="chart-dxy" style="height:280px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: COMMODITIES
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-commodities">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Commodities <span class="page-title-badge">Live</span></div>
+            <div class="page-subtitle">Energy · metals · agriculture</div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="stat-row">
+            <div class="stat-card"><div class="stat-label">WTI Crude</div><div class="stat-val">$78.4</div><div class="stat-chg dn">▼ -0.8</div></div>
+            <div class="stat-card"><div class="stat-label">Brent</div><div class="stat-val">$82.1</div><div class="stat-chg dn">▼ -0.6</div></div>
+            <div class="stat-card"><div class="stat-label">Gold</div><div class="stat-val">$2,342</div><div class="stat-chg up">▲ +8</div></div>
+            <div class="stat-card"><div class="stat-label">Silver</div><div class="stat-val">$28.4</div><div class="stat-chg up">▲ +0.2</div></div>
+            <div class="stat-card"><div class="stat-label">Nat Gas</div><div class="stat-val">$2.18</div><div class="stat-chg dn">▼ -0.04</div></div>
+            <div class="stat-card"><div class="stat-label">Copper</div><div class="stat-val">$4.42</div><div class="stat-chg up">▲ +0.06</div></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-container-header"><div class="chart-container-title">WTI Crude Oil</div></div>
+            <div class="pm-chart-wrap" id="chart-wti" style="height:280px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: CRYPTO
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-crypto">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Crypto <span class="page-title-badge">Live</span></div>
+            <div class="page-subtitle">Bitcoin · Ethereum · digital assets</div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="stat-row">
+            <div class="stat-card"><div class="stat-label">Bitcoin</div><div class="stat-val">$62,840</div><div class="stat-chg up">▲ +2.1%</div></div>
+            <div class="stat-card"><div class="stat-label">Ethereum</div><div class="stat-val">$3,124</div><div class="stat-chg up">▲ +1.4%</div></div>
+            <div class="stat-card"><div class="stat-label">Mkt Cap</div><div class="stat-val">$2.3T</div><div class="stat-chg up">▲ +1.8%</div></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-container-header"><div class="chart-container-title">BTC / ETH — Price History</div></div>
+            <div class="pm-chart-wrap" id="chart-crypto" style="height:300px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: FRED SERIES CHART
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-fred-series">
+        <div class="page-header" id="fred-page-header">
+          <div class="page-title-group">
+            <div class="page-title" id="fred-page-title">FRED Indicators <span class="page-title-badge">FRED API</span></div>
+            <div class="page-subtitle" id="fred-page-subtitle">Select a series from the left navigation</div>
+          </div>
+        </div>
+        <div class="fred-main" id="fred-main" style="flex:1;min-height:0;">
+          <div class="fred-state-msg"><div class="fred-spinner"></div><span>Loading data…</span></div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: YIELD CURVE
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-fred-yc" style="overflow:hidden;">
+        <!-- injected by renderMacroYieldCurve() -->
+        <div class="fred-state-msg" style="flex:1"><div class="fred-spinner"></div><span>Loading yield curve…</span></div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: CENTRAL BANKS
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-fred-cb">
+        <!-- injected by renderMacroCB() -->
+        <div class="fred-state-msg" style="flex:1"><div class="fred-spinner"></div><span>Loading…</span></div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: MONTE CARLO
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-monte-carlo">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Monte Carlo Simulator <span class="page-title-badge">Tool</span></div>
+            <div class="page-subtitle">Portfolio path simulation · return distribution · VaR</div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="grid-1-2">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div class="chart-container">
+                <div class="chart-container-header"><div class="chart-container-title">Simulation Inputs</div></div>
+                <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+                  <div><div class="stat-label" style="margin-bottom:5px">Portfolio Value ($)</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-family:var(--mono);font-size:12px;color:var(--text)" value="1,000,000"></div>
+                  <div><div class="stat-label" style="margin-bottom:5px">Annual Return (%)</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-family:var(--mono);font-size:12px;color:var(--text)" value="7.0"></div>
+                  <div><div class="stat-label" style="margin-bottom:5px">Annual Volatility (%)</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-family:var(--mono);font-size:12px;color:var(--text)" value="12.0"></div>
+                  <div><div class="stat-label" style="margin-bottom:5px">Time Horizon (Years)</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-family:var(--mono);font-size:12px;color:var(--text)" value="10"></div>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <div class="chart-container-header"><div class="chart-container-title">Simulation Paths</div></div>
+              <div class="pm-chart-wrap" id="chart-mc" style="height:360px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: CORRELATION
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-correlation">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Correlation Matrix <span class="page-title-badge">Tool</span></div>
+            <div class="page-subtitle">Cross-asset correlations · rolling window</div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="coming-soon">
+            <div class="coming-soon-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+            <div class="coming-soon-title">Correlation Matrix</div>
+            <div class="coming-soon-sub">Cross-asset correlation engine coming soon</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: RETURN ASSUMPTIONS (CMA TAB)
+      ════════════════════════════════════════ -->
+      <!-- CMA TAB PLACEHOLDER — paste cma-tab.html content here -->
+      <div class="section-page" id="page-return-assumptions">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Return Assumptions <span class="page-title-badge">Tool · CMA</span></div>
+            <div class="page-subtitle">Capital market assumptions · 10-year forward estimates · USD</div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="coming-soon">
+            <div class="coming-soon-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div class="coming-soon-title">CMA Module</div>
+            <div class="coming-soon-sub">Insert cma-tab.html page body here</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: STRESS TEST
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-stress-test">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Stress Tester <span class="page-title-badge">Tool</span></div>
+            <div class="page-subtitle">Historical scenario analysis · portfolio P&amp;L</div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="coming-soon">
+            <div class="coming-soon-icon"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="coming-soon-title">Stress Tester</div>
+            <div class="coming-soon-sub">Historical scenario P&amp;L coming soon</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: FACTOR EXPLORER
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-factor-explorer">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Factor Explorer <span class="page-title-badge">Ken French Data</span></div>
+            <div class="page-subtitle">Value · momentum · quality · size · low vol</div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="coming-soon">
+            <div class="coming-soon-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <div class="coming-soon-title">Factor Explorer</div>
+            <div class="coming-soon-sub">Fama-French factor returns coming soon</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: NEWS FLOW
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-news">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">News Flow <span class="page-title-badge">NewsAPI</span></div>
+            <div class="page-subtitle">Macro · markets · central banks · geopolitical</div>
+          </div>
+          <div class="page-controls">
+            <div class="pill-group">
+              <div class="pill active">All</div>
+              <div class="pill">Macro</div>
+              <div class="pill">Rates</div>
+              <div class="pill">Equity</div>
+              <div class="pill">Credit</div>
+            </div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="news-list">
+            <div class="news-item"><div class="news-item-header"><span class="news-tag news-tag-macro">Macro</span><span class="news-time">2 min ago</span></div><div class="news-headline">Fed officials signal patience on rate cuts as inflation data disappoints for third consecutive month</div><div class="news-source">Reuters · Federal Reserve</div></div>
+            <div class="news-item"><div class="news-item-header"><span class="news-tag news-tag-rates">Rates</span><span class="news-time">14 min ago</span></div><div class="news-headline">10-year Treasury yield climbs to 4.62% as strong jobs report reduces near-term cut expectations</div><div class="news-source">Bloomberg · Fixed Income</div></div>
+            <div class="news-item"><div class="news-item-header"><span class="news-tag news-tag-equity">Equity</span><span class="news-time">31 min ago</span></div><div class="news-headline">Nvidia surges 8% after earnings beat, AI chip demand outlook upgraded for fiscal 2025</div><div class="news-source">FT · Technology</div></div>
+            <div class="news-item"><div class="news-item-header"><span class="news-tag news-tag-macro">Macro</span><span class="news-time">1h ago</span></div><div class="news-headline">ECB signals June cut is likely as European inflation continues to moderate toward 2% target</div><div class="news-source">WSJ · Europe</div></div>
+            <div class="news-item"><div class="news-item-header"><span class="news-tag news-tag-credit">Credit</span><span class="news-time">2h ago</span></div><div class="news-headline">High yield spreads tighten to post-GFC lows amid robust corporate earnings and declining default rates</div><div class="news-source">FT · Credit Markets</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: COT POSITIONING
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-cot">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">COT Positioning <span class="page-title-badge">CFTC Data</span></div>
+            <div class="page-subtitle">Commitment of Traders · speculative positioning</div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Contract</th><th>Net Spec.</th><th>Chg WoW</th><th>% of OI</th><th>Bias</th></tr></thead>
+              <tbody>
+                <tr><td>S&amp;P 500 Futures</td><td class="td-up">+142,480</td><td class="td-up">+8,200</td><td>18.4%</td><td class="td-up">Long</td></tr>
+                <tr><td>10Y T-Note</td><td class="td-dn">-412,800</td><td class="td-dn">-22,400</td><td>-12.8%</td><td class="td-dn">Short</td></tr>
+                <tr><td>EUR/USD</td><td class="td-dn">-48,200</td><td class="td-dn">-4,100</td><td>-8.2%</td><td class="td-dn">Short</td></tr>
+                <tr><td>Gold</td><td class="td-up">+218,400</td><td class="td-up">+12,800</td><td>28.4%</td><td class="td-up">Long</td></tr>
+                <tr><td>WTI Crude</td><td class="td-up">+184,200</td><td class="td-dn">-8,400</td><td>22.1%</td><td class="td-up">Long</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main><!-- /main -->
+  </div><!-- /body -->
+</div><!-- /app -->
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   SHELL CONTROLS
+══════════════════════════════════════════════════════════════════════ */
+function doLogin() {
+  const email = document.getElementById('login-email').value;
+  const pass  = document.getElementById('login-pass').value;
+  if (!email || !pass) return;
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+  updateTimestamp();
+  fredBoot(); // initialise FRED engine on login
+}
+function doLogout() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+}
+document.getElementById('login-pass').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doLogin();
+});
+
+function showPage(id) {
+  document.querySelectorAll('.section-page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  // Only update nav active state for non-FRED pages (FRED pages managed by showFredPage)
+  if (!id.startsWith('fred-')) {
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.classList.toggle('active', item.getAttribute('onclick') && item.getAttribute('onclick').includes("'"+id+"'"));
+    });
+  }
+}
+
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('collapsed');
+}
+
+function filterNav(q) {
+  const query = q.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const label = (item.dataset.label || item.textContent).toLowerCase();
+    item.style.display = !query || label.includes(query) ? '' : 'none';
+  });
+  // Show/hide nav-section top-level groups
+  document.querySelectorAll('.nav-section').forEach(section => {
+    if (!query) { section.classList.remove('collapsed'); return; }
+    const anyVisible = [...section.querySelectorAll('.nav-item')].some(i => i.style.display !== 'none');
+    section.classList.toggle('collapsed', !anyVisible);
+  });
+  // Show/hide nav-sub-groups
+  document.querySelectorAll('.nav-sub-group').forEach(sg => {
+    if (!query) { sg.classList.remove('collapsed'); return; }
+    const anyVisible = [...sg.querySelectorAll('.nav-item')].some(i => i.style.display !== 'none');
+    sg.classList.toggle('collapsed', !anyVisible);
+  });
+}
+
+function setPill(group, el) {
+  const g = typeof group === 'string' ? document.getElementById(group) : group;
+  if (!g) return;
+  g.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function updateTimestamp() {
+  const el = document.getElementById('header-ts');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = 'LIVE · ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+}
+setInterval(updateTimestamp, 60000);
+
+function toggleSubGroup(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('collapsed');
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   FRED PAGE ROUTER — replaces switchMacroTab / showPage('macro')
+   type: 'series' | 'yc' | 'cb'
+   id:   FRED series ID (only for type='series')
+══════════════════════════════════════════════════════════════════════ */
+let fredYCInitialized = false;
+let fredCBInitialized = false;
+
+function showFredPage(type, seriesId) {
+  // Deactivate all nav items, then activate the clicked one
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+  // Find and activate matching item by data-series attribute
+  const targetSeries = type === 'series' ? seriesId : (type === 'yc' ? '__yc__' : '__cb__');
+  document.querySelectorAll(`.nav-item[data-series="${targetSeries}"]`).forEach(el => el.classList.add('active'));
+
+  if (type === 'yc') {
+    showPage('fred-yc');
+    if (!fredYCInitialized) {
+      fredYCInitialized = true;
+      renderMacroYieldCurve();
+    }
+  } else if (type === 'cb') {
+    showPage('fred-cb');
+    if (!fredCBInitialized) {
+      fredCBInitialized = true;
+      renderMacroCB();
+    }
+  } else {
+    showPage('fred-series');
+    fredState.active = seriesId;
+    fredRenderChart(seriesId);
+  }
+}
+
+/* Override showPage to NOT touch nav-item active state (showFredPage handles it) */
+
+/* ══════════════════════════════════════════════════════════════════════
+   FRED ENGINE
+   Ported from fred_dashboard.html — all series data, chart rendering,
+   yield curve visualizer, data table, CSV/PNG export, pinning.
+══════════════════════════════════════════════════════════════════════ */
+
+const FRED_DATA_URL = 'http://localhost:8000/economic_data.json';
+const FRED_ID_MAP = { 'DTB3': 'DGS3MO' };
+let fredLocalData = {};
+
+const FRED_PERIODS = ['1Y','3Y','5Y','7Y','10Y','15Y','20Y','30Y'];
+const YC_COLORS = ['#d4a44c','#7c6fcd','#4caf82','#4a90d9','#e05555'];
+
+const YC_TENORS = [
+  {label:'1M',id:'DGS1MO'},{label:'3M',id:'DTB3'},{label:'6M',id:'DGS6MO'},
+  {label:'1Y',id:'DGS1'},{label:'2Y',id:'DGS2'},{label:'3Y',id:'DGS3'},
+  {label:'5Y',id:'DGS5'},{label:'7Y',id:'DGS7'},{label:'10Y',id:'DGS10'},
+  {label:'20Y',id:'DGS20'},{label:'30Y',id:'DGS30'},
+];
+
+/* ── NAV DATA STRUCTURE ──────────────────────────────────────────────── */
+const FRED_NAV = [
+  { emoji:'📌', label:'Pinned / Favorites', id:'pinned', items:[] },
+  { emoji:'📈', label:'Interest Rates & Yield Curve', id:'rates', items:[
+    { label:'Yield Curve Visualizer', id:'__yc__', ticker:'CURVE', special:true },
+    { label:'Fed Funds Rate', id:'FEDFUNDS', ticker:'FEDFUNDS' },
+    { label:'SOFR', id:'SOFR', ticker:'SOFR' },
+    { label:'3M Treasury', id:'DTB3', ticker:'DTB3' },
+    { label:'2Y Treasury', id:'DGS2', ticker:'DGS2' },
+    { label:'5Y Treasury', id:'DGS5', ticker:'DGS5' },
+    { label:'10Y Treasury', id:'DGS10', ticker:'DGS10' },
+    { label:'30Y Treasury', id:'DGS30', ticker:'DGS30' },
+    { label:'10Y–2Y Spread', id:'T10Y2Y', ticker:'T10Y2Y' },
+    { label:'10Y–3M Spread', id:'T10Y3M', ticker:'T10Y3M' },
+  ]},
+  { emoji:'🏦', label:'Monetary Policy & Fed Balance Sheet', id:'fed', items:[
+    { label:'Fed Balance Sheet', id:'WALCL', ticker:'WALCL' },
+    { label:'M2 Money Supply', id:'M2SL', ticker:'M2SL' },
+    { label:'Bank Reserves', id:'WRESBAL', ticker:'WRESBAL' },
+    { label:'Reverse Repo (RRP)', id:'RRPONTSYD', ticker:'RRPONTSYD' },
+  ]},
+  { emoji:'📊', label:'Inflation', id:'inflation', items:[
+    { label:'CPI – All Items', id:'CPIAUCSL', ticker:'CPIAUCSL' },
+    { label:'CPI – Core', id:'CPILFESL', ticker:'CPILFESL' },
+    { label:'PCE', id:'PCEPI', ticker:'PCEPI' },
+    { label:'Core PCE', id:'PCEPILFE', ticker:'PCEPILFE' },
+    { label:'PPI – Final Demand', id:'PPIFID', ticker:'PPIFID' },
+    { label:'5Y Breakeven', id:'T5YIE', ticker:'T5YIE' },
+    { label:'10Y Breakeven', id:'T10YIE', ticker:'T10YIE' },
+  ]},
+  { emoji:'💼', label:'Labor Market', id:'labor', items:[
+    { label:'Unemployment Rate', id:'UNRATE', ticker:'UNRATE' },
+    { label:'Nonfarm Payrolls', id:'PAYEMS', ticker:'PAYEMS' },
+    { label:'Labor Force Participation', id:'CIVPART', ticker:'CIVPART' },
+    { label:'Initial Jobless Claims', id:'ICSA', ticker:'ICSA' },
+    { label:'JOLTS Job Openings', id:'JTSJOL', ticker:'JTSJOL' },
+    { label:'Avg Hourly Earnings YoY', id:'CES0500000003', ticker:'AHEYOY' },
+  ]},
+  { emoji:'🏗️', label:'Economic Activity & Growth', id:'growth', items:[
+    { label:'Real GDP', id:'GDPC1', ticker:'GDPC1' },
+    { label:'GDP Growth QoQ', id:'A191RL1Q225SBEA', ticker:'GDPGR' },
+    { label:'Industrial Production', id:'INDPRO', ticker:'INDPRO' },
+    { label:'Capacity Utilization', id:'TCU', ticker:'TCU' },
+    { label:'Retail Sales', id:'RSXFS', ticker:'RSXFS' },
+  ]},
+  { emoji:'🏠', label:'Housing', id:'housing', items:[
+    { label:'Housing Starts', id:'HOUST', ticker:'HOUST' },
+    { label:'Building Permits', id:'PERMIT', ticker:'PERMIT' },
+    { label:'Existing Home Sales', id:'EXHOSLUSM495S', ticker:'EXHSALES' },
+    { label:'Case-Shiller HPI', id:'CSUSHPISA', ticker:'CSHPI' },
+    { label:'30Y Mortgage Rate', id:'MORTGAGE30US', ticker:'MTG30' },
+  ]},
+  { emoji:'💳', label:'Credit & Financial Conditions', id:'credit', items:[
+    { label:'HY Credit Spread', id:'BAMLH0A0HYM2', ticker:'HYSPR' },
+    { label:'IG Credit Spread', id:'BAMLC0A0CM', ticker:'IGSPR' },
+    { label:'TED Spread', id:'TEDRATE', ticker:'TED' },
+    { label:'C&I Loans', id:'TOTCI', ticker:'TOTCI' },
+    { label:'Consumer Credit', id:'TOTALSL', ticker:'CONSC' },
+  ]},
+  { emoji:'🌐', label:'Global & Trade', id:'global', items:[
+    { label:'USD Index (DXY)', id:'DTWEXBGS', ticker:'DXY' },
+    { label:'Trade Balance', id:'BOPGSTB', ticker:'TRADBAL' },
+    { label:'Current Account', id:'NETFI', ticker:'CURRACCT' },
+  ]},
+  { emoji:'⚡', label:'Commodities & Energy', id:'energy', items:[
+    { label:'WTI Crude Oil', id:'DCOILWTICO', ticker:'WTI' },
+    { label:'Natural Gas', id:'DHHNGSP', ticker:'NATGAS' },
+    { label:'Commodity PPI', id:'PPIACO', ticker:'PPIACO' },
+  ]},
+  { emoji:'📉', label:'Market & Sentiment', id:'market', items:[
+    { label:'VIX', id:'VIXCLS', ticker:'VIX' },
+    { label:'Consumer Sentiment', id:'UMCSENT', ticker:'UMCSENT' },
+    { label:'Conference Board LEI', id:'USSLIND', ticker:'LEI' },
+  ]},
+];
+
+/* ── Series metadata ─────────────────────────────────────────────────── */
+const FRED_SERIES_META = {
+  FEDFUNDS:{unit:'%',fmt:'rate'},SOFR:{unit:'%',fmt:'rate'},DTB3:{unit:'%',fmt:'rate'},
+  DGS2:{unit:'%',fmt:'rate'},DGS5:{unit:'%',fmt:'rate'},DGS10:{unit:'%',fmt:'rate'},
+  DGS30:{unit:'%',fmt:'rate'},T10Y2Y:{unit:'%',fmt:'rate'},T10Y3M:{unit:'%',fmt:'rate'},
+  WALCL:{unit:'$M',fmt:'dollar_m'},M2SL:{unit:'$B',fmt:'dollar_b'},
+  WRESBAL:{unit:'$M',fmt:'dollar_m'},RRPONTSYD:{unit:'$B',fmt:'dollar_b'},
+  CPIAUCSL:{unit:'idx',fmt:'idx'},CPILFESL:{unit:'idx',fmt:'idx'},
+  PCEPI:{unit:'idx',fmt:'idx'},PCEPILFE:{unit:'idx',fmt:'idx'},
+  PPIFID:{unit:'idx',fmt:'idx'},T5YIE:{unit:'%',fmt:'rate'},T10YIE:{unit:'%',fmt:'rate'},
+  UNRATE:{unit:'%',fmt:'pct'},PAYEMS:{unit:'K',fmt:'payrolls'},
+  CIVPART:{unit:'%',fmt:'pct'},ICSA:{unit:'K',fmt:'num_k'},JTSJOL:{unit:'K',fmt:'num_k'},
+  CES0500000003:{unit:'$/hr',fmt:'dollar_hr'},
+  GDPC1:{unit:'$B',fmt:'dollar_b'},A191RL1Q225SBEA:{unit:'%',fmt:'rate'},
+  INDPRO:{unit:'idx',fmt:'idx'},TCU:{unit:'%',fmt:'pct'},RSXFS:{unit:'$M',fmt:'dollar_m'},
+  HOUST:{unit:'K',fmt:'num_k'},PERMIT:{unit:'K',fmt:'num_k'},
+  EXHOSLUSM495S:{unit:'K',fmt:'num_k'},CSUSHPISA:{unit:'idx',fmt:'idx'},
+  MORTGAGE30US:{unit:'%',fmt:'rate'},
+  BAMLH0A0HYM2:{unit:'%',fmt:'rate'},BAMLC0A0CM:{unit:'%',fmt:'rate'},
+  TEDRATE:{unit:'%',fmt:'rate'},TOTCI:{unit:'$M',fmt:'dollar_m'},TOTALSL:{unit:'$B',fmt:'dollar_b'},
+  DTWEXBGS:{unit:'idx',fmt:'idx'},BOPGSTB:{unit:'$M',fmt:'dollar_m'},NETFI:{unit:'$M',fmt:'dollar_m'},
+  DCOILWTICO:{unit:'$/bbl',fmt:'dollar_bbl'},DHHNGSP:{unit:'$/MCF',fmt:'dollar_bbl'},PPIACO:{unit:'idx',fmt:'idx'},
+  VIXCLS:{unit:'idx',fmt:'idx'},UMCSENT:{unit:'idx',fmt:'idx'},USSLIND:{unit:'idx',fmt:'idx'},
+  DGS1MO:{unit:'%',fmt:'rate'},DGS6MO:{unit:'%',fmt:'rate'},DGS1:{unit:'%',fmt:'rate'},
+  DGS3:{unit:'%',fmt:'rate'},DGS7:{unit:'%',fmt:'rate'},DGS20:{unit:'%',fmt:'rate'},
+};
+
+const FRED_DEFAULT_TRANSFORM = {
+  CPIAUCSL:'yoy',CPILFESL:'yoy',PCEPI:'yoy',PCEPILFE:'yoy',
+  PPIFID:'yoy',PPIACO:'yoy',INDPRO:'yoy',RSXFS:'yoy',
+  CSUSHPISA:'yoy',CES0500000003:'yoy',
+};
+
+const FRED_DEFINITIONS = {
+  FEDFUNDS:  { def:"The Fed's target overnight lending rate between banks.", why:"Controls the cost of all borrowing in the economy — the single most powerful monetary policy lever." },
+  SOFR:      { def:"Secured Overnight Financing Rate — the near risk-free rate anchored to Treasury repo markets.", why:"Has replaced LIBOR as the primary benchmark for floating-rate debt globally." },
+  DGS2:      { def:"Yield on a 2-year US Treasury note.", why:"The curve's most sensitive Fed policy tracker — moves before the FOMC does." },
+  DGS5:      { def:"Yield on a 5-year US Treasury note.", why:"Benchmarks medium-term corporate bonds, auto loans, and 5Y fixed mortgages." },
+  DGS10:     { def:"Yield on a 10-year US Treasury note — the world's most important interest rate.", why:"Directly prices 30Y mortgages, equity discount rates, and sovereign borrowing costs globally." },
+  DGS30:     { def:"Yield on a 30-year US Treasury bond.", why:"Sets the rate for 30Y fixed mortgages; a key gauge of long-run inflation and fiscal credibility." },
+  T10Y2Y:    { def:"Spread between 10Y and 2Y Treasury yields.", why:"The most-watched recession indicator — every US recession since 1955 was preceded by an inversion." },
+  T10Y3M:    { def:"Spread between 10Y Treasury and 3M T-bill yields.", why:"The Fed's own preferred recession predictor — NY Fed publishes monthly recession probability from this alone." },
+  WALCL:     { def:"Total assets on the Federal Reserve's balance sheet.", why:"Quantitative easing (QE) expands it; quantitative tightening (QT) shrinks it — directly affects liquidity." },
+  M2SL:      { def:"Broad money supply: cash, checking, savings, money market accounts, and small CDs.", why:"M2 surged $6T in 2020–21, directly fueling the inflation surge. Leading indicator for inflation by 12–18 months." },
+  WRESBAL:   { def:"Reserve balances held by commercial banks at the Federal Reserve.", why:"A key indicator of banking system liquidity and the effectiveness of QT." },
+  RRPONTSYD: { def:"Amount of overnight reverse repurchase agreements with the Fed.", why:"A gauge of excess liquidity in the financial system — high RRP means banks have nowhere to park cash." },
+  CPIAUCSL:  { def:"Consumer Price Index for all urban consumers — the headline inflation measure.", why:"Social Security COLAs, wage contracts, and financial instruments are indexed to CPI. Fed indirectly watches it." },
+  CPILFESL:  { def:"CPI excluding volatile food and energy — the 'core' inflation measure.", why:"Strips out noise to reveal embedded, sticky inflation in services and shelter." },
+  PCEPI:     { def:"Personal Consumption Expenditures price index — the Fed's official inflation gauge.", why:"The Fed's 2% target is stated in PCE terms. This is the number that moves the dot plot." },
+  PCEPILFE:  { def:"Core PCE excluding food and energy.", why:"The Fed's single most important inflation input for rate decisions — 2% is the explicit target." },
+  PPIFID:    { def:"Producer Price Index for final demand goods and services.", why:"Upstream price pressures that typically flow through to consumer prices with a 3–6 month lag." },
+  T5YIE:     { def:"Market-implied 5-year inflation expectation derived from TIPS breakevens.", why:"The Fed watches breakevens to assess whether inflation expectations remain 'anchored' near 2%." },
+  T10YIE:    { def:"Market-implied 10-year inflation expectation from TIPS breakevens.", why:"The long-run inflation anchor — a sustained move above 2.5% signals de-anchoring risk." },
+  UNRATE:    { def:"Percentage of the civilian labor force that is unemployed and actively seeking work.", why:"One half of the Fed's dual mandate. The Sahm Rule triggers at +0.5pp above 12-month low." },
+  PAYEMS:    { def:"Total nonfarm payroll employment from the BLS monthly jobs survey.", why:"The most market-moving data release — drives immediate repricing in bonds, equities, and FX." },
+  CIVPART:   { def:"Share of working-age population that is employed or actively seeking work.", why:"Context for unemployment: declining participation masks true labor market slack." },
+  ICSA:      { def:"First-time unemployment insurance filings — the most timely labor market signal.", why:"Only a 5-day lag. Sustained moves above 300K historically precede recessions." },
+  JTSJOL:    { def:"Total number of unfilled job openings from the BLS JOLTS survey.", why:"Measures labor demand. The jobs-to-workers ratio is a key Fed input for assessing tightness." },
+  CES0500000003: { def:"Average hourly earnings for all private nonfarm employees.", why:"The Fed's primary wage inflation tracker — sustained above 4% YoY keeps services inflation elevated." },
+  GDPC1:     { def:"Real GDP in chained 2017 dollars — the broadest measure of economic output.", why:"Two consecutive negative quarters = technical recession. The NBER uses broader criteria." },
+  A191RL1Q225SBEA: { def:"Annualized quarterly real GDP growth rate.", why:"The headline number in BEA's GDP release — reported on an annualized basis by convention." },
+  INDPRO:    { def:"Federal Reserve index of output from manufacturing, mining, and utilities.", why:"One of the four NBER recession indicators. Monthly frequency makes it a timely GDP proxy." },
+  TCU:       { def:"Percentage of industrial capacity currently in use.", why:"Below 78% signals slack; above 85% signals inflationary pressure from supply constraints." },
+  RSXFS:     { def:"Retail and food services sales excluding food services — a proxy for consumer spending.", why:"Consumer spending is 70% of GDP. This is the real-time read on household demand." },
+  HOUST:     { def:"New residential construction starts, seasonally adjusted annual rate.", why:"Housing is the most rate-sensitive sector. Leads economic activity by 6–12 months." },
+  PERMIT:    { def:"Building permits issued for new residential construction.", why:"Leading indicator for housing starts — a permit must be issued before construction begins." },
+  EXHOSLUSM495S: { def:"Total existing homes sold at seasonally adjusted annual rate.", why:"90% of housing transactions are existing homes. Sensitive to mortgage rates and inventory." },
+  CSUSHPISA: { def:"S&P/Case-Shiller national home price index.", why:"Tracks home price appreciation — a key input to shelter inflation, which is 33% of CPI." },
+  MORTGAGE30US: { def:"Average 30-year fixed mortgage rate from Freddie Mac's weekly survey.", why:"The most direct link between Fed policy/bond markets and household affordability." },
+  BAMLH0A0HYM2: { def:"Option-adjusted spread on ICE BofA US High Yield index over Treasuries.", why:"The market's real-time risk barometer. Spikes above 800bps historically signal credit stress." },
+  BAMLC0A0CM: { def:"Option-adjusted spread on ICE BofA US Corporate Bond index over Treasuries.", why:"Measures investment-grade credit stress. Widening signals tightening financial conditions." },
+  TEDRATE:   { def:"Spread between 3-month LIBOR and 3-month T-bill (discontinued Apr 2023).", why:"Was the classic interbank stress gauge. Spikes above 100bps signaled funding market seizure." },
+  TOTCI:     { def:"Total commercial and industrial loans outstanding at US commercial banks.", why:"C&I loan growth tracks business investment demand. Declines often precede recessions." },
+  TOTALSL:   { def:"Total outstanding consumer credit (revolving + non-revolving).", why:"Measures household leverage. Rapid growth can signal over-extension; contraction signals deleveraging." },
+  DTWEXBGS:  { def:"Broad trade-weighted US Dollar index against a basket of major trading partners.", why:"A strong dollar tightens global financial conditions and reduces US export competitiveness." },
+  BOPGSTB:   { def:"US trade balance in goods and services (exports minus imports).", why:"A deficit means more dollars flowing abroad — feeds into currency and current account dynamics." },
+  DCOILWTICO: { def:"West Texas Intermediate crude oil spot price.", why:"Energy costs feed directly into headline CPI and production costs throughout the economy." },
+  DHHNGSP:   { def:"Henry Hub natural gas spot price.", why:"Drives utility costs and industrial energy prices — a key input to PPI and electricity inflation." },
+  VIXCLS:    { def:"CBOE Volatility Index — 30-day implied volatility of S&P 500 options.", why:"The market fear gauge. Below 15 = calm; 15–25 = caution; above 35 = stress; above 50 = crisis." },
+  UMCSENT:   { def:"University of Michigan Consumer Sentiment Index (1966=100).", why:"Consumer spending = 70% of GDP. Prolonged readings below 60 precede spending contractions." },
+  USSLIND:   { def:"Conference Board Leading Economic Index — composite of 10 forward-looking indicators.", why:"Consecutive monthly declines are a historically reliable early recession warning." },
+};
+
+/* ── STATE ───────────────────────────────────────────────────────────── */
+let fredState = {
+  active: 'DGS10',
+  period: '5Y',
+  transforms: {},
+  showRecessions: true,
+  tableOpen: true,
+  pinned: JSON.parse(localStorage.getItem('fred_pinned') || '[]'),
+  openGroups: JSON.parse(localStorage.getItem('fred_groups') || '{"rates":true,"inflation":true}'),
+  ycDates: [{ date: '', color: YC_COLORS[0], label: 'Primary' }],
+};
+
+const fredCache = {};
+let fredRecessionData = null;
+
+/* ── FORMATTING ──────────────────────────────────────────────────────── */
+function fredFmtVal(v, seriesId, transform) {
+  if (v == null || isNaN(v)) return '—';
+  const meta = FRED_SERIES_META[seriesId] || { fmt: 'num' };
+  if (transform === 'yoy' || transform === 'mom') return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+  switch (meta.fmt) {
+    case 'rate':     return v.toFixed(2) + '%';
+    case 'pct':      return v.toFixed(1) + '%';
+    case 'idx':      return v.toFixed(1);
+    case 'dollar_b': return '$' + (v >= 1000 ? (v/1000).toFixed(2)+'T' : v.toFixed(0)+'B');
+    case 'dollar_m': return '$' + (v>=1e6?(v/1e6).toFixed(2)+'T':v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M');
+    case 'payrolls': return v >= 1000 ? (v/1000).toFixed(1)+'M' : v.toFixed(0)+'K';
+    case 'num_k':    return v.toFixed(0) + 'K';
+    case 'dollar_hr':   return '$' + v.toFixed(2);
+    case 'dollar_bbl':  return '$' + v.toFixed(2);
+    default: return v.toFixed(2);
+  }
+}
+
+function fredFmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function fredFmtDateShort(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month:'short', year:'2-digit' });
+}
+
+function fredFmtAxisDate(d, period) {
+  const yr = parseInt(period);
+  if (yr <= 3)  return d3.timeFormat("%b '%y")(d);
+  return d3.timeFormat("%Y")(d);
+}
+
+/* ── DATA FETCH (from local economic_data.json) ──────────────────────── */
+async function fredFetchSeries(id, startDate) {
+  const localId = FRED_ID_MAP[id] || id;
+  const key = id + '_' + (startDate||'');
+  if (fredCache[key]) return fredCache[key];
+  const pts = (fredLocalData[localId] || []).filter(p => !startDate || p.date >= startDate);
+  fredCache[key] = pts;
+  if (!pts.length) console.warn('No local data for:', id);
+  return pts;
+}
+
+async function fredFetchRecessions() {
+  if (fredRecessionData) return fredRecessionData;
+  const pts = fredLocalData['USREC'] || [];
+  const bands = [];
+  let start = null;
+  for (const o of pts) {
+    if (o.value === 1 && !start) start = o.date;
+    if (o.value === 0 && start) { bands.push({ start, end: o.date }); start = null; }
+  }
+  if (start && pts.length) bands.push({ start, end: pts[pts.length-1].date });
+  fredRecessionData = bands;
+  return bands;
+}
+
+function fredPeriodStart(period) {
+  if (period === 'ALL') return null;
+  const now = new Date();
+  now.setFullYear(now.getFullYear() - (parseInt(period) || 5));
+  return now.toISOString().slice(0,10);
+}
+
+function fredApplyTransform(pts, transform) {
+  if (transform === 'level') return pts;
+  if (transform === 'yoy') {
+    return pts.map((p) => {
+      const prevDate = new Date(p.date+'T00:00:00');
+      prevDate.setFullYear(prevDate.getFullYear()-1);
+      const prevStr = prevDate.toISOString().slice(0,10);
+      const prev = [...pts].reverse().find(q => q.date <= prevStr);
+      if (!prev || prev.value === 0) return null;
+      return { date: p.date, value: ((p.value - prev.value) / Math.abs(prev.value)) * 100 };
+    }).filter(Boolean);
+  }
+  if (transform === 'mom') {
+    return pts.slice(1).map((p,i) => {
+      const prev = pts[i];
+      if (!prev || prev.value === 0) return null;
+      return { date: p.date, value: ((p.value - prev.value) / Math.abs(prev.value)) * 100 };
+    }).filter(Boolean);
+  }
+  return pts;
+}
+
+/* fredBuildNav and fredNavSearch removed — nav is now static HTML in the left sidebar */
+
+/* ── SERIES SELECTION (kept for internal use) ───────────────────────── */
+
+/* ── CHART RENDER ────────────────────────────────────────────────────── */
+async function fredRenderChart(seriesId) {
+  const content = document.getElementById('fred-main');
+  if (!content) return;
+  content.innerHTML = `<div class="fred-skeleton fred-skeleton-chart"></div>`;
+
+  const meta = FRED_SERIES_META[seriesId] || { unit:'', fmt:'num' };
+  // Get name from HTML nav item data-label (most accurate), fall back to FRED_NAV
+  const navEl = document.querySelector(`.nav-item[data-series="${seriesId}"]`);
+  const navItem = FRED_NAV.flatMap(g=>g.items||[]).find(i=>i.id===seriesId);
+  const seriesName = (navEl && navEl.dataset.label) ? navEl.dataset.label : (navItem ? navItem.label : seriesId);
+
+  // Update the page-level header
+  const titleEl = document.getElementById('fred-page-title');
+  const subEl   = document.getElementById('fred-page-subtitle');
+  if (titleEl) titleEl.innerHTML = `${seriesName} <span class="page-title-badge">FRED API</span>`;
+  if (subEl)   subEl.textContent = `${seriesId} · ${meta.unit} · 10-year forward estimates`;
+
+  const effectiveTransform = fredState.transforms[seriesId] ?? FRED_DEFAULT_TRANSFORM[seriesId] ?? 'level';
+  const start = fredPeriodStart(fredState.period);
+
+  const [pts, recessions] = await Promise.all([
+    fredFetchSeries(seriesId, start),
+    fredFetchRecessions()
+  ]);
+
+  const data = fredApplyTransform(pts, effectiveTransform);
+  const latest = data[data.length-1];
+  const prev   = data[data.length-2];
+  const delta  = latest && prev ? latest.value - prev.value : null;
+  const deltaStr = delta!=null ? (delta>=0?'▲ ':' ▼ ')+fredFmtVal(Math.abs(delta),seriesId,effectiveTransform==='level'?seriesId:effectiveTransform) : '';
+  const deltaClass = delta==null?'flat':delta>=0?'up':'dn';
+
+  const defBlock = FRED_DEFINITIONS[seriesId]
+    ? `<div class="fred-definition"><strong>${FRED_DEFINITIONS[seriesId].def}</strong> ${FRED_DEFINITIONS[seriesId].why}</div>`
+    : '';
+
+  // Check if "All" period should show
+  const raw = fredLocalData[FRED_ID_MAP[seriesId]||seriesId]||[];
+  const cutoff = new Date(); cutoff.setFullYear(cutoff.getFullYear()-30);
+  const showAll = raw.length && raw[0].date < cutoff.toISOString().slice(0,10);
+
+  content.innerHTML = `
+  <div class="fred-chart-page">
+    <div class="fred-chart-header">
+      <div class="fred-chart-meta">
+        <div class="fred-series-name">${seriesName}</div>
+        <div class="fred-series-id">${seriesId} &nbsp;·&nbsp; ${meta.unit} &nbsp;·&nbsp; FRED</div>
+        ${defBlock}
+        <div class="fred-latest">${latest ? fredFmtVal(latest.value,seriesId,effectiveTransform) : '—'}</div>
+        <div class="fred-latest-sub">
+          <span class="${deltaClass}">${deltaStr}</span>
+          &nbsp; ${latest ? fredFmtDate(latest.date) : ''}
+        </div>
+      </div>
+      <div class="fred-chart-controls">
+        <div class="fred-period-pills">
+          ${FRED_PERIODS.map(p=>`<button class="fred-period-pill${p===fredState.period?' active':''}" data-p="${p}">${p}</button>`).join('')}
+          ${showAll?`<button class="fred-period-pill${fredState.period==='ALL'?' active':''}" data-p="ALL">All</button>`:''}
+        </div>
+        <div class="fred-transform-pills">
+          <button class="fred-transform-pill${effectiveTransform==='level'?' active':''}" data-t="level">Level</button>
+          <button class="fred-transform-pill${effectiveTransform==='yoy'?' active':''}" data-t="yoy">YoY %</button>
+          <button class="fred-transform-pill${effectiveTransform==='mom'?' active':''}" data-t="mom">MoM %</button>
+        </div>
+        <label class="fred-rec-toggle">
+          <input type="checkbox" id="fred-cb-recession" ${fredState.showRecessions?'checked':''}>
+          <span>Recessions</span>
+        </label>
+        <button class="fred-export-btn" id="fred-btn-csv">CSV ↓</button>
+        <button class="fred-export-btn" id="fred-btn-png">PNG ↓</button>
+      </div>
+    </div>
+
+    <div id="fred-svg-wrap">
+      <div id="fred-chart-tooltip">
+        <div class="fred-tt-date" id="fred-tt-date"></div>
+        <div class="fred-tt-val" id="fred-tt-val"></div>
+        <div class="fred-tt-chg" id="fred-tt-chg"></div>
+      </div>
+    </div>
+
+    <div class="fred-data-table-wrap">
+      <div class="fred-data-table-header" id="fred-table-toggle">
+        <span class="fred-data-table-title">Recent Observations (last 24)</span>
+        <span class="fred-data-table-toggle">${fredState.tableOpen?'▲ Collapse':'▼ Expand'}</span>
+      </div>
+      <div class="fred-data-table-body" id="fred-data-table-body" style="${fredState.tableOpen?'':'display:none'}">
+        <table>
+          <thead><tr><th>Date</th><th>Value</th><th>Change</th><th>% Change</th></tr></thead>
+          <tbody id="fred-data-table-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+  // Wire controls
+  content.querySelectorAll('.fred-period-pill').forEach(b => b.addEventListener('click', () => {
+    fredState.period = b.dataset.p; fredRenderChart(seriesId);
+  }));
+  content.querySelectorAll('.fred-transform-pill').forEach(b => b.addEventListener('click', () => {
+    fredState.transforms[seriesId] = b.dataset.t; fredRenderChart(seriesId);
+  }));
+  document.getElementById('fred-table-toggle').addEventListener('click', () => {
+    fredState.tableOpen = !fredState.tableOpen;
+    document.getElementById('fred-data-table-body').style.display = fredState.tableOpen ? '' : 'none';
+    document.querySelector('.fred-data-table-toggle').textContent = fredState.tableOpen ? '▲ Collapse' : '▼ Expand';
+  });
+  document.getElementById('fred-cb-recession').addEventListener('change', function() {
+    fredState.showRecessions = this.checked; fredRenderChart(seriesId);
+  });
+  document.getElementById('fred-btn-csv').addEventListener('click', () => fredExportCSV(data, seriesId));
+  document.getElementById('fred-btn-png').addEventListener('click', () => fredExportPNG('fred-svg-wrap', seriesId));
+
+  fredDrawLineChart(data, seriesId, fredState.showRecessions ? recessions : []);
+  fredFillDataTable(data, seriesId);
+}
+
+/* ── D3 LINE CHART ───────────────────────────────────────────────────── */
+function fredDrawLineChart(data, seriesId, recessions) {
+  const wrap = document.getElementById('fred-svg-wrap');
+  if (!wrap || !data.length) {
+    if (wrap) wrap.innerHTML = '<div class="fred-state-msg"><span>No data available for this period.</span></div>';
+    return;
+  }
+
+  const margin = { top:20, right:64, bottom:36, left:16 };
+  const W = wrap.clientWidth || 800;
+  const H = Math.max(360, Math.min(500, window.innerHeight - 300));
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  d3.select(wrap).select('svg').remove();
+  d3.select(wrap).select('.fred-state-msg').remove();
+
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H).attr('id','fred-main-svg');
+  const g   = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const parseDate = d3.timeParse('%Y-%m-%d');
+  const parsed = data.map(d=>({date:parseDate(d.date),value:d.value})).filter(d=>d.date);
+
+  const xScale = d3.scaleTime().domain(d3.extent(parsed,d=>d.date)).range([0,iw]);
+  const [vmin,vmax] = d3.extent(parsed,d=>d.value);
+  const pad = (vmax-vmin)*0.07 || 0.5;
+  const yScale = d3.scaleLinear().domain([vmin-pad,vmax+pad]).range([ih,0]).nice();
+
+  // Recession bands
+  if (recessions && recessions.length) {
+    for (const r of recessions) {
+      const rx = xScale(parseDate(r.start)||parsed[0].date);
+      const rw = xScale(parseDate(r.end)||parsed[parsed.length-1].date) - rx;
+      if (rw>0) g.append('rect').attr('class','fred-recession-band')
+        .attr('x',Math.max(0,rx)).attr('y',0)
+        .attr('width',Math.min(rw,iw-Math.max(0,rx))).attr('height',ih);
+    }
+  }
+
+  // Zero line
+  if (vmin<0 && vmax>0) {
+    g.append('line').attr('class','fred-zero-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(0)).attr('y2',yScale(0));
+  }
+
+  // Grid
+  yScale.ticks(6).forEach(t => {
+    g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
+  });
+
+  // X axis
+  const xAxis = d3.axisBottom(xScale)
+    .ticks(parseInt(fredState.period)<=3?8:6)
+    .tickFormat(d=>fredFmtAxisDate(d,fredState.period))
+    .tickSize(0);
+  g.append('g').attr('transform',`translate(0,${ih+8})`).call(xAxis).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','10');
+
+  // Y axis
+  const yAxis = d3.axisRight(yScale).ticks(6)
+    .tickFormat(v=>fredFmtVal(v,seriesId,fredState.transforms[seriesId]??FRED_DEFAULT_TRANSFORM[seriesId]??'level'))
+    .tickSize(0);
+  g.append('g').attr('transform',`translate(${iw+8},0)`).call(yAxis).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','10');
+
+  // Gradient
+  const defs = svg.append('defs');
+  const grad = defs.append('linearGradient').attr('id','fred-amber-grad').attr('x1',0).attr('x2',0).attr('y1',0).attr('y2',1);
+  grad.append('stop').attr('offset','0%').attr('stop-color','#d4a44c');
+  grad.append('stop').attr('offset','100%').attr('stop-color','#d4a44c').attr('stop-opacity',0);
+
+  // Area
+  const area = d3.area().x(d=>xScale(d.date)).y0(ih).y1(d=>yScale(d.value)).defined(d=>!isNaN(d.value)).curve(d3.curveMonotoneX);
+  g.append('path').datum(parsed).attr('d',area).attr('fill','url(#fred-amber-grad)').attr('opacity',0.15);
+
+  // Line
+  const line = d3.line().x(d=>xScale(d.date)).y(d=>yScale(d.value)).defined(d=>!isNaN(d.value)).curve(d3.curveMonotoneX);
+  g.append('path').datum(parsed).attr('d',line).attr('class','fred-chart-line').attr('stroke','#d4a44c');
+
+  // Hover
+  const crossV = g.append('line').attr('class','fred-crosshair').attr('y1',0).attr('y2',ih).style('opacity',0);
+  const crossH = g.append('line').attr('class','fred-crosshair').attr('x1',0).attr('x2',iw).style('opacity',0);
+  const dot    = g.append('circle').attr('class','fred-hover-dot').attr('r',4).style('opacity',0);
+  const tt     = document.getElementById('fred-chart-tooltip');
+  const bisect = d3.bisector(d=>d.date).left;
+
+  svg.append('rect')
+    .attr('width',iw).attr('height',ih)
+    .attr('transform',`translate(${margin.left},${margin.top})`)
+    .attr('fill','transparent')
+    .on('mousemove', function(event) {
+      const [mx] = d3.pointer(event,this);
+      const xDate = xScale.invert(mx);
+      const i = bisect(parsed,xDate);
+      const d = parsed[i]||parsed[i-1];
+      if (!d) return;
+      const px=xScale(d.date), py=yScale(d.value);
+      crossV.attr('x1',px).attr('x2',px).style('opacity',1);
+      crossH.attr('y1',py).attr('y2',py).style('opacity',1);
+      dot.attr('cx',px).attr('cy',py).style('opacity',1);
+      const prev2 = i>0?parsed[i-1]:null;
+      const dc = prev2 ? d.value - prev2.value : null;
+      const transform = fredState.transforms[seriesId]??FRED_DEFAULT_TRANSFORM[seriesId]??'level';
+      document.getElementById('fred-tt-date').textContent = fredFmtDate(data[i]?data[i].date:'');
+      document.getElementById('fred-tt-val').textContent  = fredFmtVal(d.value,seriesId,transform);
+      const ttChg = document.getElementById('fred-tt-chg');
+      ttChg.textContent = dc!=null?(dc>=0?'▲ ':' ▼ ')+Math.abs(dc).toFixed(3):'';
+      ttChg.className = 'fred-tt-chg '+(dc==null?'':dc>=0?'up':'dn');
+      const rx=margin.left+px+12, ry=margin.top+py-20;
+      if (tt) { tt.style.left=(rx+180>W?rx-190:rx)+'px'; tt.style.top=Math.max(0,ry)+'px'; tt.style.opacity=1; }
+    })
+    .on('mouseleave', () => {
+      crossV.style('opacity',0); crossH.style('opacity',0); dot.style('opacity',0);
+      if (tt) tt.style.opacity=0;
+    });
+}
+
+/* ── DATA TABLE ──────────────────────────────────────────────────────── */
+function fredFillDataTable(data, seriesId) {
+  const tbody = document.getElementById('fred-data-table-rows');
+  if (!tbody) return;
+  const transform = fredState.transforms[seriesId]??FRED_DEFAULT_TRANSFORM[seriesId]??'level';
+  const recent = data.slice(-24).reverse();
+  tbody.innerHTML = recent.map((p,i) => {
+    const prev = recent[i+1];
+    const chg  = prev ? p.value - prev.value : null;
+    const pchg = prev && prev.value!==0 ? (chg/Math.abs(prev.value))*100 : null;
+    const cls  = chg==null?'':chg>=0?'td-up':'td-dn';
+    return `<tr>
+      <td class="fred-td-date">${fredFmtDate(p.date)}</td>
+      <td class="fred-td-val">${fredFmtVal(p.value,seriesId,transform)}</td>
+      <td class="${cls}">${chg!=null?(chg>=0?'▲ ':' ▼ ')+Math.abs(chg).toFixed(3):'—'}</td>
+      <td class="${cls}">${pchg!=null?(pchg>=0?'+':'')+pchg.toFixed(2)+'%':'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   YIELD CURVE — rendered into mtab-content-yc
+══════════════════════════════════════════════════════════════════════ */
+async function renderMacroYieldCurve() {
+  const container = document.getElementById('page-fred-yc');
+  if (!container) return;
+
+  container.innerHTML = `
+  <div class="yc-page" style="display:flex;flex:1;flex-direction:column;overflow:hidden;">
+    <div class="yc-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="yc-title">US Treasury Yield Curve</span>
+        <span class="yc-shape-badge shape-normal" id="yc-shape-badge">—</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="fred-export-btn" id="yc-btn-csv">Table CSV ↓</button>
+        <button class="fred-export-btn" id="yc-btn-png">Chart PNG ↓</button>
+      </div>
+    </div>
+    <div class="yc-body" style="flex:1;overflow:hidden;">
+      <div class="yc-sidebar">
+        <div>
+          <div class="yc-section-label">Curves to Display</div>
+          <div id="yc-date-rows"></div>
+          <button class="yc-add-btn" id="yc-add-btn">+ Add Comparison Date</button>
+        </div>
+        <div>
+          <div class="yc-section-label" style="margin-top:4px">Quick Presets</div>
+          <div class="preset-grid" id="yc-presets">
+            <button class="preset-btn" data-date="1y">1Y Ago</button>
+            <button class="preset-btn" data-date="2y">2Y Ago</button>
+            <button class="preset-btn" data-date="5y">5Y Ago</button>
+            <button class="preset-btn" data-date="2020-01-02">Pre-COVID</button>
+            <button class="preset-btn" data-date="2008-12-01">GFC Trough</button>
+            <button class="preset-btn" data-date="2001-01-02">Dot-com Peak</button>
+          </div>
+        </div>
+      </div>
+      <div class="yc-main">
+        <div id="yc-chart-wrap">
+          <div class="fred-state-msg"><div class="fred-spinner"></div><span>Loading yield curve…</span></div>
+          <div id="yc-tooltip"></div>
+        </div>
+        <div id="yc-table-wrap">
+          <div style="padding:8px 10px 4px;border-bottom:1px solid var(--border)">
+            <span class="fred-data-table-title">Yield Comparison Table</span>
+          </div>
+          <div id="yc-table-inner"></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  if (!fredState.ycDates[0].date) {
+    fredState.ycDates[0].date = new Date().toISOString().slice(0,10);
+  }
+  ycRenderDateRows();
+
+  document.getElementById('yc-add-btn').addEventListener('click', () => {
+    if (fredState.ycDates.length >= 5) return;
+    const i = fredState.ycDates.length;
+    fredState.ycDates.push({ date:'', color:YC_COLORS[i], label:`Comp. ${i}` });
+    ycRenderDateRows(); ycLoadAndDraw();
+  });
+
+  document.getElementById('yc-presets').querySelectorAll('.preset-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      let d = b.dataset.date;
+      if (d==='1y'||d==='2y'||d==='5y') {
+        const now = new Date();
+        now.setFullYear(now.getFullYear()-parseInt(d));
+        d = now.toISOString().slice(0,10);
+      }
+      if (fredState.ycDates.length >= 5) return;
+      const i = fredState.ycDates.length;
+      fredState.ycDates.push({ date:d, color:YC_COLORS[i%YC_COLORS.length], label:b.textContent.trim() });
+      ycRenderDateRows(); ycLoadAndDraw();
+    });
+  });
+
+  document.getElementById('yc-btn-csv').addEventListener('click', ycExportCSV);
+  document.getElementById('yc-btn-png').addEventListener('click', () => fredExportPNG('yc-chart-wrap','yield_curve'));
+
+  ycLoadAndDraw();
+}
+
+function ycRenderDateRows() {
+  const wrap = document.getElementById('yc-date-rows');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  fredState.ycDates.forEach((d,i) => {
+    const row = document.createElement('div');
+    row.className = 'yc-date-row';
+    row.innerHTML = `
+      <div class="yc-color-swatch" style="background:${d.color}"></div>
+      <input class="yc-date-input" type="date" value="${d.date}" data-i="${i}">
+      <span class="yc-label-tag">${i===0?'Primary':'Comp.'}</span>
+      ${i>0?`<button class="yc-remove" data-i="${i}" title="Remove">×</button>`:'<span style="width:22px"></span>'}
+    `;
+    row.querySelector('.yc-date-input').addEventListener('change', function() {
+      fredState.ycDates[parseInt(this.dataset.i)].date = this.value;
+      ycLoadAndDraw();
+    });
+    const rmv = row.querySelector('.yc-remove');
+    if (rmv) rmv.addEventListener('click', function() {
+      fredState.ycDates.splice(parseInt(this.dataset.i),1);
+      ycRenderDateRows(); ycLoadAndDraw();
+    });
+    wrap.appendChild(row);
+  });
+}
+
+async function ycLoadAndDraw() {
+  const allDates = fredState.ycDates.filter(d=>d.date);
+  if (!allDates.length) return;
+  const wrap = document.getElementById('yc-chart-wrap');
+  if (!wrap) return;
+
+  const tenorData = {};
+  await Promise.all(YC_TENORS.map(async t => {
+    tenorData[t.id] = await fredFetchSeries(t.id, '2000-01-01');
+  }));
+
+  function findNearest(pts, dateStr) {
+    if (!pts||!pts.length) return null;
+    let best = null;
+    for (const p of pts) { if (p.date<=dateStr) best=p; else break; }
+    return best ? best.value : null;
+  }
+
+  const curves = allDates.map(d => ({
+    ...d, values: YC_TENORS.map(t => findNearest(tenorData[t.id],d.date))
+  }));
+
+  ycDrawChart(curves);
+  ycDrawTable(curves);
+  ycUpdateShapeBadge(curves[0]);
+}
+
+function ycDrawChart(curves) {
+  const wrap = document.getElementById('yc-chart-wrap');
+  if (!wrap) return;
+  d3.select(wrap).select('.fred-state-msg').remove();
+  d3.select(wrap).select('svg').remove();
+
+  const margin = { top:24, right:64, bottom:40, left:16 };
+  const W = wrap.clientWidth || 700;
+  const H = Math.max(300, Math.min(440, window.innerHeight - 420));
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+  const g   = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const xScale = d3.scalePoint().domain(YC_TENORS.map(t=>t.label)).range([0,iw]).padding(0.2);
+  const allVals = curves.flatMap(c=>c.values.filter(v=>v!=null));
+  const [vmin,vmax] = d3.extent(allVals);
+  const pad = (vmax-vmin)*0.18||0.3;
+  const yScale = d3.scaleLinear().domain([vmin-pad,vmax+pad]).range([ih,0]).nice();
+
+  yScale.ticks(5).forEach(tick => {
+    g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(tick)).attr('y2',yScale(tick));
+  });
+
+  if (vmin<=0) g.append('line').attr('class','fred-zero-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(0)).attr('y2',yScale(0));
+
+  g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).tickSize(4))
+    .select('.domain').attr('stroke','rgba(255,255,255,0.08)');
+  g.selectAll('.tick line').attr('stroke','rgba(255,255,255,0.08)');
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','10').attr('dy','1.2em');
+
+  g.append('g').attr('transform',`translate(${iw+8},0)`)
+    .call(d3.axisRight(yScale).ticks(5).tickFormat(v=>v.toFixed(1)+'%').tickSize(0))
+    .select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','10');
+
+  curves.forEach((curve,ci) => {
+    const lineData = YC_TENORS.map((t,i)=>({label:t.label,value:curve.values[i],x:xScale(t.label)})).filter(d=>d.value!=null);
+    const lineGen = d3.line().x(d=>d.x).y(d=>yScale(d.value)).curve(d3.curveMonotoneX);
+
+    if (ci===0) {
+      for (let i=1;i<lineData.length;i++) {
+        const a=lineData[i-1],b=lineData[i];
+        if (a.value>b.value-0.01) {
+          g.append('rect').attr('x',a.x).attr('y',yScale(Math.max(a.value,b.value)))
+            .attr('width',b.x-a.x).attr('height',Math.abs(yScale(a.value)-yScale(b.value))+0.5)
+            .attr('fill','rgba(224,85,85,0.12)');
+        }
+      }
+    }
+
+    g.append('path').datum(lineData).attr('d',lineGen)
+      .attr('fill','none').attr('stroke',curve.color)
+      .attr('stroke-width',ci===0?2:1.2)
+      .attr('opacity',ci===0?1:0.7)
+      .attr('stroke-dasharray',ci===0?'none':'5 3');
+
+    g.selectAll(`.yc-dot-${ci}`).data(lineData).enter().append('circle')
+      .attr('class',`yc-dot-${ci}`)
+      .attr('cx',d=>d.x).attr('cy',d=>yScale(d.value)).attr('r',ci===0?4:3)
+      .attr('fill',curve.color).attr('stroke','#141920').attr('stroke-width',1.5);
+  });
+
+  const tt = document.getElementById('yc-tooltip');
+  const overlay = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+  YC_TENORS.forEach((tenor,ti) => {
+    const bx = xScale(tenor.label);
+    overlay.append('rect')
+      .attr('x',bx-xScale.step()*0.4).attr('y',0)
+      .attr('width',xScale.step()*0.8).attr('height',ih).attr('fill','transparent')
+      .on('mouseover', function(event) {
+        let html = `<div style="color:var(--text3);font-size:9px;margin-bottom:5px">${tenor.label} MATURITY</div>`;
+        curves.forEach(c => {
+          const v=c.values[ti];
+          html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="width:8px;height:8px;border-radius:1px;background:${c.color};display:inline-block"></span>
+            <span style="color:var(--text2);font-size:10px">${c.date}</span>
+            <span style="color:${c.color};font-weight:500;margin-left:auto">${v!=null?v.toFixed(2)+'%':'—'}</span>
+          </div>`;
+        });
+        if (tt) { tt.innerHTML=html; tt.style.opacity=1; }
+      })
+      .on('mousemove', function(event) {
+        const [mx,my] = d3.pointer(event,wrap);
+        if (tt) { tt.style.left=(mx+12)+'px'; tt.style.top=(my-20)+'px'; }
+      })
+      .on('mouseleave', () => { if (tt) tt.style.opacity=0; });
+  });
+}
+
+function ycDrawTable(curves) {
+  const wrap = document.getElementById('yc-table-inner');
+  if (!wrap) return;
+  const primary = curves[0];
+  const headers = ['Date',...YC_TENORS.map(t=>t.label)];
+  let html = `<table class="yc-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+
+  curves.forEach((c,ci) => {
+    html += `<tr>
+      <td class="yc-td-date${ci===0?' yc-td-primary':''}">
+        <span class="yc-color-swatch" style="background:${c.color};width:8px;height:8px;border-radius:1px;display:inline-block"></span>
+        ${c.date}${ci===0?' <span style="font-size:9px;color:var(--text3)">(primary)</span>':''}
+      </td>
+      ${c.values.map((v,i)=>{
+        const pv=primary.values[i];
+        const cls=ci===0?'yc-td-primary':(v==null||pv==null?'':v>pv?'yc-td-higher':'yc-td-lower');
+        return `<td class="${cls}">${v!=null?v.toFixed(2)+'%':'—'}</td>`;
+      }).join('')}
+    </tr>`;
+  });
+
+  const pv = primary.values;
+  const get = label => { const i=YC_TENORS.findIndex(t=>t.label===label); return i>=0?pv[i]:null; };
+  const sp_10_2  = get('10Y')!=null&&get('2Y')!=null  ? (get('10Y')-get('2Y')).toFixed(2)  : '—';
+  const sp_10_3m = get('10Y')!=null&&get('3M')!=null  ? (get('10Y')-get('3M')).toFixed(2)  : '—';
+  const sp_30_2  = get('30Y')!=null&&get('2Y')!=null  ? (get('30Y')-get('2Y')).toFixed(2)  : '—';
+  html += `<tr class="yc-spreads-row">
+    <td>Key Spreads (Primary)</td>
+    <td colspan="${YC_TENORS.length}" style="text-align:left;padding-left:10px">
+      10Y–2Y: <span style="color:${parseFloat(sp_10_2)<0?'var(--red)':'var(--green)'}">${sp_10_2}%</span>
+      &nbsp;&nbsp; 10Y–3M: <span style="color:${parseFloat(sp_10_3m)<0?'var(--red)':'var(--green)'}">${sp_10_3m}%</span>
+      &nbsp;&nbsp; 30Y–2Y: <span style="color:${parseFloat(sp_30_2)<0?'var(--red)':'var(--green)'}">${sp_30_2}%</span>
+    </td>
+  </tr>`;
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function ycUpdateShapeBadge(curve) {
+  const badge = document.getElementById('yc-shape-badge');
+  if (!badge) return;
+  const get = l => { const i=YC_TENORS.findIndex(t=>t.label===l); return i>=0?curve.values[i]:null; };
+  const v2=get('2Y'),v10=get('10Y'),v5=get('5Y');
+  if (!v2||!v10) return;
+  const spread=v10-v2;
+  let shape='Normal',cls='shape-normal';
+  if (spread<-0.05) { shape='Inverted'; cls='shape-inv'; }
+  else if (Math.abs(spread)<=0.25) { shape='Flat'; cls='shape-flat'; }
+  else if (v5&&v5>v10&&v5>v2) { shape='Humped'; cls='shape-humped'; }
+  badge.textContent=shape; badge.className='yc-shape-badge '+cls;
+}
+
+function ycExportCSV() {
+  const rows = [['Date',...YC_TENORS.map(t=>t.label)].join(',')];
+  const blob = new Blob([rows.join('\n')],{type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='yield_curve.csv'; a.click();
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CENTRAL BANKS — rendered into mtab-content-cb
+══════════════════════════════════════════════════════════════════════ */
+async function renderMacroCB() {
+  const container = document.getElementById('page-fred-cb');
+  if (!container) return;
+
+  container.innerHTML = `
+  <div class="page-header">
+    <div class="page-title-group">
+      <div class="page-title">Central Banks <span class="page-title-badge">FRED API</span></div>
+      <div class="page-subtitle">Policy rates · Fed balance sheet · liquidity · money supply</div>
+    </div>
+  </div>
+  <div class="cb-page">
+    <div class="cb-rates-grid" id="cb-rates-grid">
+      <div class="cb-rate-card"><div class="cb-rate-label">Fed Funds</div><div class="cb-rate-val" id="cb-ff">—</div><div class="cb-rate-chg flat">▬ on hold</div><div class="cb-rate-next">Next: Jun 18</div></div>
+      <div class="cb-rate-card"><div class="cb-rate-label">ECB Deposit</div><div class="cb-rate-val">4.00%</div><div class="cb-rate-chg dn">▼ cutting</div><div class="cb-rate-next">Next: Jun 5</div></div>
+      <div class="cb-rate-card"><div class="cb-rate-label">BOE Rate</div><div class="cb-rate-val">5.25%</div><div class="cb-rate-chg flat">▬ on hold</div><div class="cb-rate-next">Next: Jun 20</div></div>
+      <div class="cb-rate-card"><div class="cb-rate-label">BOJ Rate</div><div class="cb-rate-val">0.10%</div><div class="cb-rate-chg up">▲ hiking</div><div class="cb-rate-next">Next: Jun 14</div></div>
+      <div class="cb-rate-card"><div class="cb-rate-label">PBoC LPR</div><div class="cb-rate-val">3.45%</div><div class="cb-rate-chg flat">▬ stable</div><div class="cb-rate-next">Next: Jun 20</div></div>
+      <div class="cb-rate-card"><div class="cb-rate-label">RBA Rate</div><div class="cb-rate-val">4.35%</div><div class="cb-rate-chg flat">▬ on hold</div><div class="cb-rate-next">Next: Jun 18</div></div>
+    </div>
+
+    <!-- Fed Funds chart -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="font-size:12px;font-weight:500;color:var(--text2);">Fed Funds Rate — Historical</div>
+        <div class="fred-period-pills" id="cb-ff-periods">
+          <button class="fred-period-pill" data-p="3Y">3Y</button>
+          <button class="fred-period-pill active" data-p="5Y">5Y</button>
+          <button class="fred-period-pill" data-p="10Y">10Y</button>
+          <button class="fred-period-pill" data-p="20Y">20Y</button>
+          <button class="fred-period-pill" data-p="ALL">All</button>
+        </div>
+      </div>
+      <div id="cb-ff-chart" style="position:relative;min-height:260px;"></div>
+    </div>
+
+    <!-- Fed Balance Sheet chart -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="font-size:12px;font-weight:500;color:var(--text2);">Fed Balance Sheet (Total Assets)</div>
+        <div class="fred-period-pills" id="cb-bs-periods">
+          <button class="fred-period-pill" data-p="3Y">3Y</button>
+          <button class="fred-period-pill active" data-p="5Y">5Y</button>
+          <button class="fred-period-pill" data-p="10Y">10Y</button>
+          <button class="fred-period-pill" data-p="ALL">All</button>
+        </div>
+      </div>
+      <div id="cb-bs-chart" style="position:relative;min-height:260px;"></div>
+    </div>
+
+    <!-- M2 Money Supply -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:500;color:var(--text2);">M2 Money Supply</div>
+      </div>
+      <div id="cb-m2-chart" style="position:relative;min-height:240px;"></div>
+    </div>
+
+    <!-- Inflation: CPI vs PCE -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:500;color:var(--text2);">CPI &amp; Core PCE — YoY % (Fed's Inflation Targets)</div>
+      </div>
+      <div id="cb-inflation-chart" style="position:relative;min-height:240px;"></div>
+    </div>
+  </div>
+  `;
+
+  // Load FEDFUNDS value into card
+  const ffPts = await fredFetchSeries('FEDFUNDS', fredPeriodStart('1Y'));
+  if (ffPts.length) {
+    const el = document.getElementById('cb-ff');
+    if (el) el.textContent = ffPts[ffPts.length-1].value.toFixed(2) + '%';
+  }
+
+  // Draw charts
+  let cbFfPeriod = '5Y';
+  let cbBsPeriod = '5Y';
+
+  async function drawCBChart(seriesId, wrapperId, period, color) {
+    const wrap = document.getElementById(wrapperId);
+    if (!wrap) return;
+    const pts = await fredFetchSeries(seriesId, fredPeriodStart(period));
+    const data = fredApplyTransform(pts, seriesId==='CPIAUCSL'||seriesId==='PCEPILFE'?'yoy':'level');
+    if (!data.length) { wrap.innerHTML='<div class="fred-state-msg"><span>No data</span></div>'; return; }
+    drawMiniLineChart(wrap, data, seriesId, color||'#d4a44c');
+  }
+
+  async function drawCBInflation() {
+    const wrap = document.getElementById('cb-inflation-chart');
+    if (!wrap) return;
+    const [cpiPts, pcePts] = await Promise.all([
+      fredFetchSeries('CPIAUCSL', fredPeriodStart('10Y')),
+      fredFetchSeries('PCEPILFE', fredPeriodStart('10Y')),
+    ]);
+    const cpiData = fredApplyTransform(cpiPts,'yoy');
+    const pceData = fredApplyTransform(pcePts,'yoy');
+    drawMiniMultiLineChart(wrap, [
+      { data:cpiData, color:'#d4a44c', label:'CPI YoY' },
+      { data:pceData, color:'#7c6fcd', label:'Core PCE YoY' },
+    ], ['2.0% Target'], [2.0]);
+  }
+
+  await Promise.all([
+    drawCBChart('FEDFUNDS','cb-ff-chart',cbFfPeriod,'#d4a44c'),
+    drawCBChart('WALCL','cb-bs-chart',cbBsPeriod,'#4a90d9'),
+    drawCBChart('M2SL','cb-m2-chart','10Y','#4caf82'),
+    drawCBInflation(),
+  ]);
+
+  // Period buttons for FF chart
+  document.getElementById('cb-ff-periods').querySelectorAll('.fred-period-pill').forEach(b => {
+    b.addEventListener('click', async () => {
+      document.getElementById('cb-ff-periods').querySelectorAll('.fred-period-pill').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      cbFfPeriod = b.dataset.p;
+      await drawCBChart('FEDFUNDS','cb-ff-chart',cbFfPeriod,'#d4a44c');
+    });
+  });
+  document.getElementById('cb-bs-periods').querySelectorAll('.fred-period-pill').forEach(b => {
+    b.addEventListener('click', async () => {
+      document.getElementById('cb-bs-periods').querySelectorAll('.fred-period-pill').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      cbBsPeriod = b.dataset.p;
+      await drawCBChart('WALCL','cb-bs-chart',cbBsPeriod,'#4a90d9');
+    });
+  });
+}
+
+/* ── Mini chart helpers for CB tab ──────────────────────────────────── */
+function drawMiniLineChart(wrap, data, seriesId, color) {
+  d3.select(wrap).select('svg').remove();
+  d3.select(wrap).select('.fred-state-msg').remove();
+  if (!data.length) return;
+
+  const margin = { top:14, right:56, bottom:28, left:10 };
+  const W = wrap.clientWidth || 700;
+  const H = 240;
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+  const g   = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const parseDate = d3.timeParse('%Y-%m-%d');
+  const parsed = data.map(d=>({date:parseDate(d.date),value:d.value})).filter(d=>d.date);
+
+  const xScale = d3.scaleTime().domain(d3.extent(parsed,d=>d.date)).range([0,iw]);
+  const [vmin,vmax] = d3.extent(parsed,d=>d.value);
+  const pad=(vmax-vmin)*0.07||0.5;
+  const yScale = d3.scaleLinear().domain([vmin-pad,vmax+pad]).range([ih,0]).nice();
+
+  if (vmin<0&&vmax>0) g.append('line').attr('class','fred-zero-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(0)).attr('y2',yScale(0));
+
+  yScale.ticks(4).forEach(t=>{
+    g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
+  });
+
+  g.append('g').attr('transform',`translate(0,${ih+6})`).call(d3.axisBottom(xScale).ticks(5).tickFormat(d=>d3.timeFormat("%Y")(d)).tickSize(0)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','9');
+
+  g.append('g').attr('transform',`translate(${iw+6},0)`).call(d3.axisRight(yScale).ticks(4).tickFormat(v=>fredFmtVal(v,seriesId,'level')).tickSize(0)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','9');
+
+  const defs = svg.append('defs');
+  const grad = defs.append('linearGradient').attr('id','cb-grad-'+seriesId).attr('x1',0).attr('x2',0).attr('y1',0).attr('y2',1);
+  grad.append('stop').attr('offset','0%').attr('stop-color',color);
+  grad.append('stop').attr('offset','100%').attr('stop-color',color).attr('stop-opacity',0);
+
+  const area = d3.area().x(d=>xScale(d.date)).y0(ih).y1(d=>yScale(d.value)).defined(d=>!isNaN(d.value)).curve(d3.curveMonotoneX);
+  g.append('path').datum(parsed).attr('d',area).attr('fill',`url(#cb-grad-${seriesId})`).attr('opacity',0.14);
+
+  const line = d3.line().x(d=>xScale(d.date)).y(d=>yScale(d.value)).defined(d=>!isNaN(d.value)).curve(d3.curveMonotoneX);
+  g.append('path').datum(parsed).attr('d',line).attr('fill','none').attr('stroke',color).attr('stroke-width',1.5);
+}
+
+function drawMiniMultiLineChart(wrap, series, annotLabels, annotVals) {
+  d3.select(wrap).select('svg').remove();
+  if (!series.length||!series[0].data.length) return;
+
+  const margin = { top:14, right:80, bottom:28, left:10 };
+  const W = wrap.clientWidth || 700;
+  const H = 240;
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+  const g   = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const parseDate = d3.timeParse('%Y-%m-%d');
+  const allParsed = series.map(s=>s.data.map(d=>({date:parseDate(d.date),value:d.value})).filter(d=>d.date));
+  const allVals = allParsed.flatMap(p=>p.map(d=>d.value));
+  const allDates = allParsed.flatMap(p=>p.map(d=>d.date));
+
+  const xScale = d3.scaleTime().domain(d3.extent(allDates)).range([0,iw]);
+  const [vmin,vmax] = d3.extent(allVals);
+  const pad=(vmax-vmin)*0.1||0.3;
+  const yScale = d3.scaleLinear().domain([vmin-pad,vmax+pad]).range([ih,0]).nice();
+
+  yScale.ticks(4).forEach(t=>{
+    g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
+  });
+
+  // Target annotation lines
+  if (annotVals) annotVals.forEach((av,i)=>{
+    const ay = yScale(av);
+    g.append('line').attr('x1',0).attr('x2',iw).attr('y1',ay).attr('y2',ay)
+      .attr('stroke','rgba(255,255,255,0.2)').attr('stroke-width',1).attr('stroke-dasharray','4 3');
+    if (annotLabels&&annotLabels[i]) {
+      g.append('text').attr('x',iw+4).attr('y',ay+3).text(annotLabels[i])
+        .attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','8');
+    }
+  });
+
+  g.append('g').attr('transform',`translate(0,${ih+6})`).call(d3.axisBottom(xScale).ticks(5).tickFormat(d=>d3.timeFormat("%Y")(d)).tickSize(0)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','9');
+  g.append('g').attr('transform',`translate(${iw+6},0)`).call(d3.axisRight(yScale).ticks(4).tickFormat(v=>(v>=0?'+':'')+v.toFixed(1)+'%').tickSize(0)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','9');
+
+  const line = d3.line().x(d=>xScale(d.date)).y(d=>yScale(d.value)).defined(d=>!isNaN(d.value)).curve(d3.curveMonotoneX);
+
+  series.forEach((s,si) => {
+    g.append('path').datum(allParsed[si]).attr('d',line).attr('fill','none')
+      .attr('stroke',s.color).attr('stroke-width',1.5).attr('opacity',0.9);
+  });
+
+  // Legend
+  const lx = iw - series.length * 90 + 10;
+  series.forEach((s,si) => {
+    g.append('line').attr('x1',lx+si*88).attr('x2',lx+si*88+14).attr('y1',8).attr('y2',8)
+      .attr('stroke',s.color).attr('stroke-width',2);
+    g.append('text').attr('x',lx+si*88+18).attr('y',11).text(s.label)
+      .attr('fill','#8a8fa8').attr('font-family',"'IBM Plex Mono'").attr('font-size','9');
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   EXPORT UTILS
+══════════════════════════════════════════════════════════════════════ */
+function fredExportCSV(data, id) {
+  const rows = ['Date,Value',...data.map(d=>`${d.date},${d.value}`)];
+  const blob = new Blob([rows.join('\n')],{type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`${id}_${fredState.period}.csv`; a.click();
+}
+
+function fredExportPNG(wrapperId, name) {
+  const wrap = document.getElementById(wrapperId);
+  const svg  = wrap ? wrap.querySelector('svg') : null;
+  if (!svg) return;
+  const s = new XMLSerializer().serializeToString(svg);
+  const canvas = document.createElement('canvas');
+  canvas.width = (svg.getAttribute('width')||800)*2;
+  canvas.height= (svg.getAttribute('height')||400)*2;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle='#0e1117'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  const img = new Image();
+  img.onload = () => {
+    ctx.scale(2,2); ctx.drawImage(img,0,0);
+    const a=document.createElement('a'); a.download=name+'.png';
+    a.href=canvas.toDataURL('image/png'); a.click();
+  };
+  img.src = 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(s)));
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HEADER TICKERS (live from FRED data)
+══════════════════════════════════════════════════════════════════════ */
+async function fredLoadHeaderTickers() {
+  const start = fredPeriodStart('1Y');
+  const pairs = [
+    ['FEDFUNDS','ht-ff','ht-ff-c','rate'],
+    ['DGS10','ht-10y','ht-10y-c','rate'],
+    ['DGS2','ht-2y','ht-2y-c','rate'],
+    ['T10Y2Y','ht-sp','ht-sp-c','rate'],
+    ['CPIAUCSL','ht-cpi','ht-cpi-c','yoy'],
+    ['UNRATE','ht-ur','ht-ur-c','pct'],
+    ['VIXCLS','ht-vix','ht-vix-c','idx'],
+  ];
+  await Promise.all(pairs.map(async ([id,valId,chgId,fmt]) => {
+    const pts = await fredFetchSeries(id,start);
+    if (!pts.length) return;
+    const latest=pts[pts.length-1], prev=pts[pts.length-2];
+    let displayVal = latest.value;
+    if (fmt==='yoy'&&prev) {
+      const yr=new Date(latest.date+'T00:00:00'); yr.setFullYear(yr.getFullYear()-1);
+      const yrStr=yr.toISOString().slice(0,10);
+      const yearAgo=[...pts].reverse().find(p=>p.date<=yrStr);
+      if (yearAgo) displayVal=((latest.value-yearAgo.value)/yearAgo.value)*100;
+    }
+    const chg=prev?latest.value-prev.value:null;
+    const el=document.getElementById(valId);
+    const ce=document.getElementById(chgId);
+    if (el) el.textContent=fmt==='rate'?displayVal.toFixed(2)+'%':fmt==='yoy'?displayVal.toFixed(1)+'%':fmt==='pct'?displayVal.toFixed(1)+'%':displayVal.toFixed(1);
+    if (ce&&chg!=null) {
+      ce.textContent=(chg>=0?'▲':' ▼')+' '+Math.abs(chg).toFixed(2);
+      ce.className='htick-chg '+(chg>0?'up':chg<0?'dn':'flat');
+    }
+  }));
+
+  const ts = document.getElementById('header-ts');
+  if (ts) ts.textContent='FRED · '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════════════════════════════ */
+async function fredBoot() {
+  try {
+    const r = await fetch(FRED_DATA_URL+'?_='+Date.now());
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    fredLocalData = j.series || {};
+    const ts = j.updated_at ? new Date(j.updated_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'unknown';
+    const tsEl = document.getElementById('header-ts');
+    if (tsEl) tsEl.textContent='FRED · Updated '+ts;
+  } catch(e) {
+    console.warn('FRED data not loaded (need economic_data.json running on :8000):', e.message);
+    const tsEl = document.getElementById('header-ts');
+    if (tsEl) tsEl.textContent='FRED · offline mode';
+  }
+
+  fredLoadHeaderTickers();
+}
+</script>
+</body>
+</html>
