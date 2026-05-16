@@ -346,6 +346,58 @@ a      { color: inherit; text-decoration: none; }
 .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
 .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
 
+/* ── Markets Tab ─────────────────────────────────────────────────────── */
+.mk-tab {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 10px 16px 11px; border: none; background: none;
+  border-bottom: 2px solid transparent; cursor: pointer;
+  transition: all 0.12s; margin-bottom: -1px;
+}
+.mk-tab:hover { color: var(--text); }
+.mk-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+.mk-panel { display: none; flex-direction: column; gap: 12px; }
+.mk-panel.active { display: flex; }
+
+.mk-auto-indicator {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 5px var(--green);
+  transition: all 0.2s;
+}
+.mk-auto-indicator.off { background: var(--text3); box-shadow: none; }
+
+.mk-chart-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px; color: var(--text3);
+  background: var(--bg2); pointer-events: none;
+}
+.mk-chart-overlay.hidden { display: none; }
+
+/* stat-card selected state for markets */
+.stat-card.mk-selected { border-color: var(--amber); }
+.stat-card.mk-card-clickable { cursor: pointer; }
+
+/* table group header rows */
+.mk-group-hdr td {
+  background: var(--bg3) !important;
+  color: var(--amber) !important;
+  font-family: var(--mono); font-size: 8.5px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 6px 14px !important;
+  border-top: 1px solid var(--border2);
+}
+.mk-group-hdr:hover td { background: var(--bg3) !important; }
+
+/* loading pulse on cells */
+@keyframes mk-cell-pulse { 0%,100%{opacity:0.25} 50%{opacity:0.7} }
+.mk-loading { animation: mk-cell-pulse 1.4s ease-in-out infinite; color: var(--text3) !important; }
+
+/* spin animation for refresh icon */
+@keyframes mk-spin { to { transform: rotate(360deg); } }
+.mk-spinning { animation: mk-spin 0.9s linear infinite; display: inline-block; }
+
 /* ── Coming soon ──────────────────────────────────────────────────────── */
 .coming-soon {
   flex: 1; display: flex; flex-direction: column;
@@ -802,17 +854,8 @@ a      { color: inherit; text-decoration: none; }
             <span>Markets</span><span class="nav-section-arrow">▼</span>
           </div>
           <div class="nav-items">
-            <div class="nav-item active" onclick="showPage('global-equities')" data-label="Global Equities">
-              <div class="nav-dot"></div>Global Equities<span class="nav-item-badge">EQ</span>
-            </div>
-            <div class="nav-item" onclick="showPage('fixed-income')" data-label="Fixed Income">
-              <div class="nav-dot"></div>Fixed Income<span class="nav-item-badge">FI</span>
-            </div>
-            <div class="nav-item" onclick="showPage('fx')" data-label="FX & Currencies">
-              <div class="nav-dot"></div>FX &amp; Currencies<span class="nav-item-badge">FX</span>
-            </div>
-            <div class="nav-item" onclick="showPage('commodities')" data-label="Commodities">
-              <div class="nav-dot"></div>Commodities<span class="nav-item-badge">CM</span>
+            <div class="nav-item active" onclick="showPage('markets');mkBoot()" data-label="Markets Overview">
+              <div class="nav-dot"></div>Markets Overview<span class="nav-item-badge">MKT</span>
             </div>
             <div class="nav-item" onclick="showPage('crypto')" data-label="Crypto">
               <div class="nav-dot"></div>Crypto<span class="nav-item-badge">CR</span>
@@ -874,9 +917,6 @@ a      { color: inherit; text-decoration: none; }
                 <span class="nav-section-emoji">🏦</span>Central Banks<span class="nav-sub-arrow">▼</span>
               </div>
               <div class="nav-sub-items">
-                <div class="nav-item" onclick="showFredPage('cb')" data-label="CB Overview" data-series="__cb__">
-                  <div class="nav-dot"></div>Overview &amp; Policy Rates<span class="nav-item-badge">CB</span>
-                </div>
                 <div class="nav-cb-label">U.S. Federal Reserve</div>
                 <div class="nav-item" onclick="showFredPage('series','WALCL')" data-label="Fed Balance Sheet" data-series="WALCL">
                   <div class="nav-dot"></div>Balance Sheet (WALCL)<span class="nav-item-badge">WALCL</span>
@@ -1051,158 +1091,207 @@ a      { color: inherit; text-decoration: none; }
     <main id="main">
 
       <!-- ════════════════════════════════════════
-           PAGE: GLOBAL EQUITIES
+           PAGE: MARKETS (unified)
       ════════════════════════════════════════ -->
-      <div class="section-page active" id="page-global-equities">
+      <div class="section-page active" id="page-markets">
         <div class="page-header">
           <div class="page-title-group">
-            <div class="page-title">Global Equities <span class="page-title-badge">Live</span></div>
-            <div class="page-subtitle">Major indices · benchmarks · regional performance</div>
+            <div class="page-title">Markets <span class="page-title-badge">Live · Delayed</span></div>
+            <div class="page-subtitle">Global markets across asset classes · Yahoo Finance</div>
           </div>
-          <div class="page-controls">
-            <div class="pill-group" id="eq-period">
-              <div class="pill" onclick="setPill('eq-period',this)">1D</div>
-              <div class="pill" onclick="setPill('eq-period',this)">1W</div>
-              <div class="pill" onclick="setPill('eq-period',this)">1M</div>
-              <div class="pill" onclick="setPill('eq-period',this)">3M</div>
-              <div class="pill active" onclick="setPill('eq-period',this)">YTD</div>
-              <div class="pill" onclick="setPill('eq-period',this)">1Y</div>
-              <div class="pill" onclick="setPill('eq-period',this)">3Y</div>
-              <div class="pill" onclick="setPill('eq-period',this)">5Y</div>
+          <div class="page-controls" id="mk-topbar-controls">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div class="mk-auto-indicator" id="mk-auto-dot-hdr" title="Auto-refresh active"></div>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-last-update-hdr">—</span>
             </div>
-            <div class="pill-group">
-              <div class="pill active" onclick="setPill(this.parentNode,this)">Price</div>
-              <div class="pill" onclick="setPill(this.parentNode,this)">Total Ret.</div>
-            </div>
+            <button class="icon-btn" id="mk-refresh-btn-hdr" onclick="mkRefreshAll()" title="Refresh data">
+              <svg viewBox="0 0 24 24" id="mk-refresh-icon-hdr"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </button>
           </div>
         </div>
-        <div class="page-body">
-          <div class="stat-row">
-            <div class="stat-card"><div class="stat-label">S&amp;P 500</div><div class="stat-val">5,308</div><div class="stat-chg up">▲ +1.24% today</div><div class="stat-sub">YTD +18.3%</div></div>
-            <div class="stat-card"><div class="stat-label">MSCI EAFE</div><div class="stat-val">2,341</div><div class="stat-chg up">▲ +0.61%</div><div class="stat-sub">YTD +8.2%</div></div>
-            <div class="stat-card"><div class="stat-label">MSCI EM</div><div class="stat-val">1,082</div><div class="stat-chg dn">▼ -0.43%</div><div class="stat-sub">YTD +4.1%</div></div>
-            <div class="stat-card"><div class="stat-label">Nasdaq 100</div><div class="stat-val">18,491</div><div class="stat-chg up">▲ +1.78%</div><div class="stat-sub">YTD +23.1%</div></div>
-            <div class="stat-card"><div class="stat-label">Russell 2000</div><div class="stat-val">2,094</div><div class="stat-chg dn">▼ -0.22%</div><div class="stat-sub">YTD +2.4%</div></div>
-            <div class="stat-card"><div class="stat-label">Stoxx 600</div><div class="stat-val">512</div><div class="stat-chg up">▲ +0.38%</div><div class="stat-sub">YTD +10.1%</div></div>
-            <div class="stat-card"><div class="stat-label">Nikkei 225</div><div class="stat-val">38,460</div><div class="stat-chg up">▲ +0.90%</div><div class="stat-sub">YTD +16.8%</div></div>
-            <div class="stat-card"><div class="stat-label">CSI 300</div><div class="stat-val">3,612</div><div class="stat-chg dn">▼ -0.15%</div><div class="stat-sub">YTD -1.2%</div></div>
-          </div>
-          <div class="grid-2-1">
+
+        <!-- ── asset class tabs ── -->
+        <div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;flex-shrink:0;">
+          <button class="mk-tab active" onclick="mkShowPanel('eq',this)" data-panel="eq">Equities</button>
+          <button class="mk-tab" onclick="mkShowPanel('rates',this)" data-panel="rates">Rates</button>
+          <button class="mk-tab" onclick="mkShowPanel('fx',this)" data-panel="fx">FX</button>
+          <button class="mk-tab" onclick="mkShowPanel('cmd',this)" data-panel="cmd">Commodities</button>
+          <button class="mk-tab" onclick="mkShowPanel('credit',this)" data-panel="credit">Credit</button>
+          <button class="mk-tab" onclick="mkShowPanel('vol',this)" data-panel="vol">Volatility</button>
+        </div>
+
+        <div class="page-body" style="gap:12px;">
+
+          <!-- ── EQUITIES ── -->
+          <div class="mk-panel active" id="mk-panel-eq">
+            <div class="stat-row" id="mk-cards-eq"></div>
             <div class="chart-container">
               <div class="chart-container-header">
-                <div class="chart-container-title">S&amp;P 500 — YTD Performance</div>
-              </div>
-              <div class="pm-chart-wrap" id="chart-sp500" style="height:300px"></div>
-            </div>
-            <div class="chart-container">
-              <div class="chart-container-header"><div class="chart-container-title">Regional Heat Map</div></div>
-              <div style="padding: 12px;">
-                <div class="heatmap-grid" style="grid-template-columns: 1fr 1fr; gap: 3px;">
-                  <div class="heatmap-cell hm-strong-up"><div class="hm-label">US Large Cap</div><div class="hm-val">+1.24%</div></div>
-                  <div class="heatmap-cell hm-up"><div class="hm-label">Japan</div><div class="hm-val">+0.90%</div></div>
-                  <div class="heatmap-cell hm-up"><div class="hm-label">Europe</div><div class="hm-val">+0.38%</div></div>
-                  <div class="heatmap-cell hm-slight-up"><div class="hm-label">EAFE</div><div class="hm-val">+0.61%</div></div>
-                  <div class="heatmap-cell hm-slight-dn"><div class="hm-label">EM</div><div class="hm-val">-0.43%</div></div>
-                  <div class="heatmap-cell hm-slight-dn"><div class="hm-label">US Small Cap</div><div class="hm-val">-0.22%</div></div>
-                  <div class="heatmap-cell hm-flat"><div class="hm-label">China</div><div class="hm-val">-0.15%</div></div>
-                  <div class="heatmap-cell hm-dn"><div class="hm-label">LatAm</div><div class="hm-val">-0.82%</div></div>
+                <div class="chart-container-title" id="mk-chart-title-eq">Select an instrument</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-eq"></span>
+                  <div class="pill-group" id="mk-periods-eq"></div>
                 </div>
               </div>
+              <div class="pm-chart-wrap" id="mk-chart-wrap-eq" style="height:240px;position:relative;">
+                <div class="mk-chart-overlay" id="mk-chart-overlay-eq">Select an instrument above</div>
+              </div>
             </div>
+            <div class="data-table-wrap" style="overflow-x:auto;">
+              <table class="data-table" style="min-width:860px;" id="mk-table-eq">
+                <thead><tr>
+                  <th style="text-align:left;min-width:160px">Instrument</th>
+                  <th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
+                  <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y</th><th>5Y</th>
+                </tr></thead>
+                <tbody id="mk-tbody-eq"></tbody>
+              </table>
+            </div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.8;">ETF proxies: EAFE→EFA, MSCI EM→EEM. Yahoo Finance 15-min delay.</div>
           </div>
-          <div class="data-table-wrap">
-            <table class="data-table">
-              <thead><tr><th>Index / Benchmark</th><th>Last</th><th>1D</th><th>1W</th><th>1M</th><th>YTD</th><th>1Y</th></tr></thead>
-              <tbody>
-                <tr><td>S&amp;P 500</td><td>5,308</td><td class="td-up">+1.24%</td><td class="td-up">+2.1%</td><td class="td-up">+4.8%</td><td class="td-up">+18.3%</td><td class="td-up">+26.1%</td></tr>
-                <tr><td>Nasdaq 100</td><td>18,491</td><td class="td-up">+1.78%</td><td class="td-up">+2.8%</td><td class="td-up">+6.2%</td><td class="td-up">+23.1%</td><td class="td-up">+34.2%</td></tr>
-                <tr><td>Russell 2000</td><td>2,094</td><td class="td-dn">-0.22%</td><td class="td-dn">-0.4%</td><td class="td-up">+1.1%</td><td class="td-up">+2.4%</td><td class="td-up">+11.2%</td></tr>
-                <tr><td>MSCI EAFE</td><td>2,341</td><td class="td-up">+0.61%</td><td class="td-up">+1.2%</td><td class="td-up">+2.3%</td><td class="td-up">+8.2%</td><td class="td-up">+14.4%</td></tr>
-                <tr><td>MSCI EM</td><td>1,082</td><td class="td-dn">-0.43%</td><td class="td-dn">-0.8%</td><td class="td-up">+1.4%</td><td class="td-up">+4.1%</td><td class="td-up">+6.2%</td></tr>
-                <tr><td>Stoxx 600</td><td>512</td><td class="td-up">+0.38%</td><td class="td-up">+0.6%</td><td class="td-up">+1.9%</td><td class="td-up">+10.1%</td><td class="td-up">+12.8%</td></tr>
-                <tr><td>Nikkei 225</td><td>38,460</td><td class="td-up">+0.90%</td><td class="td-up">+1.4%</td><td class="td-up">+3.8%</td><td class="td-up">+16.8%</td><td class="td-up">+22.4%</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
-      <!-- ════════════════════════════════════════
-           PAGE: FIXED INCOME
-      ════════════════════════════════════════ -->
-      <div class="section-page" id="page-fixed-income">
-        <div class="page-header">
-          <div class="page-title-group">
-            <div class="page-title">Fixed Income <span class="page-title-badge">Live</span></div>
-            <div class="page-subtitle">Treasuries · credit · spreads · duration</div>
+          <!-- ── RATES ── -->
+          <div class="mk-panel" id="mk-panel-rates">
+            <div class="stat-row" id="mk-cards-rates"></div>
+            <div class="chart-container">
+              <div class="chart-container-header">
+                <div class="chart-container-title" id="mk-chart-title-rates">Select an instrument</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-rates"></span>
+                  <div class="pill-group" id="mk-periods-rates"></div>
+                </div>
+              </div>
+              <div class="pm-chart-wrap" id="mk-chart-wrap-rates" style="height:240px;position:relative;">
+                <div class="mk-chart-overlay" id="mk-chart-overlay-rates">Select an instrument above</div>
+              </div>
+            </div>
+            <div class="data-table-wrap" style="overflow-x:auto;">
+              <table class="data-table" style="min-width:860px;" id="mk-table-rates">
+                <thead><tr>
+                  <th style="text-align:left;min-width:160px">Instrument</th>
+                  <th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
+                  <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y</th><th>5Y</th>
+                </tr></thead>
+                <tbody id="mk-tbody-rates"></tbody>
+              </table>
+            </div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">Yields via CBOE indices (^IRX ^FVX ^TNX ^TYX). Values in %.</div>
           </div>
-        </div>
-        <div class="page-body">
-          <div class="stat-row">
-            <div class="stat-card"><div class="stat-label">2Y Treasury</div><div class="stat-val">4.84%</div><div class="stat-chg up">▲ +0.02</div></div>
-            <div class="stat-card"><div class="stat-label">10Y Treasury</div><div class="stat-val">4.62%</div><div class="stat-chg up">▲ +0.04</div></div>
-            <div class="stat-card"><div class="stat-label">30Y Treasury</div><div class="stat-val">4.74%</div><div class="stat-chg up">▲ +0.03</div></div>
-            <div class="stat-card"><div class="stat-label">HY Spread</div><div class="stat-val">314 bps</div><div class="stat-chg dn">▼ -8</div></div>
-            <div class="stat-card"><div class="stat-label">IG Spread</div><div class="stat-val">102 bps</div><div class="stat-chg dn">▼ -3</div></div>
-            <div class="stat-card"><div class="stat-label">TIPS 10Y Real</div><div class="stat-val">2.14%</div><div class="stat-chg up">▲ +0.02</div></div>
-          </div>
-          <div class="chart-container">
-            <div class="chart-container-header"><div class="chart-container-title">Treasury Yields — Key Tenors</div></div>
-            <div class="pm-chart-wrap" id="chart-treasuries" style="height:280px"></div>
-          </div>
-        </div>
-      </div>
 
-      <!-- ════════════════════════════════════════
-           PAGE: FX
-      ════════════════════════════════════════ -->
-      <div class="section-page" id="page-fx">
-        <div class="page-header">
-          <div class="page-title-group">
-            <div class="page-title">FX &amp; Currencies <span class="page-title-badge">Live</span></div>
-            <div class="page-subtitle">Dollar index · major pairs · EM currencies</div>
+          <!-- ── FX ── -->
+          <div class="mk-panel" id="mk-panel-fx">
+            <div class="stat-row" id="mk-cards-fx"></div>
+            <div class="chart-container">
+              <div class="chart-container-header">
+                <div class="chart-container-title" id="mk-chart-title-fx">Select an instrument</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-fx"></span>
+                  <div class="pill-group" id="mk-periods-fx"></div>
+                </div>
+              </div>
+              <div class="pm-chart-wrap" id="mk-chart-wrap-fx" style="height:240px;position:relative;">
+                <div class="mk-chart-overlay" id="mk-chart-overlay-fx">Select an instrument above</div>
+              </div>
+            </div>
+            <div class="data-table-wrap" style="overflow-x:auto;">
+              <table class="data-table" style="min-width:860px;" id="mk-table-fx">
+                <thead><tr>
+                  <th style="text-align:left;min-width:160px">Pair</th>
+                  <th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
+                  <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y</th><th>5Y</th>
+                </tr></thead>
+                <tbody id="mk-tbody-fx"></tbody>
+              </table>
+            </div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">FX spot rates. Real-time where available. DXY via ICE futures (DX-Y.NYB).</div>
           </div>
-        </div>
-        <div class="page-body">
-          <div class="stat-row">
-            <div class="stat-card"><div class="stat-label">DXY</div><div class="stat-val">104.3</div><div class="stat-chg up">▲ +0.2</div></div>
-            <div class="stat-card"><div class="stat-label">EUR/USD</div><div class="stat-val">1.0841</div><div class="stat-chg dn">▼ -0.0012</div></div>
-            <div class="stat-card"><div class="stat-label">USD/JPY</div><div class="stat-val">154.8</div><div class="stat-chg up">▲ +0.4</div></div>
-            <div class="stat-card"><div class="stat-label">GBP/USD</div><div class="stat-val">1.2694</div><div class="stat-chg flat">▬ flat</div></div>
-            <div class="stat-card"><div class="stat-label">USD/CNH</div><div class="stat-val">7.248</div><div class="stat-chg up">▲ +0.012</div></div>
-          </div>
-          <div class="chart-container">
-            <div class="chart-container-header"><div class="chart-container-title">DXY — Dollar Index</div></div>
-            <div class="pm-chart-wrap" id="chart-dxy" style="height:280px"></div>
-          </div>
-        </div>
-      </div>
 
-      <!-- ════════════════════════════════════════
-           PAGE: COMMODITIES
-      ════════════════════════════════════════ -->
-      <div class="section-page" id="page-commodities">
-        <div class="page-header">
-          <div class="page-title-group">
-            <div class="page-title">Commodities <span class="page-title-badge">Live</span></div>
-            <div class="page-subtitle">Energy · metals · agriculture</div>
+          <!-- ── COMMODITIES ── -->
+          <div class="mk-panel" id="mk-panel-cmd">
+            <div class="stat-row" id="mk-cards-cmd"></div>
+            <div class="chart-container">
+              <div class="chart-container-header">
+                <div class="chart-container-title" id="mk-chart-title-cmd">Select an instrument</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-cmd"></span>
+                  <div class="pill-group" id="mk-periods-cmd"></div>
+                </div>
+              </div>
+              <div class="pm-chart-wrap" id="mk-chart-wrap-cmd" style="height:240px;position:relative;">
+                <div class="mk-chart-overlay" id="mk-chart-overlay-cmd">Select an instrument above</div>
+              </div>
+            </div>
+            <div class="data-table-wrap" style="overflow-x:auto;">
+              <table class="data-table" style="min-width:860px;" id="mk-table-cmd">
+                <thead><tr>
+                  <th style="text-align:left;min-width:160px">Instrument</th>
+                  <th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
+                  <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y</th><th>5Y</th>
+                </tr></thead>
+                <tbody id="mk-tbody-cmd"></tbody>
+              </table>
+            </div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">Front-month futures. Commodity indices via ETF proxies (DJP, GSG). URA proxy for Uranium.</div>
           </div>
-        </div>
-        <div class="page-body">
-          <div class="stat-row">
-            <div class="stat-card"><div class="stat-label">WTI Crude</div><div class="stat-val">$78.4</div><div class="stat-chg dn">▼ -0.8</div></div>
-            <div class="stat-card"><div class="stat-label">Brent</div><div class="stat-val">$82.1</div><div class="stat-chg dn">▼ -0.6</div></div>
-            <div class="stat-card"><div class="stat-label">Gold</div><div class="stat-val">$2,342</div><div class="stat-chg up">▲ +8</div></div>
-            <div class="stat-card"><div class="stat-label">Silver</div><div class="stat-val">$28.4</div><div class="stat-chg up">▲ +0.2</div></div>
-            <div class="stat-card"><div class="stat-label">Nat Gas</div><div class="stat-val">$2.18</div><div class="stat-chg dn">▼ -0.04</div></div>
-            <div class="stat-card"><div class="stat-label">Copper</div><div class="stat-val">$4.42</div><div class="stat-chg up">▲ +0.06</div></div>
+
+          <!-- ── CREDIT ── -->
+          <div class="mk-panel" id="mk-panel-credit">
+            <div class="stat-row" id="mk-cards-credit"></div>
+            <div class="chart-container">
+              <div class="chart-container-header">
+                <div class="chart-container-title" id="mk-chart-title-credit">Select an instrument</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-credit"></span>
+                  <div class="pill-group" id="mk-periods-credit"></div>
+                </div>
+              </div>
+              <div class="pm-chart-wrap" id="mk-chart-wrap-credit" style="height:240px;position:relative;">
+                <div class="mk-chart-overlay" id="mk-chart-overlay-credit">Select an instrument above</div>
+              </div>
+            </div>
+            <div class="data-table-wrap" style="overflow-x:auto;">
+              <table class="data-table" style="min-width:860px;" id="mk-table-credit">
+                <thead><tr>
+                  <th style="text-align:left;min-width:160px">Instrument</th>
+                  <th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
+                  <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y</th><th>5Y</th>
+                </tr></thead>
+                <tbody id="mk-tbody-credit"></tbody>
+              </table>
+            </div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">ETF prices shown (not spreads). LQD=US IG, HYG=US HY, BKLN=Loans, AGG=US Agg, AGGG=Global Agg, LQDE=Euro IG, IHYG=Euro HY, EMB=EM Sovereign.</div>
           </div>
-          <div class="chart-container">
-            <div class="chart-container-header"><div class="chart-container-title">WTI Crude Oil</div></div>
-            <div class="pm-chart-wrap" id="chart-wti" style="height:280px"></div>
+
+          <!-- ── VOLATILITY ── -->
+          <div class="mk-panel" id="mk-panel-vol">
+            <div class="stat-row" id="mk-cards-vol"></div>
+            <div class="chart-container">
+              <div class="chart-container-header">
+                <div class="chart-container-title" id="mk-chart-title-vol">Select an instrument</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-vol"></span>
+                  <div class="pill-group" id="mk-periods-vol"></div>
+                </div>
+              </div>
+              <div class="pm-chart-wrap" id="mk-chart-wrap-vol" style="height:240px;position:relative;">
+                <div class="mk-chart-overlay" id="mk-chart-overlay-vol">Select an instrument above</div>
+              </div>
+            </div>
+            <div class="data-table-wrap" style="overflow-x:auto;">
+              <table class="data-table" style="min-width:860px;" id="mk-table-vol">
+                <thead><tr>
+                  <th style="text-align:left;min-width:160px">Instrument</th>
+                  <th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
+                  <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y</th><th>5Y</th>
+                </tr></thead>
+                <tbody id="mk-tbody-vol"></tbody>
+              </table>
+            </div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">VIX = CBOE Volatility Index, 30-day implied vol of S&amp;P 500 options.</div>
           </div>
-        </div>
-      </div>
+
+        </div><!-- /page-body -->
+      </div><!-- /page-markets -->
 
       <!-- ════════════════════════════════════════
            PAGE: CRYPTO
@@ -1437,7 +1526,10 @@ function doLogin() {
   document.getElementById('login-overlay').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
   updateTimestamp();
-  fredBoot(); // initialise FRED engine on login
+  // Show markets page by default and boot it
+  showPage('markets');
+  mkBoot();
+  fredBoot();
 }
 function doLogout() {
   document.getElementById('app').style.display = 'none';
@@ -2684,6 +2776,441 @@ async function fredLoadHeaderTickers() {
 /* ══════════════════════════════════════════════════════════════════════
    BOOT
 ══════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════
+   MARKETS ENGINE — Yahoo Finance via allorigins.win CORS proxy
+   D3-based charts matching existing FRED chart style
+══════════════════════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+
+const MK_PANELS = ['eq','rates','fx','cmd','credit','vol'];
+const MK_PERIODS = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y','7Y','10Y','20Y','30Y','All'];
+const MK_TABLE_PERIODS = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y'];
+
+const TICKERS = [
+  // EQUITIES
+  {t:'^GSPC',  n:'S&P 500',            g:'U.S.',              p:'eq',     d:2, card:true},
+  {t:'^NDX',   n:'Nasdaq 100',          g:'U.S.',              p:'eq',     d:2, card:true},
+  {t:'^RUI',   n:'Russell 1000',        g:'U.S.',              p:'eq',     d:2, card:false},
+  {t:'^RLG',   n:'Russell 1000 Growth', g:'U.S.',              p:'eq',     d:2, card:false},
+  {t:'^RLV',   n:'Russell 1000 Value',  g:'U.S.',              p:'eq',     d:2, card:false},
+  {t:'^RUT',   n:'Russell 2000',        g:'U.S.',              p:'eq',     d:2, card:true},
+  {t:'EFA',    n:'MSCI EAFE',           g:'Developed Intl',    p:'eq',     d:2, card:true, etf:true},
+  {t:'^STOXX', n:'Stoxx 600',           g:'Developed Intl',    p:'eq',     d:2, card:false},
+  {t:'^GDAXI', n:'DAX',                 g:'Developed Intl',    p:'eq',     d:2, card:false},
+  {t:'^FTSE',  n:'FTSE 100',            g:'Developed Intl',    p:'eq',     d:2, card:false},
+  {t:'^N225',  n:'Nikkei 225',          g:'Developed Intl',    p:'eq',     d:2, card:false},
+  {t:'EEM',    n:'MSCI EM',             g:'Emerging Markets',  p:'eq',     d:2, card:true, etf:true},
+  {t:'^HSI',   n:'Hang Seng',           g:'Emerging Markets',  p:'eq',     d:2, card:false},
+  {t:'^BVSP',  n:'Bovespa',             g:'Emerging Markets',  p:'eq',     d:2, card:false},
+  // RATES
+  {t:'^IRX',   n:'U.S. 3M',             g:'U.S. Treasuries',   p:'rates',  d:3, card:true,  yield:true},
+  {t:'^FVX',   n:'U.S. 5Y',             g:'U.S. Treasuries',   p:'rates',  d:3, card:true,  yield:true},
+  {t:'^TNX',   n:'U.S. 10Y',            g:'U.S. Treasuries',   p:'rates',  d:3, card:true,  yield:true},
+  {t:'^TYX',   n:'U.S. 30Y',            g:'U.S. Treasuries',   p:'rates',  d:3, card:true,  yield:true},
+  // FX
+  {t:'DX-Y.NYB',n:'DXY',               g:'Dollar Index',       p:'fx',     d:3, card:true},
+  {t:'EURUSD=X',n:'EUR/USD',            g:'G10',               p:'fx',     d:4, card:true},
+  {t:'GBPUSD=X',n:'GBP/USD',            g:'G10',               p:'fx',     d:4, card:true},
+  {t:'JPY=X',  n:'USD/JPY',             g:'G10',               p:'fx',     d:2, card:true},
+  {t:'CHF=X',  n:'USD/CHF',             g:'G10',               p:'fx',     d:4, card:false},
+  {t:'AUDUSD=X',n:'AUD/USD',            g:'G10',               p:'fx',     d:4, card:false},
+  {t:'CAD=X',  n:'USD/CAD',             g:'G10',               p:'fx',     d:4, card:false},
+  {t:'NZDUSD=X',n:'NZD/USD',            g:'G10',               p:'fx',     d:4, card:false},
+  {t:'SEK=X',  n:'USD/SEK',             g:'G10',               p:'fx',     d:4, card:false},
+  {t:'NOK=X',  n:'USD/NOK',             g:'G10',               p:'fx',     d:4, card:false},
+  {t:'CNY=X',  n:'USD/CNY',             g:'EM',                p:'fx',     d:4, card:false},
+  {t:'BRL=X',  n:'USD/BRL',             g:'EM',                p:'fx',     d:4, card:false},
+  {t:'INR=X',  n:'USD/INR',             g:'EM',                p:'fx',     d:4, card:false},
+  {t:'MXN=X',  n:'USD/MXN',             g:'EM',                p:'fx',     d:4, card:false},
+  {t:'KRW=X',  n:'USD/KRW',             g:'EM',                p:'fx',     d:2, card:false},
+  {t:'SGD=X',  n:'USD/SGD',             g:'EM',                p:'fx',     d:4, card:false},
+  {t:'ZAR=X',  n:'USD/ZAR',             g:'EM',                p:'fx',     d:4, card:false},
+  {t:'TRY=X',  n:'USD/TRY',             g:'EM',                p:'fx',     d:4, card:false},
+  // COMMODITIES
+  {t:'DJP',    n:'Bloomberg Commodity', g:'Indices',           p:'cmd',    d:2, card:false, etf:true},
+  {t:'GSG',    n:'S&P GSCI',            g:'Indices',           p:'cmd',    d:2, card:false, etf:true},
+  {t:'CL=F',   n:'WTI Crude',           g:'Energy',            p:'cmd',    d:2, card:true},
+  {t:'BZ=F',   n:'Brent Crude',         g:'Energy',            p:'cmd',    d:2, card:true},
+  {t:'NG=F',   n:'Natural Gas',         g:'Energy',            p:'cmd',    d:3, card:false},
+  {t:'RB=F',   n:'Gasoline',            g:'Energy',            p:'cmd',    d:4, card:false},
+  {t:'GC=F',   n:'Gold',                g:'Metals',            p:'cmd',    d:2, card:true},
+  {t:'SI=F',   n:'Silver',              g:'Metals',            p:'cmd',    d:2, card:false},
+  {t:'HG=F',   n:'Copper',              g:'Metals',            p:'cmd',    d:3, card:true},
+  {t:'PL=F',   n:'Platinum',            g:'Metals',            p:'cmd',    d:2, card:false},
+  {t:'PA=F',   n:'Palladium',           g:'Metals',            p:'cmd',    d:2, card:false},
+  {t:'URA',    n:'Uranium (URA)',        g:'Metals',            p:'cmd',    d:2, card:false, etf:true},
+  {t:'ZC=F',   n:'Corn',                g:'Agriculture',       p:'cmd',    d:2, card:false},
+  {t:'ZW=F',   n:'Wheat',               g:'Agriculture',       p:'cmd',    d:2, card:false},
+  {t:'ZS=F',   n:'Soybeans',            g:'Agriculture',       p:'cmd',    d:2, card:false},
+  {t:'KC=F',   n:'Coffee',              g:'Agriculture',       p:'cmd',    d:2, card:false},
+  {t:'LBS=F',  n:'Lumber',              g:'Agriculture',       p:'cmd',    d:2, card:false},
+  // CREDIT
+  {t:'LQD',    n:'U.S. IG Corporate',   g:'U.S. Credit',       p:'credit', d:2, card:true,  etf:true},
+  {t:'HYG',    n:'U.S. High Yield',     g:'U.S. Credit',       p:'credit', d:2, card:true,  etf:true},
+  {t:'BKLN',   n:'Senior Loans',        g:'U.S. Credit',       p:'credit', d:2, card:false, etf:true},
+  {t:'AGG',    n:'U.S. Aggregate',      g:'U.S. Credit',       p:'credit', d:2, card:false, etf:true},
+  {t:'AGGG',   n:'Global Aggregate',    g:'Global Fixed',      p:'credit', d:2, card:false, etf:true},
+  {t:'LQDE',   n:'Euro IG Corporate',   g:'Global Credit',     p:'credit', d:2, card:false, etf:true},
+  {t:'IHYG',   n:'Euro High Yield',     g:'Global Credit',     p:'credit', d:2, card:false, etf:true},
+  {t:'EMB',    n:'EM Sovereign USD',    g:'Global Credit',     p:'credit', d:2, card:false, etf:true},
+  // VOLATILITY
+  {t:'^VIX',   n:'VIX',                 g:'Volatility',        p:'vol',    d:2, card:true},
+];
+
+const mkState = {
+  prices: {}, history: {},
+  selected: {eq:null,rates:null,fx:null,cmd:null,credit:null,vol:null},
+  period:   {eq:'1Y', rates:'1Y', fx:'1Y', cmd:'1Y', credit:'1Y', vol:'1Y'},
+  autoOn: true, autoTimer: null, booted: false,
+};
+
+/* ── period → Yahoo params ─────────────────────────────────────────── */
+function mkPeriodParams(period) {
+  const now = Math.floor(Date.now()/1000);
+  const map = {
+    '1D': {range:'1d',   interval:'5m'},
+    '5D': {range:'5d',   interval:'15m'},
+    '1M': {range:'1mo',  interval:'1d'},
+    '3M': {range:'3mo',  interval:'1d'},
+    '1Y': {range:'1y',   interval:'1wk'},
+    '3Y': {range:'3y',   interval:'1mo'},
+    '5Y': {range:'5y',   interval:'1mo'},
+    '7Y': {range:'7y',   interval:'1mo'},
+    '10Y':{range:'10y',  interval:'3mo'},
+    '20Y':{range:'20y',  interval:'3mo'},
+    '30Y':{range:'30y',  interval:'3mo'},
+    'All':{range:'max',  interval:'3mo'},
+  };
+  if (map[period]) return map[period];
+  const today = new Date();
+  let start;
+  if (period==='MTD')      start = new Date(today.getFullYear(), today.getMonth(), 1);
+  else if (period==='QTD') start = new Date(today.getFullYear(), Math.floor(today.getMonth()/3)*3, 1);
+  else if (period==='YTD') start = new Date(today.getFullYear(), 0, 1);
+  return {period1: Math.floor(start.getTime()/1000), period2: now, interval:'1d'};
+}
+
+/* ── fetch via proxy ────────────────────────────────────────────────── */
+async function mkFetch(ticker, params) {
+  let url;
+  if (params.period1) {
+    url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${params.period1}&period2=${params.period2}&interval=${params.interval}&includePrePost=false`;
+  } else {
+    url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=${params.range}&interval=${params.interval}&includePrePost=false`;
+  }
+  const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  const r = await fetch(proxy, {signal: AbortSignal.timeout(12000)});
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+}
+
+/* ── fetch quote ────────────────────────────────────────────────────── */
+async function mkFetchQuote(ticker) {
+  try {
+    const data = await mkFetch(ticker, {range:'1d', interval:'1d'});
+    const meta = data?.chart?.result?.[0]?.meta;
+    if (!meta) return null;
+    const price = meta.regularMarketPrice ?? meta.chartPreviousClose;
+    const prev  = meta.chartPreviousClose ?? price;
+    const change = price - prev;
+    const changePct = prev ? (change/prev)*100 : 0;
+    return {price, prev, change, changePct, ts: meta.regularMarketTime};
+  } catch { return null; }
+}
+
+/* ── fetch history ──────────────────────────────────────────────────── */
+async function mkFetchHistory(ticker, period) {
+  const key = `${ticker}|${period}`;
+  if (mkState.history[key]) return mkState.history[key];
+  try {
+    const p = mkPeriodParams(period);
+    const data = await mkFetch(ticker, p);
+    const result = data?.chart?.result?.[0];
+    if (!result) return null;
+    const ts = result.timestamp;
+    const closes = result.indicators?.quote?.[0]?.close;
+    if (!ts || !closes) return null;
+    const pairs = ts.map((t,i)=>[t,closes[i]]).filter(([,v])=>v!=null);
+    if (pairs.length < 2) return null;
+    const out = {timestamps: pairs.map(p=>p[0]), prices: pairs.map(p=>p[1])};
+    mkState.history[key] = out;
+    return out;
+  } catch { return null; }
+}
+
+/* ── format ─────────────────────────────────────────────────────────── */
+function mkFmtPrice(v, d, isYield) {
+  if (v==null||isNaN(v)) return '—';
+  if (isYield) return (v/100).toFixed(d)+'%';
+  if (v >= 10000) return v.toLocaleString('en-US',{maximumFractionDigits:d});
+  return v.toFixed(d);
+}
+function mkFmtChg(v) {
+  if (v==null||isNaN(v)) return '<span style="color:var(--text3)">—</span>';
+  const sign = v>0?'+':'';
+  const cls = v>0.05?'td-up':v<-0.05?'td-dn':'td-flat';
+  return `<span class="${cls}">${sign}${v.toFixed(2)}%</span>`;
+}
+
+/* ── render stat cards ──────────────────────────────────────────────── */
+function mkRenderCards(panel) {
+  const el = document.getElementById(`mk-cards-${panel}`);
+  if (!el) return;
+  const items = TICKERS.filter(t=>t.p===panel && t.card);
+  el.innerHTML = items.map(item => {
+    const q = mkState.prices[item.t];
+    const sel = mkState.selected[panel]===item.t ? ' mk-selected' : '';
+    const priceStr = q ? mkFmtPrice(q.price, item.d, item.yield) : '<span class="mk-loading">···</span>';
+    const chgCls = !q ? '' : q.changePct>0.05?'up':q.changePct<-0.05?'dn':'flat';
+    const chgStr = q ? `<span class="${chgCls}">${q.changePct>0?'▲ +':'▼ '}${Math.abs(q.changePct).toFixed(2)}%</span>` : '';
+    return `<div class="stat-card mk-card-clickable${sel}" onclick="mkSelectTicker('${panel}','${item.t}')">
+      <div class="stat-label">${item.n}</div>
+      <div class="stat-val" style="font-size:16px">${priceStr}</div>
+      <div class="stat-chg">${chgStr}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── render table ───────────────────────────────────────────────────── */
+function mkRenderTable(panel) {
+  const tbody = document.getElementById(`mk-tbody-${panel}`);
+  if (!tbody) return;
+  const items = TICKERS.filter(t=>t.p===panel);
+  let html='', lastGroup=null;
+  items.forEach(item => {
+    if (item.g !== lastGroup) {
+      html += `<tr class="mk-group-hdr"><td colspan="12">${item.g}</td></tr>`;
+      lastGroup = item.g;
+    }
+    const q = mkState.prices[item.t];
+    const sel = mkState.selected[panel]===item.t ? ' style="background:rgba(212,164,76,0.05)"' : '';
+    const priceStr = q ? mkFmtPrice(q.price, item.d, item.yield) : '<span class="mk-loading">···</span>';
+    const etfTag = item.etf ? ' <span style="font-size:8px;color:var(--text3);font-family:var(--mono)">ETF</span>' : '';
+    const periodCells = MK_TABLE_PERIODS.map(period => {
+      if (period==='1D') return `<td>${q ? mkFmtChg(q.changePct) : '<span class="mk-loading">—</span>'}</td>`;
+      const key = `${item.t}|${period}`;
+      const h = mkState.history[key];
+      if (!h) return `<td><span style="color:var(--text3)">—</span></td>`;
+      const first=h.prices[0], last=h.prices[h.prices.length-1];
+      const ret = first ? ((last-first)/first)*100 : null;
+      return `<td>${ret!=null ? mkFmtChg(ret) : '<span style="color:var(--text3)">—</span>'}</td>`;
+    }).join('');
+    html += `<tr class="mk-row"${sel} onclick="mkSelectTicker('${panel}','${item.t}')" style="cursor:pointer">
+      <td>${item.n}${etfTag}</td>
+      <td style="text-align:right;font-family:var(--mono);font-weight:500;color:var(--text)">${priceStr}</td>
+      ${periodCells}
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+/* ── render period buttons ──────────────────────────────────────────── */
+function mkRenderPeriods(panel) {
+  const el = document.getElementById(`mk-periods-${panel}`);
+  if (!el) return;
+  el.innerHTML = MK_PERIODS.map(p =>
+    `<div class="pill${mkState.period[panel]===p?' active':''}" onclick="mkSelectPeriod('${panel}','${p}')">${p}</div>`
+  ).join('');
+}
+
+/* ── D3 chart matching FRED style ───────────────────────────────────── */
+function mkRenderChart(panel) {
+  const ticker = mkState.selected[panel];
+  const period = mkState.period[panel];
+  const wrap = document.getElementById(`mk-chart-wrap-${panel}`);
+  const overlay = document.getElementById(`mk-chart-overlay-${panel}`);
+  const titleEl = document.getElementById(`mk-chart-title-${panel}`);
+  const statEl  = document.getElementById(`mk-chart-stat-${panel}`);
+
+  if (!ticker || !wrap) { if(overlay) overlay.classList.remove('hidden'); return; }
+
+  const item = TICKERS.find(t=>t.t===ticker);
+  if (titleEl) titleEl.textContent = item ? item.n : ticker;
+  if (overlay) { overlay.classList.remove('hidden'); overlay.textContent = 'Loading…'; }
+
+  mkFetchHistory(ticker, period).then(h => {
+    if (!h) { if(overlay){overlay.textContent='No data available';} return; }
+    if (overlay) overlay.classList.add('hidden');
+
+    const first=h.prices[0], last=h.prices[h.prices.length-1];
+    const ret = first ? ((last-first)/first)*100 : null;
+
+    if (statEl && ret!=null) {
+      const sign = ret>=0?'+':'';
+      const cls = ret>0.05?'up':ret<-0.05?'dn':'flat';
+      statEl.innerHTML = `${period}: <span class="${cls}">${sign}${ret.toFixed(2)}%</span>`;
+    }
+
+    // D3 chart
+    d3.select(wrap).select('svg').remove();
+    const margin = {top:14, right:72, bottom:28, left:8};
+    const W = wrap.clientWidth || 700;
+    const H = wrap.clientHeight || 240;
+    const iw = W - margin.left - margin.right;
+    const ih = H - margin.top - margin.bottom;
+
+    const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+    const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+    const dates = h.timestamps.map(ts=>new Date(ts*1000));
+    const xScale = d3.scaleTime().domain(d3.extent(dates)).range([0,iw]);
+    const [vmin,vmax] = d3.extent(h.prices);
+    const pad = (vmax-vmin)*0.07 || 0.5;
+    const yScale = d3.scaleLinear().domain([vmin-pad, vmax+pad]).range([ih,0]).nice();
+
+    const color = ret==null||ret>=0 ? 'var(--green)' : 'var(--red)';
+    const colorHex = ret==null||ret>=0 ? '#4caf82' : '#e05555';
+
+    // gridlines
+    yScale.ticks(4).forEach(t => {
+      g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
+    });
+
+    // x axis
+    g.append('g').attr('transform',`translate(0,${ih+6})`)
+      .call(d3.axisBottom(xScale).ticks(6).tickFormat(d => {
+        if (period==='1D'||period==='5D') return d3.timeFormat('%H:%M')(d);
+        if (period==='1M'||period==='MTD'||period==='QTD') return d3.timeFormat('%b %d')(d);
+        return d3.timeFormat('%Y')(d);
+      }).tickSize(0))
+      .select('.domain').remove();
+    g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','9');
+
+    // y axis
+    g.append('g').attr('transform',`translate(${iw+6},0)`)
+      .call(d3.axisRight(yScale).ticks(4).tickFormat(v => mkFmtPrice(v, item?.d||2, item?.yield||false)).tickSize(0))
+      .select('.domain').remove();
+    g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','9');
+
+    // gradient fill
+    const defs = svg.append('defs');
+    const gradId = 'mk-grad-'+panel;
+    const grad = defs.append('linearGradient').attr('id',gradId).attr('x1',0).attr('x2',0).attr('y1',0).attr('y2',1);
+    grad.append('stop').attr('offset','0%').attr('stop-color',colorHex);
+    grad.append('stop').attr('offset','100%').attr('stop-color',colorHex).attr('stop-opacity',0);
+
+    const area = d3.area()
+      .x((_,i)=>xScale(dates[i])).y0(ih).y1((_,i)=>yScale(h.prices[i]))
+      .defined((_,i)=>h.prices[i]!=null).curve(d3.curveMonotoneX);
+    g.append('path').datum(h.prices).attr('d',area).attr('fill',`url(#${gradId})`).attr('opacity',0.12);
+
+    const line = d3.line()
+      .x((_,i)=>xScale(dates[i])).y((_,i)=>yScale(h.prices[i]))
+      .defined((_,i)=>h.prices[i]!=null).curve(d3.curveMonotoneX);
+    g.append('path').datum(h.prices).attr('d',line).attr('fill','none').attr('stroke',color).attr('stroke-width',1.5);
+
+    // crosshair + tooltip
+    const tooltip = document.getElementById('fred-chart-tooltip') ||
+      (() => { const d=document.createElement('div'); d.id='mk-tt-'+panel; d.className=''; Object.assign(d.style,{position:'absolute',pointerEvents:'none',opacity:0,background:'var(--bg4)',border:'1px solid var(--border2)',padding:'8px 12px',borderRadius:'4px',fontFamily:"'IBM Plex Mono'",fontSize:'11px',zIndex:50,whiteSpace:'nowrap',transition:'opacity 0.1s',boxShadow:'0 4px 20px rgba(0,0,0,0.5)'}); wrap.appendChild(d); return d; })();
+
+    const vline = g.append('line').attr('class','fred-crosshair').attr('y1',0).attr('y2',ih).style('display','none');
+    const dot   = g.append('circle').attr('r',4).attr('class','fred-hover-dot').style('display','none');
+
+    svg.on('mousemove', function(event) {
+      const [mx] = d3.pointer(event, g.node());
+      const date = xScale.invert(mx);
+      const idx  = d3.bisectLeft(dates, date);
+      const i    = Math.max(0, Math.min(h.prices.length-1, idx));
+      if (!h.prices[i]) return;
+      const x = xScale(dates[i]), y = yScale(h.prices[i]);
+      vline.attr('x1',x).attr('x2',x).style('display',null);
+      dot.attr('cx',x).attr('cy',y).style('display',null);
+      const dateStr = (period==='1D'||period==='5D')
+        ? dates[i].toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
+        : dates[i].toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      tooltip.style.opacity = 1;
+      tooltip.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${dateStr}</div><div style="color:var(--amber);font-size:14px;font-weight:500">${mkFmtPrice(h.prices[i], item?.d||2, item?.yield||false)}</div>`;
+      const bx = wrap.getBoundingClientRect();
+      const ex = event.clientX - bx.left;
+      tooltip.style.left = (ex > W/2 ? ex - tooltip.offsetWidth - 10 : ex + 10) + 'px';
+      tooltip.style.top  = '20px';
+    }).on('mouseleave', () => {
+      vline.style('display','none'); dot.style('display','none'); tooltip.style.opacity=0;
+    });
+  });
+}
+
+/* ── interaction ────────────────────────────────────────────────────── */
+window.mkShowPanel = function(panel, btn) {
+  MK_PANELS.forEach(p => document.getElementById(`mk-panel-${p}`)?.classList.remove('active'));
+  document.getElementById(`mk-panel-${panel}`)?.classList.add('active');
+  document.querySelectorAll('#page-markets .mk-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+};
+
+window.mkSelectTicker = function(panel, ticker) {
+  mkState.selected[panel] = ticker;
+  delete mkState.history[`${ticker}|${mkState.period[panel]}`];
+  mkRenderCards(panel);
+  mkRenderTable(panel);
+  mkRenderChart(panel);
+};
+
+window.mkSelectPeriod = function(panel, period) {
+  mkState.period[panel] = period;
+  mkRenderPeriods(panel);
+  mkRenderChart(panel);
+};
+
+/* ── data fetch ─────────────────────────────────────────────────────── */
+async function mkFetchAllQuotes() {
+  const icon = document.getElementById('mk-refresh-icon-hdr');
+  if (icon) icon.classList.add('mk-spinning');
+  const BATCH = 6;
+  const tickers = TICKERS.map(t=>t.t);
+  for (let i=0; i<tickers.length; i+=BATCH) {
+    await Promise.all(tickers.slice(i,i+BATCH).map(async tk => {
+      const q = await mkFetchQuote(tk);
+      if (q) mkState.prices[tk] = q;
+    }));
+    MK_PANELS.forEach(p => { mkRenderCards(p); mkRenderTable(p); });
+  }
+  const upEl = document.getElementById('mk-last-update-hdr');
+  if (upEl) upEl.textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  if (icon) icon.classList.remove('mk-spinning');
+}
+
+async function mkPreloadHistory() {
+  const preloadPeriods = ['1D','5D','1M','3M','YTD','1Y','3Y','5Y'];
+  for (const item of TICKERS) {
+    for (const period of preloadPeriods) {
+      await mkFetchHistory(item.t, period);
+      mkRenderTable(item.p);
+    }
+    await new Promise(r=>setTimeout(r,60));
+  }
+}
+
+window.mkRefreshAll = async function() {
+  mkState.history = {};
+  await mkFetchAllQuotes();
+  MK_PANELS.forEach(p => { if(mkState.selected[p]) mkRenderChart(p); });
+  mkPreloadHistory();
+};
+
+function mkScheduleAuto() {
+  if (mkState.autoTimer) clearTimeout(mkState.autoTimer);
+  if (!mkState.autoOn) return;
+  mkState.autoTimer = setTimeout(() => { mkRefreshAll(); mkScheduleAuto(); }, 60000);
+}
+
+/* ── boot (called once when page is first shown) ───────────────────── */
+window.mkBoot = function() {
+  if (mkState.booted) return;
+  mkState.booted = true;
+  MK_PANELS.forEach(p => {
+    mkRenderPeriods(p);
+    mkRenderCards(p);
+    mkRenderTable(p);
+    const first = TICKERS.find(t=>t.p===p && t.card);
+    if (first) mkState.selected[p] = first.t;
+  });
+  mkFetchAllQuotes().then(() => { mkPreloadHistory(); mkScheduleAuto(); });
+};
+
+})();
+
 async function fredBoot() {
   try {
     const r = await fetch(FRED_DATA_URL+'?_='+Date.now());
