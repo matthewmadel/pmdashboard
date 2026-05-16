@@ -1,0 +1,31 @@
+name: Update FRED Data
+
+on:
+  schedule:
+    - cron: "0 14 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install requests
+
+      - name: Fetch FRED data
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python fred_fetch.py
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add economic_data.json
+          git diff --staged --quiet || git commit -m "data: FRED update $(date -u +%Y-%m-%d)"
+          git push
