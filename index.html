@@ -4816,10 +4816,16 @@ window.mcShowTab = function(tab, btn) {
     if (p) p.style.display = 'none';
   });
   const panel = document.getElementById('mc-panel-' + tab);
-  if (panel) { panel.style.display = 'flex'; panel.style.flexDirection = 'column'; }
+  if (panel) {
+    panel.style.display    = 'flex';
+    panel.style.flexDirection = 'column';
+    panel.style.flex       = '1';
+    panel.style.minHeight  = '0';
+    panel.style.overflow   = 'hidden';
+  }
   document.querySelectorAll('#page-monte-carlo .mk-tab').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  if (tab === 'cma') cmaRender();
+  if (tab === 'cma') try { cmaRender(); } catch(e) { console.error(e); }
 };
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -4998,6 +5004,13 @@ window.cmaAddToPortfolio = function(idx) {
   const tbody = document.getElementById('mc-asset-tbody');
   if (tbody) tbody.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
+
+window.cmaRender  = cmaRender;
+window.cmaFilter  = cmaFilter;
+window.cmaSort    = cmaSort;
+
+// Pre-render table immediately so it's ready when tab is first clicked
+try { cmaRender(); } catch(e) { console.error('cmaRender init error:', e); }
 </script>
 </body>
 </html>
