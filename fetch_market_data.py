@@ -160,15 +160,6 @@ TICKERS = [
     {"key": "ETH-USD",  "fetch": "ETH-USD",  "name": "Ethereum",               "panel": "crypto"},
     {"key": "BNB-USD",  "fetch": "BNB-USD",  "name": "BNB",                    "panel": "crypto"},
     {"key": "SOL-USD",  "fetch": "SOL-USD",  "name": "Solana",                 "panel": "crypto"},
-    {"key": "XRP-USD",  "fetch": "XRP-USD",  "name": "XRP",                    "panel": "crypto"},
-    {"key": "DOGE-USD", "fetch": "DOGE-USD", "name": "Dogecoin",               "panel": "crypto"},
-    {"key": "ADA-USD",  "fetch": "ADA-USD",  "name": "Cardano",                "panel": "crypto"},
-    {"key": "AVAX-USD", "fetch": "AVAX-USD", "name": "Avalanche",              "panel": "crypto"},
-    {"key": "LINK-USD", "fetch": "LINK-USD", "name": "Chainlink",              "panel": "crypto"},
-    {"key": "DOT-USD",  "fetch": "DOT-USD",  "name": "Polkadot",               "panel": "crypto"},
-    {"key": "LTC-USD",  "fetch": "LTC-USD",  "name": "Litecoin",               "panel": "crypto"},
-    {"key": "UNI-USD",  "fetch": "UNI-USD",  "name": "Uniswap",                "panel": "crypto"},
-    {"key": "ATOM-USD", "fetch": "ATOM-USD", "name": "Cosmos",                 "panel": "crypto"},
 ]
 
 # ── LOGGING ───────────────────────────────────────────────────────────────────
