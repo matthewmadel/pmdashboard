@@ -2785,6 +2785,17 @@ async function fredLoadHeaderTickers() {
 /* ══════════════════════════════════════════════════════════════════════
    BOOT
 ══════════════════════════════════════════════════════════════════════ */
+// ── Crypto constants (global — used by cryptoBoot outside the IIFE) ──────────
+const CRYPTO_DATA_URL = './markets_crypto.json';
+const CRYPTO_TICKERS = [
+  {t:'BTC-USD', n:'Bitcoin',  d:2},
+  {t:'ETH-USD', n:'Ethereum', d:2},
+  {t:'BNB-USD', n:'BNB',      d:2},
+  {t:'SOL-USD', n:'Solana',   d:2},
+];
+const MK_TABLE_PERIODS_CRYPTO = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y'];
+let cryptoState = { prices:{}, rawHistory:{}, selected:null, period:'1Y', booted:false };
+
 /* ══════════════════════════════════════════════════════════════════════
    MARKETS ENGINE — Yahoo Finance via allorigins.win CORS proxy
    D3-based charts matching existing FRED chart style
@@ -3208,15 +3219,6 @@ const MK_DATA_URLS = {
   vol:    './markets_vol.json',
 };
 
-const CRYPTO_DATA_URL = './markets_crypto.json';
-const CRYPTO_TICKERS = [
-  {t:'BTC-USD', n:'Bitcoin',  d:2},
-  {t:'ETH-USD', n:'Ethereum', d:2},
-  {t:'BNB-USD', n:'BNB',      d:2},
-  {t:'SOL-USD', n:'Solana',   d:2},
-];
-const MK_TABLE_PERIODS_CRYPTO = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y'];
-let cryptoState = { prices:{}, rawHistory:{}, selected:null, period:'1Y', booted:false };
 const mkPanelLoaded = {}; // tracks which panels have been fetched
 
 // Period boundary helpers — returns ISO date string for start of period
