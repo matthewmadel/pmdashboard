@@ -1573,32 +1573,26 @@ a      { color: inherit; text-decoration: none; }
 
             <!-- Cash Flows -->
             <div class="mc-section">
-              <div class="mc-section-header"><span class="mc-section-title">Cash Flows</span></div>
-              <div class="mc-section-body">
-                <div class="mc-row-2">
-                  <div class="mc-field">
-                    <div class="mc-label">Annual Flow ($)</div>
-                    <input class="mc-input" id="mc-cashflow" type="text" value="0" placeholder="− withdrawal, + contribution">
-                  </div>
-                  <div class="mc-field">
-                    <div class="mc-label">Flow Type</div>
-                    <select class="mc-select" id="mc-flow-type">
-                      <option value="fixed">Fixed Dollar</option>
-                      <option value="pct">% of Balance</option>
-                      <option value="real">Fixed Real (inflation-adj.)</option>
-                    </select>
-                  </div>
+              <div class="mc-section-header">
+                <span class="mc-section-title">Cash Flows</span>
+                <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">+ contribution · − withdrawal</span>
+              </div>
+              <div class="mc-section-body" style="padding:10px;">
+                <div style="overflow-x:auto;">
+                  <table class="mc-asset-table" style="min-width:480px;">
+                    <thead><tr>
+                      <th style="min-width:90px">Label</th>
+                      <th style="width:80px">Amount</th>
+                      <th style="min-width:100px">Type</th>
+                      <th style="width:52px">Yr Start</th>
+                      <th style="width:52px">Yr End</th>
+                      <th style="width:24px"></th>
+                    </tr></thead>
+                    <tbody id="mc-flow-tbody"></tbody>
+                  </table>
                 </div>
-                <div class="mc-row-2">
-                  <div class="mc-field">
-                    <div class="mc-label">Start Year</div>
-                    <input class="mc-input" id="mc-flow-start" type="number" min="1" value="1">
-                  </div>
-                  <div class="mc-field">
-                    <div class="mc-label">End Year</div>
-                    <input class="mc-input" id="mc-flow-end" type="number" min="1" value="20">
-                  </div>
-                </div>
+                <button class="mc-add-btn" onclick="mcAddFlow()">+ Add Cash Flow</button>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">Positive = contribution. Negative = withdrawal. All flows are summed each year.</div>
               </div>
             </div>
 
@@ -4050,6 +4044,8 @@ const MC_CORR_DEFAULTS = {
 let mcAssets = [];   // [{name, cls, wt, ret, vol, fee}, ...]
 let mcCorrMatrix = []; // n×n user-editable correlation values
 let mcRowId = 0;
+let mcFlows = [];    // [{id, label, amt, type, start, end}, ...]
+let mcFlowId = 0;
 
 // ── Asset table ──────────────────────────────────────────────────────────
 function mcAddRow(name='', cls='US Equity', wt='', ret='', vol='', fee='0') {
@@ -4278,10 +4274,23 @@ function mcRun() {
   const rebal     = document.getElementById('mc-rebal').value;
   const model     = document.getElementById('mc-model').value;
   const df        = 5; // degrees of freedom for t-distribution
-  const flowAmt   = mcParseVal('mc-cashflow');
-  const flowType  = document.getElementById('mc-flow-type').value;
-  const flowStart = parseInt(document.getElementById('mc-flow-start').value) || 1;
-  const flowEnd   = parseInt(document.getElementById('mc-flow-end').value) || horizon;
+  // Read all cash flow rows
+  const flows = mcFlows.map(f => {
+    const row = document.getElementById('mc-flow-row-' + f.id);
+    if (row) {
+      f.label = row.querySelector('.mc-f-label').value;
+      f.amt   = row.querySelector('.mc-f-amt').value;
+      f.type  = row.querySelector('.mc-f-type').value;
+      f.start = row.querySelector('.mc-f-start').value;
+      f.end   = row.querySelector('.mc-f-end').value;
+    }
+    return {
+      amt:   parseFloat(f.amt) || 0,
+      type:  f.type || 'fixed',
+      start: parseInt(f.start) || 1,
+      end:   parseInt(f.end) || horizon,
+    };
+  }).filter(f => f.amt !== 0);
   const target    = mcParseVal('mc-target');
   const floor     = mcParseVal('mc-floor');
 
@@ -4331,16 +4340,21 @@ function mcRun() {
             for (let i = 0; i < n; i++) aVal[i] = total * targetWeights[i];
           }
 
-          // Cash flow (applied after rebalancing)
-          if (t >= flowStart && t <= flowEnd && flowAmt !== 0) {
-            let cf = 0;
-            if (flowType === 'fixed')       cf = flowAmt;
-            else if (flowType === 'real')   cf = flowAmt * Math.pow(1 + inflation, t - 1);
-            else if (flowType === 'pct')    cf = total * (flowAmt / 100);
-            total += cf;
-            if (total < 0) total = 0;
-            // Redistribute to target weights after cash flow
-            for (let i = 0; i < n; i++) aVal[i] = total * targetWeights[i];
+          // Apply all cash flows (summed)
+          if (flows.length > 0) {
+            let netCF = 0;
+            for (let fi = 0; fi < flows.length; fi++) {
+              const f = flows[fi];
+              if (t < f.start || t > f.end) continue;
+              if (f.type === 'fixed')     netCF += f.amt;
+              else if (f.type === 'real') netCF += f.amt * Math.pow(1 + inflation, t - 1);
+              else if (f.type === 'pct')  netCF += total * (f.amt / 100);
+            }
+            if (netCF !== 0) {
+              total += netCF;
+              if (total < 0) total = 0;
+              for (let i = 0; i < n; i++) aVal[i] = total * targetWeights[i];
+            }
           }
 
           if (total < 0) total = 0;
@@ -4635,8 +4649,50 @@ function mcDrawRuinChart(paths, floor, nPaths, horizon) {
   }).on('mouseleave',()=>{vline2.style('display','none');rdot.style('display','none');ruinTT.style.opacity='0';});
 }
 
+// ── Cash flow table ───────────────────────────────────────────────────────
+function mcAddFlow(label='', amt='', type='fixed', start='1', end='') {
+  const id = mcFlowId++;
+  mcFlows.push({ id, label, amt, type, start, end });
+  mcRenderFlowTable();
+}
+
+function mcRemoveFlow(id) {
+  mcFlows = mcFlows.filter(f => f.id !== id);
+  mcRenderFlowTable();
+}
+
+function mcRenderFlowTable() {
+  const tbody = document.getElementById('mc-flow-tbody');
+  if (!tbody) return;
+  const horizon = parseInt(document.getElementById('mc-horizon')?.value) || 20;
+  tbody.innerHTML = mcFlows.map(f => `
+    <tr id="mc-flow-row-${f.id}">
+      <td><input class="mc-f-label" value="${f.label}" placeholder="e.g. Salary"></td>
+      <td><input class="mc-f-amt" value="${f.amt}" placeholder="e.g. -50000" type="number" step="1000"
+            style="color:${parseFloat(f.amt)<0?'var(--red)':parseFloat(f.amt)>0?'var(--green)':'var(--text)'}"></td>
+      <td><select class="mc-f-type">
+        <option value="fixed"${f.type==='fixed'?' selected':''}>Fixed $</option>
+        <option value="real"${f.type==='real'?' selected':''}>Real $ (infl-adj.)</option>
+        <option value="pct"${f.type==='pct'?' selected':''}>% of Balance</option>
+      </select></td>
+      <td><input class="mc-f-start" value="${f.start}" type="number" min="1" max="50" placeholder="1"></td>
+      <td><input class="mc-f-end"   value="${f.end||horizon}" type="number" min="1" max="50" placeholder="${horizon}"></td>
+      <td><button class="del-btn" onclick="mcRemoveFlow(${f.id})">×</button></td>
+    </tr>`).join('');
+
+  // Live color update on amount change
+  tbody.querySelectorAll('.mc-f-amt').forEach(inp => {
+    inp.addEventListener('input', function() {
+      const v = parseFloat(this.value);
+      this.style.color = v < 0 ? 'var(--red)' : v > 0 ? 'var(--green)' : 'var(--text)';
+    });
+  });
+}
+
 window.mcAddRow = mcAddRow;
 window.mcRemoveRow = mcRemoveRow;
+window.mcAddFlow = mcAddFlow;
+window.mcRemoveFlow = mcRemoveFlow;
 window.mcRun = mcRun;
 window.mcToggleCorr = mcToggleCorr;
 window.mcCorrEdit = mcCorrEdit;
