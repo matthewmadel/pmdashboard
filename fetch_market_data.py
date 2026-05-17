@@ -51,7 +51,15 @@ except ImportError:
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 
-OUTPUT_FILE = Path(__file__).parent / "markets_data.json"
+OUTPUT_DIR  = Path(__file__).parent
+PANEL_FILES = {
+    "eq":     OUTPUT_DIR / "markets_eq.json",
+    "rates":  OUTPUT_DIR / "markets_rates.json",
+    "fx":     OUTPUT_DIR / "markets_fx.json",
+    "cmd":    OUTPUT_DIR / "markets_cmd.json",
+    "credit": OUTPUT_DIR / "markets_credit.json",
+    "vol":    OUTPUT_DIR / "markets_vol.json",
+}
 LOG_LEVEL   = logging.INFO
 DRY_RUN     = "--dry-run" in sys.argv
 
@@ -131,16 +139,16 @@ TICKERS = [
     {"key": "ZW=F",    "fetch": "ZW=F",      "name": "Wheat",                 "panel": "cmd"},
     {"key": "ZS=F",    "fetch": "ZS=F",      "name": "Soybeans",              "panel": "cmd"},
     {"key": "KC=F",    "fetch": "KC=F",      "name": "Coffee",                "panel": "cmd"},
-    {"key": "LBS=F",   "fetch": "LBS=F",     "name": "Lumber",                "panel": "cmd"},
+    {"key": "LBS=F",   "fetch": "WOOD",      "name": "Lumber",                "panel": "cmd"},
 
     # ── CREDIT ────────────────────────────────────────────────────────────────
     {"key": "LQD",     "fetch": "LQD",       "name": "U.S. IG Corporate",     "panel": "credit"},
     {"key": "HYG",     "fetch": "HYG",       "name": "U.S. High Yield",       "panel": "credit"},
     {"key": "BKLN",    "fetch": "BKLN",      "name": "Senior Loans",          "panel": "credit"},
     {"key": "AGG",     "fetch": "AGG",        "name": "U.S. Aggregate",       "panel": "credit"},
-    {"key": "AGGG",    "fetch": "AGGG",      "name": "Global Aggregate",       "panel": "credit"},
-    {"key": "LQDE",    "fetch": "LQDE",      "name": "Euro IG Corporate",      "panel": "credit"},
-    {"key": "IHYG",    "fetch": "IHYG",      "name": "Euro High Yield",        "panel": "credit"},
+    {"key": "AGGG",    "fetch": "IAGG",      "name": "Global Aggregate",       "panel": "credit"},
+    {"key": "LQDE",    "fetch": "VCIT",      "name": "Euro IG Corporate",      "panel": "credit"},
+    {"key": "IHYG",    "fetch": "HYXU",      "name": "Euro High Yield",        "panel": "credit"},
     {"key": "EMB",     "fetch": "EMB",       "name": "EM Sovereign USD",       "panel": "credit"},
 
     # ── VOLATILITY ────────────────────────────────────────────────────────────
@@ -228,7 +236,7 @@ def main():
             log.info("  %-20s  %s%s", t["key"], t["name"], proxy)
         return
 
-    log.info("Starting market data fetch — %d tickers, %dY history each",
+    log.info("Starting market data fetch — %d tickers, history=%s",
              len(TICKERS), HISTORY_YEARS)
 
     quotes  = {}
@@ -261,17 +269,27 @@ def main():
 
         time.sleep(BATCH_PAUSE)
 
-    # Assemble output
-    output = {
-        "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "quotes":     quotes,
-        "history":    history,
-    }
+    # Write one file per panel
+    updated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    panels = {p: {"updated_at": updated_at, "quotes": {}, "history": {}}
+              for p in PANEL_FILES}
 
-    OUTPUT_FILE.write_text(json.dumps(output, separators=(",", ":")))
-    size_kb = OUTPUT_FILE.stat().st_size / 1024
+    for ticker in TICKERS:
+        key   = ticker["key"]
+        panel = ticker["panel"]
+        if key in quotes:
+            panels[panel]["quotes"][key]  = quotes[key]
+            panels[panel]["history"][key] = history[key]
 
-    log.info("Written %s  (%.1f KB)", OUTPUT_FILE, size_kb)
+    total_kb = 0
+    for panel, path in PANEL_FILES.items():
+        path.write_text(json.dumps(panels[panel], separators=(",", ":")))
+        kb = path.stat().st_size / 1024
+        total_kb += kb
+        log.info("Written %s  (%.1f KB,  %d tickers)",
+                 path.name, kb, len(panels[panel]["quotes"]))
+
+    log.info("Total: %.1f KB across %d files", total_kb, len(PANEL_FILES))
     log.info("Success: %d  /  Errors: %d  /  Total: %d",
              len(quotes), len(errors), len(TICKERS))
     if errors:
