@@ -2859,7 +2859,7 @@ const TICKERS = [
 ];
 
 const mkState = {
-  prices: {}, history: {},
+  prices: {}, history: {}, rawHistory: {},
   selected: {eq:null,rates:null,fx:null,cmd:null,credit:null,vol:null},
   period:   {eq:'1Y', rates:'1Y', fx:'1Y', cmd:'1Y', credit:'1Y', vol:'1Y'},
   autoOn: true, autoTimer: null, booted: false,
@@ -3153,40 +3153,179 @@ window.mkSelectPeriod = function(panel, period) {
   mkRenderChart(panel);
 };
 
-/* ── data fetch ─────────────────────────────────────────────────────── */
-async function mkFetchAllQuotes() {
+/* ══════════════════════════════════════════════════════════════════════
+   DATA LAYER — cache-first architecture
+   1. On boot: load markets_data.json (written by fetch_market_data.py)
+      → instant quotes + full history for all period columns
+   2. Fallback: if JSON not found, fetch live quotes via Yahoo proxy
+      → 1D only, longer periods show — until cache is built
+   3. Refresh button: reloads cache file + any live quotes available
+══════════════════════════════════════════════════════════════════════ */
+
+const MK_DATA_URL = './markets_data.json';
+
+// Period boundary helpers — returns ISO date string for start of period
+function mkPeriodStartDate(period) {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+  if (period === '1D')  return new Date(y, m, d - 1).toISOString().slice(0,10);
+  if (period === '5D')  return new Date(y, m, d - 5).toISOString().slice(0,10);
+  if (period === 'MTD') return new Date(y, m, 1).toISOString().slice(0,10);
+  if (period === '1M')  return new Date(y, m - 1, d).toISOString().slice(0,10);
+  if (period === 'QTD') return new Date(y, Math.floor(m/3)*3, 1).toISOString().slice(0,10);
+  if (period === '3M')  return new Date(y, m - 3, d).toISOString().slice(0,10);
+  if (period === 'YTD') return new Date(y, 0, 1).toISOString().slice(0,10);
+  if (period === '1Y')  return new Date(y - 1, m, d).toISOString().slice(0,10);
+  if (period === '3Y')  return new Date(y - 3, m, d).toISOString().slice(0,10);
+  if (period === '5Y')  return new Date(y - 5, m, d).toISOString().slice(0,10);
+  if (period === '7Y')  return new Date(y - 7, m, d).toISOString().slice(0,10);
+  if (period === '10Y') return new Date(y - 10, m, d).toISOString().slice(0,10);
+  if (period === '20Y') return new Date(y - 20, m, d).toISOString().slice(0,10);
+  if (period === '30Y') return new Date(y - 30, m, d).toISOString().slice(0,10);
+  return null; // All
+}
+
+// Calculate period return from cached history rows [{date, close}]
+function mkCalcReturn(rows, period) {
+  if (!rows || rows.length < 2) return null;
+  const startDate = mkPeriodStartDate(period);
+  let startRow;
+  if (startDate) {
+    // Find the last row on or before startDate
+    startRow = null;
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (rows[i].date <= startDate) { startRow = rows[i]; break; }
+    }
+    if (!startRow) startRow = rows[0];
+  } else {
+    startRow = rows[0]; // All
+  }
+  const endRow = rows[rows.length - 1];
+  if (!startRow || !endRow || !startRow.close) return null;
+  return ((endRow.close - startRow.close) / startRow.close) * 100;
+}
+
+// Build history array for D3 chart from cached rows + period
+function mkHistoryForChart(rows, period) {
+  if (!rows || rows.length < 2) return null;
+  const startDate = mkPeriodStartDate(period);
+  let filtered = startDate ? rows.filter(r => r.date >= startDate) : rows;
+  if (filtered.length < 2) filtered = rows.slice(-2);
+  return {
+    timestamps: filtered.map(r => new Date(r.date + 'T12:00:00').getTime() / 1000),
+    prices:     filtered.map(r => r.close),
+  };
+}
+
+/* ── load cache from markets_data.json ───────────────────────────────── */
+async function mkLoadCache() {
+  try {
+    const r = await fetch(MK_DATA_URL + '?_=' + Date.now());
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+
+    // Populate quotes
+    if (j.quotes) {
+      Object.entries(j.quotes).forEach(([key, q]) => {
+        mkState.prices[key] = q;
+      });
+    }
+
+    // Populate history cache so mkFetchHistory returns instantly
+    if (j.history) {
+      Object.entries(j.history).forEach(([key, rows]) => {
+        mkState.rawHistory[key] = rows; // store raw rows
+      });
+    }
+
+    const ts = j.updated_at
+      ? new Date(j.updated_at).toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})
+      : 'cached';
+    const upEl = document.getElementById('mk-last-update-hdr');
+    if (upEl) upEl.textContent = ts;
+
+    return true;
+  } catch(e) {
+    console.warn('markets_data.json not found — falling back to live proxy:', e.message);
+    return false;
+  }
+}
+
+/* ── live proxy fallback (1D quotes only) ────────────────────────────── */
+async function mkFetchLiveQuotes() {
   const icon = document.getElementById('mk-refresh-icon-hdr');
   if (icon) icon.classList.add('mk-spinning');
   const BATCH = 6;
-  const tickers = TICKERS.map(t=>t.t);
-  for (let i=0; i<tickers.length; i+=BATCH) {
-    await Promise.all(tickers.slice(i,i+BATCH).map(async tk => {
+  const tickers = TICKERS.map(t => t.t);
+  for (let i = 0; i < tickers.length; i += BATCH) {
+    await Promise.all(tickers.slice(i, i + BATCH).map(async tk => {
       const q = await mkFetchQuote(tk);
       if (q) mkState.prices[tk] = q;
     }));
     MK_PANELS.forEach(p => { mkRenderCards(p); mkRenderTable(p); });
   }
   const upEl = document.getElementById('mk-last-update-hdr');
-  if (upEl) upEl.textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  if (upEl) upEl.textContent = 'Live · ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
   if (icon) icon.classList.remove('mk-spinning');
 }
 
-async function mkPreloadHistory() {
-  const preloadPeriods = ['1D','5D','1M','3M','YTD','1Y','3Y','5Y'];
-  for (const item of TICKERS) {
-    for (const period of preloadPeriods) {
-      await mkFetchHistory(item.t, period);
-      mkRenderTable(item.p);
-    }
-    await new Promise(r=>setTimeout(r,60));
+/* ── override mkFetchHistory to use raw cache first ─────────────────── */
+const _mkFetchHistoryOrig = mkFetchHistory;
+mkFetchHistory = async function(ticker, period) {
+  const key = `${ticker}|${period}`;
+  if (mkState.history[key]) return mkState.history[key];
+  // Try raw cache first
+  const rows = mkState.rawHistory[ticker];
+  if (rows && rows.length >= 2) {
+    const h = mkHistoryForChart(rows, period);
+    if (h) { mkState.history[key] = h; return h; }
   }
-}
+  // Fall back to live fetch
+  return _mkFetchHistoryOrig(ticker, period);
+};
+
+/* ── table rendering: use raw cache for period calcs ─────────────────── */
+const _mkRenderTableOrig = mkRenderTable;
+mkRenderTable = function(panel) {
+  const tbody = document.getElementById(`mk-tbody-${panel}`);
+  if (!tbody) return;
+  const items = TICKERS.filter(t => t.p === panel);
+  let html = '', lastGroup = null;
+  items.forEach(item => {
+    if (item.g !== lastGroup) {
+      html += `<tr class="mk-group-hdr"><td colspan="12">${item.g}</td></tr>`;
+      lastGroup = item.g;
+    }
+    const q = mkState.prices[item.t];
+    const sel = mkState.selected[panel] === item.t ? ' style="background:rgba(212,164,76,0.05)"' : '';
+    const priceStr = q ? mkFmtPrice(q.price, item.d, item.yield) : '<span class="mk-loading">···</span>';
+    const etfTag = item.etf ? ' <span style="font-size:8px;color:var(--text3);font-family:var(--mono)">ETF</span>' : '';
+    const rows = mkState.rawHistory[item.t];
+    const periodCells = MK_TABLE_PERIODS.map(period => {
+      if (period === '1D') {
+        return `<td>${q ? mkFmtChg(q.changePct) : '<span style="color:var(--text3)">—</span>'}</td>`;
+      }
+      // Use raw history for accurate period calcs
+      const ret = rows ? mkCalcReturn(rows, period) : null;
+      return `<td>${ret != null ? mkFmtChg(ret) : '<span style="color:var(--text3)">—</span>'}</td>`;
+    }).join('');
+    html += `<tr class="mk-row"${sel} onclick="mkSelectTicker('${panel}','${item.t}')" style="cursor:pointer">
+      <td>${item.n}${etfTag}</td>
+      <td style="text-align:right;font-family:var(--mono);font-weight:500;color:var(--text)">${priceStr}</td>
+      ${periodCells}
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+};
 
 window.mkRefreshAll = async function() {
+  const icon = document.getElementById('mk-refresh-icon-hdr');
+  if (icon) icon.classList.add('mk-spinning');
   mkState.history = {};
-  await mkFetchAllQuotes();
-  MK_PANELS.forEach(p => { if(mkState.selected[p]) mkRenderChart(p); });
-  mkPreloadHistory();
+  const cacheLoaded = await mkLoadCache();
+  if (!cacheLoaded) await mkFetchLiveQuotes();
+  MK_PANELS.forEach(p => { mkRenderCards(p); mkRenderTable(p); if (mkState.selected[p]) mkRenderChart(p); });
+  if (icon) icon.classList.remove('mk-spinning');
 };
 
 function mkScheduleAuto() {
@@ -3195,7 +3334,7 @@ function mkScheduleAuto() {
   mkState.autoTimer = setTimeout(() => { mkRefreshAll(); mkScheduleAuto(); }, 60000);
 }
 
-/* ── boot (called once when page is first shown) ───────────────────── */
+/* ── boot ─────────────────────────────────────────────────────────────── */
 window.mkBoot = function() {
   if (mkState.booted) return;
   mkState.booted = true;
@@ -3203,10 +3342,14 @@ window.mkBoot = function() {
     mkRenderPeriods(p);
     mkRenderCards(p);
     mkRenderTable(p);
-    const first = TICKERS.find(t=>t.p===p && t.card);
+    const first = TICKERS.find(t => t.p === p && t.card);
     if (first) mkState.selected[p] = first.t;
   });
-  mkFetchAllQuotes().then(() => { mkPreloadHistory(); mkScheduleAuto(); });
+  mkLoadCache().then(cacheLoaded => {
+    MK_PANELS.forEach(p => { mkRenderCards(p); mkRenderTable(p); });
+    if (!cacheLoaded) mkFetchLiveQuotes();
+    mkScheduleAuto();
+  });
 };
 
 })();
