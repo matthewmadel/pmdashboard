@@ -75,8 +75,8 @@ def fetch_one(ticker: dict):
         try:
             tk = yf.Ticker(symbol)
 
-            # 1-minute bars for today
-            hist_1m = tk.history(period="1d", interval="1m",
+            # 1-minute bars for last 5 days
+            hist_1m = tk.history(period="5d", interval="1m",
                                  auto_adjust=True, actions=False)
 
             # 5-day daily for previous close

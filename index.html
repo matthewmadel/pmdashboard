@@ -3054,9 +3054,17 @@ function mkRenderChart(panel) {
   if (statEl) statEl.textContent = '';
 
   mkFetchHistory(ticker, period).then(h => {
-    // For 1D period, substitute intraday bars if available
-    const intradayBars = period === '1D' && mkIntraday.bars[panel]?.[ticker];
-    if (intradayBars && intradayBars.length >= 2) {
+    // For 1D/5D periods, substitute intraday 1m bars if available
+    const allIntradayBars = (period === '1D' || period === '5D') && mkIntraday.bars[panel]?.[ticker];
+    let intradayBars = allIntradayBars;
+    if (allIntradayBars && allIntradayBars.length >= 2) {
+      if (period === '1D') {
+        // Only today's bars — filter to current calendar date
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const todayTs  = new Date(todayStr + 'T00:00:00').getTime() / 1000;
+        intradayBars   = allIntradayBars.filter(b => b[0] >= todayTs);
+        if (intradayBars.length < 2) intradayBars = allIntradayBars.slice(-60); // fallback: last 60 bars
+      }
       h = {
         timestamps: intradayBars.map(b => b[0]),
         prices:     intradayBars.map(b => b[1]),
@@ -3071,7 +3079,7 @@ function mkRenderChart(panel) {
     let retLabel = period;
 
     // For 1D with intraday data, use prev close for accurate return
-    if (period === '1D' && intradayBars) {
+    if (period === '1D' && intradayBars && intradayBars.length > 0) {
       const prevClose = mkIntraday.quotes[panel]?.[ticker]?.prev;
       if (prevClose && last) {
         ret = ((last - prevClose) / prevClose) * 100;
