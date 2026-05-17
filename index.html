@@ -1547,7 +1547,7 @@ a      { color: inherit; text-decoration: none; }
         <!-- MC tab bar -->
         <div style="background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 24px;flex-shrink:0;">
           <button class="mk-tab active" id="mc-tab-btn-simulator" onclick="mcShowTab('simulator',this)">Simulator</button>
-          <button class="mk-tab" id="mc-tab-btn-cma" onclick="mcShowTab('cma',this)">Return Assumptions</button>
+          <button class="mk-tab" id="mc-tab-btn-cma" onclick="mcShowTab('cma',this);cmaRender()">Return Assumptions</button>
         </div>
 
         <!-- Simulator panel -->
@@ -1950,11 +1950,12 @@ function doLogin() {
   document.getElementById('login-overlay').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
   updateTimestamp();
-  // Show markets page by default and boot it
   showPage('markets');
   mkBoot();
   mkNavPanel('eq');
   fredBoot();
+  // Pre-populate CMA table now that the DOM is visible
+  try { cmaRender(); } catch(e) { console.error('cmaRender:', e); }
 }
 function doLogout() {
   document.getElementById('app').style.display = 'none';
