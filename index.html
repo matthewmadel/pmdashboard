@@ -3056,19 +3056,21 @@ function mkRenderChart(panel) {
   mkFetchHistory(ticker, period).then(h => {
     // For 1D/5D periods, substitute intraday 1m bars if available
     const allIntradayBars = (period === '1D' || period === '5D') && mkIntraday.bars[panel]?.[ticker];
-    let intradayBars = allIntradayBars;
+    let intradayBars = allIntradayBars || null;
     if (allIntradayBars && allIntradayBars.length >= 2) {
       if (period === '1D') {
-        // Only today's bars — filter to current calendar date
-        const todayStr = new Date().toISOString().slice(0, 10);
-        const todayTs  = new Date(todayStr + 'T00:00:00').getTime() / 1000;
-        intradayBars   = allIntradayBars.filter(b => b[0] >= todayTs);
-        if (intradayBars.length < 2) intradayBars = allIntradayBars.slice(-60); // fallback: last 60 bars
+        // Last 24 hours — avoids all timezone issues
+        const cutoff = (Date.now() / 1000) - 86400;
+        intradayBars = allIntradayBars.filter(b => b[0] >= cutoff);
+        if (intradayBars.length < 2) intradayBars = allIntradayBars.slice(-390); // 1 trading session
       }
-      h = {
-        timestamps: intradayBars.map(b => b[0]),
-        prices:     intradayBars.map(b => b[1]),
-      };
+      // 5D: use all bars as-is (fetch script already limits to 5 days)
+      if (intradayBars && intradayBars.length >= 2) {
+        h = {
+          timestamps: intradayBars.map(b => b[0]),
+          prices:     intradayBars.map(b => b[1]),
+        };
+      }
     }
 
     if (!h) { if(overlay){overlay.textContent='No data available';} return; }
@@ -3148,7 +3150,9 @@ function mkRenderChart(panel) {
     // x axis
     g.append('g').attr('transform',`translate(0,${ih+6})`)
       .call(d3.axisBottom(xScale).ticks(6).tickFormat(d => {
-        if (period==='1D'||period==='5D') return d3.timeFormat('%H:%M')(d);
+        if (period==='1D') return d3.timeFormat('%H:%M')(d);
+        if (period==='5D' && intradayBars) return d3.timeFormat('%a %H:%M')(d);
+        if (period==='5D') return d3.timeFormat('%b %d')(d);
         if (period==='1M'||period==='MTD'||period==='QTD') return d3.timeFormat('%b %d')(d);
         return d3.timeFormat('%Y')(d);
       }).tickSize(0))
