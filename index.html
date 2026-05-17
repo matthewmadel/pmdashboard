@@ -755,6 +755,136 @@ a      { color: inherit; text-decoration: none; }
 .fred-annotation-line { stroke: rgba(255,255,255,0.2); stroke-width: 1; stroke-dasharray: 3 3; }
 .fred-annotation-label { fill: var(--text3); font-family: 'IBM Plex Mono'; font-size: 9px; }
 
+/* ── Monte Carlo Tool ─────────────────────────────────────────────────── */
+.mc-layout {
+  display: grid; grid-template-columns: 380px 1fr; gap: 16px;
+  flex: 1; min-height: 0; padding: 20px 24px; overflow: hidden;
+}
+.mc-left {
+  display: flex; flex-direction: column; gap: 12px;
+  overflow-y: auto; padding-right: 6px;
+}
+.mc-right {
+  display: flex; flex-direction: column; gap: 12px;
+  overflow-y: auto;
+}
+.mc-section {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.mc-section-header {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none;
+}
+.mc-section-title {
+  font-size: 11px; font-weight: 500; color: var(--text2);
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.mc-section-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.mc-field { display: flex; flex-direction: column; gap: 4px; }
+.mc-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.07em; text-transform: uppercase; }
+.mc-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 7px 10px;
+  font-family: var(--mono); font-size: 12px; color: var(--text);
+  transition: border-color 0.15s;
+}
+.mc-input:focus { outline: none; border-color: var(--amber); }
+.mc-select {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 7px 10px;
+  font-family: var(--mono); font-size: 11px; color: var(--text);
+  appearance: none; cursor: pointer;
+}
+.mc-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mc-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+/* Asset table */
+.mc-asset-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 10px; }
+.mc-asset-table th {
+  padding: 5px 6px; text-align: left; font-size: 9px; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 500;
+}
+.mc-asset-table td { padding: 4px 3px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+.mc-asset-table input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 3px; padding: 5px 6px; font-family: var(--mono); font-size: 10px;
+  color: var(--text); transition: border-color 0.12s;
+}
+.mc-asset-table input:focus { outline: none; border-color: var(--amber); }
+.mc-asset-table select {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 3px; padding: 5px 4px; font-family: var(--mono); font-size: 10px;
+  color: var(--text); appearance: none; cursor: pointer;
+}
+.mc-asset-table .del-btn {
+  color: var(--text3); padding: 4px 6px; border-radius: 3px; font-size: 12px;
+  transition: color 0.12s;
+}
+.mc-asset-table .del-btn:hover { color: var(--red); }
+.mc-add-btn {
+  font-family: var(--mono); font-size: 10px; color: var(--text3);
+  padding: 6px 10px; border: 1px dashed var(--border2); border-radius: var(--radius);
+  width: 100%; text-align: left; transition: all 0.12s;
+}
+.mc-add-btn:hover { color: var(--amber); border-color: var(--amber); }
+/* Run button */
+.mc-run-btn {
+  width: 100%; padding: 12px; background: var(--amber); color: var(--bg);
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; border-radius: var(--radius);
+  transition: background 0.15s; border: none; cursor: pointer;
+}
+.mc-run-btn:hover { background: var(--amber2); }
+.mc-run-btn:disabled { background: var(--bg4); color: var(--text3); cursor: not-allowed; }
+/* Stats grid */
+.mc-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.mc-stat-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.mc-stat-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.07em; text-transform: uppercase; }
+.mc-stat-val   { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text); line-height: 1.1; }
+.mc-stat-sub   { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.mc-stat-good  { color: var(--green); }
+.mc-stat-warn  { color: var(--amber); }
+.mc-stat-bad   { color: var(--red); }
+/* Percentile table */
+.mc-pct-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
+.mc-pct-table th {
+  padding: 7px 12px; text-align: right; font-size: 9px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 500;
+}
+.mc-pct-table th:first-child { text-align: left; }
+.mc-pct-table td { padding: 7px 12px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text2); }
+.mc-pct-table td:first-child { text-align: left; color: var(--text3); font-size: 10px; }
+.mc-pct-table tr:hover td { background: var(--bg3); }
+/* Correlation grid */
+.mc-corr-wrap { overflow-x: auto; }
+.mc-corr-table { border-collapse: collapse; font-family: var(--mono); font-size: 9px; }
+.mc-corr-table th {
+  padding: 4px 2px; text-align: center; color: var(--text3);
+  font-weight: 400; white-space: nowrap; max-width: 52px; overflow: hidden; text-overflow: ellipsis;
+}
+.mc-corr-table td { padding: 2px; }
+.mc-corr-input {
+  width: 48px; text-align: center; border-radius: 3px;
+  padding: 4px 2px; font-family: var(--mono); font-size: 9px;
+  border: 1px solid var(--border); color: var(--text); cursor: pointer;
+  background: var(--bg3);
+}
+.mc-corr-input.diag { background: var(--bg4); color: var(--text3); pointer-events: none; }
+.mc-corr-input:focus { outline: none; border-color: var(--amber); }
+/* empty state */
+.mc-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: 10px; color: var(--text3); font-family: var(--mono); font-size: 11px;
+  min-height: 200px;
+}
+.mc-legend { display: flex; gap: 16px; flex-wrap: wrap; }
+.mc-legend-item { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.mc-legend-swatch { width: 24px; height: 10px; border-radius: 2px; }
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .grid-2, .grid-3, .grid-2-1, .grid-1-2 { grid-template-columns: 1fr; }
@@ -1354,32 +1484,218 @@ a      { color: inherit; text-decoration: none; }
       <!-- ════════════════════════════════════════
            PAGE: MONTE CARLO
       ════════════════════════════════════════ -->
-      <div class="section-page" id="page-monte-carlo">
+      <div class="section-page" id="page-monte-carlo" style="flex-direction:column;overflow:hidden;">
         <div class="page-header">
           <div class="page-title-group">
             <div class="page-title">Monte Carlo Simulator <span class="page-title-badge">Tool</span></div>
-            <div class="page-subtitle">Portfolio path simulation · return distribution · VaR</div>
+            <div class="page-subtitle">Stochastic portfolio simulation · 10,000 paths · Cholesky-correlated GBM</div>
           </div>
         </div>
-        <div class="page-body">
-          <div class="grid-1-2">
-            <div style="display:flex;flex-direction:column;gap:10px;">
-              <div class="chart-container">
-                <div class="chart-container-header"><div class="chart-container-title">Simulation Inputs</div></div>
-                <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
-                  <div><div class="stat-label" style="margin-bottom:5px">Portfolio Value ($)</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-family:var(--mono);font-size:12px;color:var(--text)" value="1,000,000"></div>
-                  <div><div class="stat-label" style="margin-bottom:5px">Annual Return (%)</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-family:var(--mono);font-size:12px;color:var(--text)" value="7.0"></div>
-                  <div><div class="stat-label" style="margin-bottom:5px">Annual Volatility (%)</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-family:var(--mono);font-size:12px;color:var(--text)" value="12.0"></div>
-                  <div><div class="stat-label" style="margin-bottom:5px">Time Horizon (Years)</div><input style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-family:var(--mono);font-size:12px;color:var(--text)" value="10"></div>
+
+        <div class="mc-layout">
+
+          <!-- ── LEFT: Inputs ───────────────────────────────── -->
+          <div class="mc-left">
+
+            <!-- Portfolio Builder -->
+            <div class="mc-section">
+              <div class="mc-section-header">
+                <span class="mc-section-title">Portfolio</span>
+                <span style="font-family:var(--mono);font-size:9px;color:var(--text3)" id="mc-weight-total">0%</span>
+              </div>
+              <div class="mc-section-body" style="padding:10px;">
+                <div style="overflow-x:auto;">
+                  <table class="mc-asset-table" style="min-width:560px;">
+                    <thead><tr>
+                      <th style="min-width:100px">Name</th>
+                      <th style="min-width:90px">Asset Class</th>
+                      <th style="width:52px">Wt %</th>
+                      <th style="width:52px">Ret %</th>
+                      <th style="width:52px">Vol %</th>
+                      <th style="width:48px">Fee %</th>
+                      <th style="width:24px"></th>
+                    </tr></thead>
+                    <tbody id="mc-asset-tbody"></tbody>
+                  </table>
+                </div>
+                <button class="mc-add-btn" onclick="mcAddRow()">+ Add Asset</button>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">Weights auto-normalise to 100% at run time. Ret/Vol are annual %.</div>
+              </div>
+            </div>
+
+            <!-- Simulation Parameters -->
+            <div class="mc-section">
+              <div class="mc-section-header"><span class="mc-section-title">Simulation Parameters</span></div>
+              <div class="mc-section-body">
+                <div class="mc-row-2">
+                  <div class="mc-field">
+                    <div class="mc-label">Starting Value ($)</div>
+                    <input class="mc-input" id="mc-start-val" type="text" value="1,000,000">
+                  </div>
+                  <div class="mc-field">
+                    <div class="mc-label">Time Horizon (Yrs)</div>
+                    <input class="mc-input" id="mc-horizon" type="number" min="1" max="50" value="20">
+                  </div>
+                </div>
+                <div class="mc-row-2">
+                  <div class="mc-field">
+                    <div class="mc-label">Inflation (%/yr)</div>
+                    <input class="mc-input" id="mc-inflation" type="number" step="0.1" value="2.5">
+                  </div>
+                  <div class="mc-field">
+                    <div class="mc-label">Rebalancing</div>
+                    <select class="mc-select" id="mc-rebal">
+                      <option value="annual">Annual</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="none">Never</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mc-row-2">
+                  <div class="mc-field">
+                    <div class="mc-label">Return Model</div>
+                    <select class="mc-select" id="mc-model">
+                      <option value="lognormal">Log-Normal (GBM)</option>
+                      <option value="tstudent">Student-t (Fat Tails)</option>
+                    </select>
+                  </div>
+                  <div class="mc-field">
+                    <div class="mc-label">Paths</div>
+                    <select class="mc-select" id="mc-npaths">
+                      <option value="1000">1,000 (fast)</option>
+                      <option value="5000">5,000</option>
+                      <option value="10000" selected>10,000</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="chart-container">
-              <div class="chart-container-header"><div class="chart-container-title">Simulation Paths</div></div>
-              <div class="pm-chart-wrap" id="chart-mc" style="height:360px"></div>
+
+            <!-- Cash Flows -->
+            <div class="mc-section">
+              <div class="mc-section-header"><span class="mc-section-title">Cash Flows</span></div>
+              <div class="mc-section-body">
+                <div class="mc-row-2">
+                  <div class="mc-field">
+                    <div class="mc-label">Annual Flow ($)</div>
+                    <input class="mc-input" id="mc-cashflow" type="text" value="0" placeholder="− withdrawal, + contribution">
+                  </div>
+                  <div class="mc-field">
+                    <div class="mc-label">Flow Type</div>
+                    <select class="mc-select" id="mc-flow-type">
+                      <option value="fixed">Fixed Dollar</option>
+                      <option value="pct">% of Balance</option>
+                      <option value="real">Fixed Real (inflation-adj.)</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mc-row-2">
+                  <div class="mc-field">
+                    <div class="mc-label">Start Year</div>
+                    <input class="mc-input" id="mc-flow-start" type="number" min="1" value="1">
+                  </div>
+                  <div class="mc-field">
+                    <div class="mc-label">End Year</div>
+                    <input class="mc-input" id="mc-flow-end" type="number" min="1" value="20">
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+
+            <!-- Targets -->
+            <div class="mc-section">
+              <div class="mc-section-header"><span class="mc-section-title">Targets &amp; Thresholds</span></div>
+              <div class="mc-section-body">
+                <div class="mc-row-2">
+                  <div class="mc-field">
+                    <div class="mc-label">Target Terminal ($)</div>
+                    <input class="mc-input" id="mc-target" type="text" value="2,000,000">
+                  </div>
+                  <div class="mc-field">
+                    <div class="mc-label">Ruin Threshold ($)</div>
+                    <input class="mc-input" id="mc-floor" type="text" value="0">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Correlation Matrix -->
+            <div class="mc-section">
+              <div class="mc-section-header" onclick="mcToggleCorr()">
+                <span class="mc-section-title">Correlation Matrix</span>
+                <span style="font-family:var(--mono);font-size:9px;color:var(--text3)" id="mc-corr-toggle-label">Show ▼</span>
+              </div>
+              <div id="mc-corr-body" style="display:none;padding:12px;">
+                <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:8px;">Auto-seeded from asset class. Edit any cell — symmetric pairs update automatically.</div>
+                <div class="mc-corr-wrap" id="mc-corr-wrap"></div>
+              </div>
+            </div>
+
+            <!-- Run -->
+            <button class="mc-run-btn" id="mc-run-btn" onclick="mcRun()">Run Simulation</button>
+
+          </div><!-- /mc-left -->
+
+          <!-- ── RIGHT: Outputs ─────────────────────────────── -->
+          <div class="mc-right" id="mc-right">
+
+            <!-- empty state -->
+            <div class="mc-empty" id="mc-empty-state">
+              <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" fill="none" stroke-width="1.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              <div>Configure your portfolio and run the simulation</div>
+            </div>
+
+            <!-- Results (hidden until run) -->
+            <div id="mc-results" style="display:none;display:flex;flex-direction:column;gap:12px;">
+
+              <!-- Summary stat cards -->
+              <div class="mc-stat-grid" id="mc-stat-grid"></div>
+
+              <!-- Fan chart -->
+              <div class="mc-section">
+                <div class="mc-section-header" style="cursor:default;">
+                  <span class="mc-section-title">Portfolio Paths — Percentile Fan</span>
+                  <div class="mc-legend" id="mc-fan-legend">
+                    <div class="mc-legend-item"><div class="mc-legend-swatch" style="background:rgba(212,164,76,0.12)"></div>5–95th pct</div>
+                    <div class="mc-legend-item"><div class="mc-legend-swatch" style="background:rgba(212,164,76,0.22)"></div>25–75th pct</div>
+                    <div class="mc-legend-item"><div class="mc-legend-swatch" style="background:var(--amber);height:2px;margin-top:4px"></div>Median</div>
+                  </div>
+                </div>
+                <div style="position:relative;height:300px;" id="mc-fan-wrap"></div>
+              </div>
+
+              <!-- Percentile outcome table -->
+              <div class="mc-section">
+                <div class="mc-section-header" style="cursor:default;"><span class="mc-section-title">Terminal Value by Percentile</span></div>
+                <div style="overflow-x:auto;">
+                  <table class="mc-pct-table" id="mc-pct-table">
+                    <thead><tr>
+                      <th style="text-align:left">Percentile</th>
+                      <th>Terminal Value</th>
+                      <th>vs. Start</th>
+                      <th>CAGR</th>
+                      <th>Max Drawdown</th>
+                    </tr></thead>
+                    <tbody id="mc-pct-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Bottom row: histogram + ruin -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="mc-section">
+                  <div class="mc-section-header" style="cursor:default;"><span class="mc-section-title">Terminal Wealth Distribution</span></div>
+                  <div style="position:relative;height:220px;" id="mc-hist-wrap"></div>
+                </div>
+                <div class="mc-section">
+                  <div class="mc-section-header" style="cursor:default;"><span class="mc-section-title">Probability of Ruin Over Time</span></div>
+                  <div style="position:relative;height:220px;" id="mc-ruin-wrap"></div>
+                </div>
+              </div>
+
+            </div><!-- /mc-results -->
+          </div><!-- /mc-right -->
+        </div><!-- /mc-layout -->
       </div>
 
       <!-- ════════════════════════════════════════
@@ -3711,6 +4027,606 @@ function cryptoRenderChart() {
 window.cryptoBoot = cryptoBoot;
 window.cryptoSelect = cryptoSelect;
 window.cryptoSetPeriod = cryptoSetPeriod;
+
+/* ══════════════════════════════════════════════════════════════════════
+   MONTE CARLO SIMULATOR
+══════════════════════════════════════════════════════════════════════ */
+
+// ── Asset class correlation presets ──────────────────────────────────────
+const MC_ASSET_CLASSES = ['US Equity','Intl Equity','Bonds','Commodities','Real Estate','Crypto','Cash','Other'];
+
+const MC_CORR_DEFAULTS = {
+  'US Equity':   {'US Equity':1.00,'Intl Equity':0.75,'Bonds':-0.10,'Commodities':0.10,'Real Estate':0.65,'Crypto':0.30,'Cash':0.00,'Other':0.50},
+  'Intl Equity': {'US Equity':0.75,'Intl Equity':1.00,'Bonds':-0.05,'Commodities':0.15,'Real Estate':0.60,'Crypto':0.25,'Cash':0.00,'Other':0.45},
+  'Bonds':       {'US Equity':-0.10,'Intl Equity':-0.05,'Bonds':1.00,'Commodities':-0.05,'Real Estate':0.10,'Crypto':-0.10,'Cash':0.30,'Other':0.00},
+  'Commodities': {'US Equity':0.10,'Intl Equity':0.15,'Bonds':-0.05,'Commodities':1.00,'Real Estate':0.10,'Crypto':0.15,'Cash':0.00,'Other':0.10},
+  'Real Estate': {'US Equity':0.65,'Intl Equity':0.60,'Bonds':0.10,'Commodities':0.10,'Real Estate':1.00,'Crypto':0.20,'Cash':0.00,'Other':0.40},
+  'Crypto':      {'US Equity':0.30,'Intl Equity':0.25,'Bonds':-0.10,'Commodities':0.15,'Real Estate':0.20,'Crypto':1.00,'Cash':0.00,'Other':0.20},
+  'Cash':        {'US Equity':0.00,'Intl Equity':0.00,'Bonds':0.30,'Commodities':0.00,'Real Estate':0.00,'Crypto':0.00,'Cash':1.00,'Other':0.00},
+  'Other':       {'US Equity':0.50,'Intl Equity':0.45,'Bonds':0.00,'Commodities':0.10,'Real Estate':0.40,'Crypto':0.20,'Cash':0.00,'Other':1.00},
+};
+
+// ── State ────────────────────────────────────────────────────────────────
+let mcAssets = [];   // [{name, cls, wt, ret, vol, fee}, ...]
+let mcCorrMatrix = []; // n×n user-editable correlation values
+let mcRowId = 0;
+
+// ── Asset table ──────────────────────────────────────────────────────────
+function mcAddRow(name='', cls='US Equity', wt='', ret='', vol='', fee='0') {
+  const id = mcRowId++;
+  mcAssets.push({ id, name, cls, wt, ret, vol, fee });
+  mcRenderAssetTable();
+  mcRebuildCorr();
+}
+
+function mcRemoveRow(id) {
+  mcAssets = mcAssets.filter(a => a.id !== id);
+  mcRenderAssetTable();
+  mcRebuildCorr();
+}
+
+function mcReadRow(id) {
+  const row = document.getElementById('mc-row-' + id);
+  if (!row) return;
+  const a = mcAssets.find(a => a.id === id);
+  if (!a) return;
+  a.name = row.querySelector('.mc-r-name').value;
+  const prevCls = a.cls;
+  a.cls  = row.querySelector('.mc-r-cls').value;
+  a.wt   = row.querySelector('.mc-r-wt').value;
+  a.ret  = row.querySelector('.mc-r-ret').value;
+  a.vol  = row.querySelector('.mc-r-vol').value;
+  a.fee  = row.querySelector('.mc-r-fee').value;
+  if (a.cls !== prevCls) mcRebuildCorr();
+  mcUpdateWeightTotal();
+}
+
+function mcRenderAssetTable() {
+  const tbody = document.getElementById('mc-asset-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = mcAssets.map(a => `
+    <tr id="mc-row-${a.id}">
+      <td><input class="mc-r-name" value="${a.name}" placeholder="e.g. US Large Cap" onchange="mcReadRow(${a.id})"></td>
+      <td><select class="mc-r-cls" onchange="mcReadRow(${a.id})">
+        ${MC_ASSET_CLASSES.map(c=>`<option value="${c}"${c===a.cls?' selected':''}>${c}</option>`).join('')}
+      </select></td>
+      <td><input class="mc-r-wt"  value="${a.wt}"  placeholder="%" type="number" min="0" max="100" step="0.1" onchange="mcReadRow(${a.id})"></td>
+      <td><input class="mc-r-ret" value="${a.ret}" placeholder="%" type="number" step="0.1" onchange="mcReadRow(${a.id})"></td>
+      <td><input class="mc-r-vol" value="${a.vol}" placeholder="%" type="number" min="0" step="0.1" onchange="mcReadRow(${a.id})"></td>
+      <td><input class="mc-r-fee" value="${a.fee}" placeholder="%" type="number" min="0" step="0.01" onchange="mcReadRow(${a.id})"></td>
+      <td><button class="del-btn" onclick="mcRemoveRow(${a.id})">×</button></td>
+    </tr>`).join('');
+  mcUpdateWeightTotal();
+}
+
+function mcUpdateWeightTotal() {
+  const total = mcAssets.reduce((s, a) => s + (parseFloat(a.wt) || 0), 0);
+  const el = document.getElementById('mc-weight-total');
+  if (!el) return;
+  el.textContent = total.toFixed(1) + '%';
+  el.style.color = Math.abs(total - 100) < 0.1 ? 'var(--green)' : Math.abs(total - 100) < 5 ? 'var(--amber)' : 'var(--red)';
+}
+
+// ── Correlation matrix ───────────────────────────────────────────────────
+function mcRebuildCorr() {
+  const n = mcAssets.length;
+  // Preserve existing overrides
+  const prev = mcCorrMatrix;
+  mcCorrMatrix = Array.from({length:n}, (_,i) =>
+    Array.from({length:n}, (_,j) => {
+      if (i === j) return 1;
+      const ai = mcAssets[i], aj = mcAssets[j];
+      // Check if we have a prior override
+      if (prev[i] && prev[j] && prev[i][j] !== undefined && prev[i][j] !== null) {
+        // Only keep if asset order hasn't changed (heuristic: same count)
+        if (prev.length === n) return prev[i][j];
+      }
+      return (MC_CORR_DEFAULTS[ai.cls]?.[aj.cls]) ?? 0;
+    })
+  );
+  mcRenderCorrMatrix();
+}
+
+function mcRenderCorrMatrix() {
+  const wrap = document.getElementById('mc-corr-wrap');
+  if (!wrap) return;
+  const n = mcAssets.length;
+  if (n === 0) { wrap.innerHTML = '<div style="color:var(--text3);font-family:var(--mono);font-size:10px;">Add assets first.</div>'; return; }
+
+  let html = '<table class="mc-corr-table"><thead><tr><th></th>';
+  for (let j = 0; j < n; j++) {
+    const lbl = (mcAssets[j].name || mcAssets[j].cls).slice(0,8);
+    html += `<th title="${mcAssets[j].name||mcAssets[j].cls}">${lbl}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i < n; i++) {
+    const lbl = (mcAssets[i].name || mcAssets[i].cls).slice(0,8);
+    html += `<tr><th style="text-align:right;padding-right:6px">${lbl}</th>`;
+    for (let j = 0; j < n; j++) {
+      const v = mcCorrMatrix[i][j];
+      const diag = i === j;
+      const bg = diag ? 'background:var(--bg4);' : mcCorrColor(v);
+      html += `<td><input class="mc-corr-input${diag?' diag':''}" style="${bg}" value="${v.toFixed(2)}" ${diag?'readonly':''} data-i="${i}" data-j="${j}" onchange="mcCorrEdit(this)" onfocus="this.select()"></td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function mcCorrColor(v) {
+  // blue for negative, amber for positive
+  if (v >= 0.7)  return 'background:rgba(212,164,76,0.35);';
+  if (v >= 0.4)  return 'background:rgba(212,164,76,0.18);';
+  if (v >= 0.1)  return 'background:rgba(212,164,76,0.08);';
+  if (v >= -0.1) return '';
+  if (v >= -0.3) return 'background:rgba(74,144,217,0.10);';
+  return 'background:rgba(74,144,217,0.22);';
+}
+
+function mcCorrEdit(input) {
+  const i = parseInt(input.dataset.i), j = parseInt(input.dataset.j);
+  let v = parseFloat(input.value);
+  v = Math.max(-1, Math.min(1, isNaN(v) ? 0 : v));
+  mcCorrMatrix[i][j] = v;
+  mcCorrMatrix[j][i] = v; // symmetric
+  input.value = v.toFixed(2);
+  // Update mirror cell
+  const mirror = document.querySelector(`.mc-corr-input[data-i="${j}"][data-j="${i}"]`);
+  if (mirror) { mirror.value = v.toFixed(2); mirror.style.cssText = mcCorrColor(v); }
+  input.style.cssText = mcCorrColor(v);
+}
+
+function mcToggleCorr() {
+  const body = document.getElementById('mc-corr-body');
+  const lbl  = document.getElementById('mc-corr-toggle-label');
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (lbl) lbl.textContent = open ? 'Show ▼' : 'Hide ▲';
+  if (!open) mcRenderCorrMatrix();
+}
+
+// ── Math utilities ───────────────────────────────────────────────────────
+function mcRandn() {
+  // Box-Muller
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function mcRandT(df) {
+  // Student-t via ratio of normal and chi
+  const z = mcRandn();
+  let chi2 = 0;
+  for (let k = 0; k < df; k++) { const r = mcRandn(); chi2 += r*r; }
+  return z / Math.sqrt(chi2 / df);
+}
+
+function mcCholesky(A) {
+  const n = A.length;
+  const L = Array.from({length:n}, () => new Float64Array(n));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j <= i; j++) {
+      let s = A[i][j];
+      for (let k = 0; k < j; k++) s -= L[i][k] * L[j][k];
+      L[i][j] = i === j ? Math.sqrt(Math.max(s, 1e-12)) : (L[j][j] > 1e-12 ? s / L[j][j] : 0);
+    }
+  }
+  return L;
+}
+
+function mcPercentile(arr, p) {
+  const s = [...arr].sort((a,b) => a-b);
+  const idx = (p / 100) * (s.length - 1);
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  return s[lo] + (s[hi] - s[lo]) * (idx - lo);
+}
+
+function mcParseVal(id) {
+  return parseFloat(document.getElementById(id)?.value?.replace(/,/g,'') || '0');
+}
+
+function mcFmtDollar(v) {
+  if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v/1e6).toFixed(2) + 'M';
+  if (v >= 1e3) return '$' + (v/1e3).toFixed(1) + 'K';
+  return '$' + Math.round(v).toLocaleString();
+}
+
+// ── Simulation engine ────────────────────────────────────────────────────
+function mcRun() {
+  // Sync all row values
+  mcAssets.forEach(a => {
+    const row = document.getElementById('mc-row-' + a.id);
+    if (!row) return;
+    a.name = row.querySelector('.mc-r-name').value;
+    a.cls  = row.querySelector('.mc-r-cls').value;
+    a.wt   = row.querySelector('.mc-r-wt').value;
+    a.ret  = row.querySelector('.mc-r-ret').value;
+    a.vol  = row.querySelector('.mc-r-vol').value;
+    a.fee  = row.querySelector('.mc-r-fee').value;
+  });
+
+  // Validate
+  const valid = mcAssets.filter(a => parseFloat(a.wt) > 0 && parseFloat(a.ret) !== '' && parseFloat(a.vol) > 0 && !isNaN(parseFloat(a.ret)) && !isNaN(parseFloat(a.vol)));
+  if (valid.length === 0) { alert('Add at least one asset with Weight, Return, and Volatility filled in.'); return; }
+
+  // Normalise weights
+  const totalWt = valid.reduce((s,a) => s + parseFloat(a.wt), 0);
+  const assets = valid.map(a => ({
+    ...a,
+    w:   parseFloat(a.wt) / totalWt,
+    mu:  parseFloat(a.ret) / 100,
+    sig: parseFloat(a.vol) / 100,
+    fee: parseFloat(a.fee || 0) / 100,
+  }));
+  const n = assets.length;
+
+  // Build sub-matrix for valid assets
+  const idxMap = valid.map(a => mcAssets.findIndex(x => x.id === a.id));
+  const corrSub = idxMap.map(i => idxMap.map(j => (mcCorrMatrix[i] && mcCorrMatrix[i][j] !== undefined) ? mcCorrMatrix[i][j] : (i===j?1:0)));
+
+  const L = mcCholesky(corrSub);
+
+  // Inputs
+  const startVal  = mcParseVal('mc-start-val');
+  const horizon   = Math.max(1, Math.min(50, parseInt(document.getElementById('mc-horizon').value) || 20));
+  const nPaths    = parseInt(document.getElementById('mc-npaths').value) || 10000;
+  const inflation = (parseFloat(document.getElementById('mc-inflation').value) || 0) / 100;
+  const rebal     = document.getElementById('mc-rebal').value;
+  const model     = document.getElementById('mc-model').value;
+  const df        = 5; // degrees of freedom for t-distribution
+  const flowAmt   = mcParseVal('mc-cashflow');
+  const flowType  = document.getElementById('mc-flow-type').value;
+  const flowStart = parseInt(document.getElementById('mc-flow-start').value) || 1;
+  const flowEnd   = parseInt(document.getElementById('mc-flow-end').value) || horizon;
+  const target    = mcParseVal('mc-target');
+  const floor     = mcParseVal('mc-floor');
+
+  // Disable run button
+  const btn = document.getElementById('mc-run-btn');
+  btn.disabled = true; btn.textContent = 'Running…';
+
+  // Run simulation async to let UI update
+  setTimeout(() => {
+    // paths[t][p] = portfolio value at year t, path p
+    const paths = Array.from({length: horizon + 1}, () => new Float64Array(nPaths));
+    const maxDD  = new Float64Array(nPaths);  // max drawdown per path
+    const ruined = new Uint8Array(nPaths);     // ever hit floor
+
+    for (let p = 0; p < nPaths; p++) {
+      let weights  = assets.map(a => a.w);
+      let assetVal = assets.map(a => startVal * a.w);
+      let peak     = startVal;
+      paths[0][p]  = startVal;
+
+      for (let t = 1; t <= horizon; t++) {
+        // Correlated draws
+        const zBase = Array.from({length:n}, () => model === 'tstudent' ? mcRandT(df) : mcRandn());
+        const z = new Float64Array(n);
+        for (let i = 0; i < n; i++)
+          for (let j = 0; j <= i; j++)
+            z[i] += L[i][j] * zBase[j];
+
+        // Grow each asset
+        let total = 0;
+        for (let i = 0; i < n; i++) {
+          const mu  = assets[i].mu - assets[i].fee;
+          const sig = assets[i].sig;
+          const ret = Math.exp((mu - sig*sig/2) + sig * z[i]) - 1;
+          assetVal[i] *= (1 + ret);
+          total += assetVal[i];
+        }
+
+        // Cash flow
+        if (t >= flowStart && t <= flowEnd) {
+          let cf = 0;
+          if (flowType === 'fixed')  cf = flowAmt;
+          else if (flowType === 'real') cf = flowAmt * Math.pow(1 + inflation, t - 1);
+          else if (flowType === 'pct')  cf = total * (flowAmt / 100);
+          total += cf;
+          if (total < 0) total = 0;
+          // Spread cash flow proportionally
+          const scale = total > 0 ? total / (total - cf || 1) : 0;
+          for (let i = 0; i < n; i++) assetVal[i] = total * weights[i];
+        }
+
+        // Rebalancing
+        if (total > 0 && (rebal === 'annual' || (rebal === 'quarterly' && t % 0.25 === 0))) {
+          assetVal = assets.map(a => total * a.w);
+        }
+
+        if (total < 0) total = 0;
+        paths[t][p] = total;
+
+        // Track peak & drawdown
+        if (total > peak) peak = total;
+        const dd = peak > 0 ? (peak - total) / peak : 0;
+        if (dd > maxDD[p]) maxDD[p] = dd;
+        if (total <= floor) ruined[p] = 1;
+      }
+    }
+
+    btn.disabled = false; btn.textContent = 'Run Simulation';
+    mcShowResults(paths, maxDD, ruined, assets, startVal, horizon, target, floor, nPaths);
+  }, 20);
+}
+
+// ── Results rendering ─────────────────────────────────────────────────────
+function mcShowResults(paths, maxDD, ruined, assets, startVal, horizon, target, floor, nPaths) {
+  document.getElementById('mc-empty-state').style.display = 'none';
+  const res = document.getElementById('mc-results');
+  res.style.display = 'flex';
+  res.style.flexDirection = 'column';
+  res.style.gap = '12px';
+
+  const terminal = paths[horizon];
+  const pctLevels = [5, 10, 25, 50, 75, 90, 95];
+
+  // Percentile fan data (year by year)
+  const fanData = Array.from({length: horizon+1}, (_,t) => {
+    const yr = paths[t];
+    const row = {t};
+    pctLevels.forEach(p => row['p'+p] = mcPercentile(yr, p));
+    return row;
+  });
+
+  // Stats
+  const med      = mcPercentile(terminal, 50);
+  const cvar95   = (() => {
+    const sorted = [...terminal].sort((a,b) => a-b);
+    const cutoff = Math.floor(nPaths * 0.05);
+    const worst  = sorted.slice(0, cutoff);
+    return worst.reduce((s,v) => s+v, 0) / worst.length;
+  })();
+  const pSuccess = [...terminal].filter(v => v >= target).length / nPaths * 100;
+  const pRuin    = [...ruined].filter(v => v === 1).length / nPaths * 100;
+  const medCAGR  = (Math.pow(Math.max(med, 0) / startVal, 1 / horizon) - 1) * 100;
+  const medDD    = mcPercentile([...maxDD], 50) * 100;
+
+  // Stat cards
+  const statDefs = [
+    { label:'Median Terminal', val: mcFmtDollar(med), sub: `vs. ${mcFmtDollar(startVal)} start`, cls: '' },
+    { label:'P(Success)', val: pSuccess.toFixed(1)+'%', sub:`≥ ${mcFmtDollar(target)} target`, cls: pSuccess>=70?'mc-stat-good':pSuccess>=40?'mc-stat-warn':'mc-stat-bad' },
+    { label:'P(Ruin)', val: pRuin.toFixed(1)+'%', sub:`≤ ${mcFmtDollar(floor)} floor`, cls: pRuin<=5?'mc-stat-good':pRuin<=20?'mc-stat-warn':'mc-stat-bad' },
+    { label:'Median CAGR', val: (medCAGR>=0?'+':'')+medCAGR.toFixed(2)+'%', sub:'annualized', cls: medCAGR>=0?'mc-stat-good':'mc-stat-bad' },
+    { label:'CVaR 95%', val: mcFmtDollar(cvar95), sub:'avg of worst 5%', cls: cvar95<startVal?'mc-stat-bad':'mc-stat-warn' },
+    { label:'Median Max Drawdown', val: '-'+medDD.toFixed(1)+'%', sub:'across all paths', cls: medDD>30?'mc-stat-bad':medDD>15?'mc-stat-warn':'mc-stat-good' },
+    { label:'5th Pct Terminal', val: mcFmtDollar(mcPercentile(terminal,5)), sub:'worst-case scenario', cls: 'mc-stat-bad' },
+    { label:'95th Pct Terminal', val: mcFmtDollar(mcPercentile(terminal,95)), sub:'best-case scenario', cls: 'mc-stat-good' },
+  ];
+  document.getElementById('mc-stat-grid').innerHTML = statDefs.map(s => `
+    <div class="mc-stat-card">
+      <div class="mc-stat-label">${s.label}</div>
+      <div class="mc-stat-val ${s.cls}">${s.val}</div>
+      <div class="mc-stat-sub">${s.sub}</div>
+    </div>`).join('');
+
+  // Percentile table
+  const pctRows = [5, 10, 25, 50, 75, 90, 95].map(p => {
+    const tv   = mcPercentile(terminal, p);
+    const cagr = (Math.pow(Math.max(tv,0)/startVal, 1/horizon) - 1) * 100;
+    const dd   = mcPercentile([...maxDD].filter((_,i) => {
+      const sorted = [...terminal].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
+      const cutIdx = Math.floor(p/100 * nPaths);
+      return i === sorted[Math.min(cutIdx, nPaths-1)].i;
+    }), 50) * 100;
+    const ddApprox = mcPercentile([...maxDD], p) * 100;
+    const vs   = ((tv - startVal) / startVal * 100);
+    const color = tv >= target ? 'var(--green)' : tv <= floor ? 'var(--red)' : 'var(--text)';
+    return `<tr>
+      <td>${p}th percentile</td>
+      <td style="color:${color};font-weight:500">${mcFmtDollar(tv)}</td>
+      <td style="color:${vs>=0?'var(--green)':'var(--red)'}">${vs>=0?'+':''}${vs.toFixed(1)}%</td>
+      <td style="color:${cagr>=0?'var(--green)':'var(--red)'}">${cagr>=0?'+':''}${cagr.toFixed(2)}%</td>
+      <td style="color:var(--amber)">-${ddApprox.toFixed(1)}%</td>
+    </tr>`;
+  });
+  document.getElementById('mc-pct-tbody').innerHTML = pctRows.join('');
+
+  // Charts
+  mcDrawFanChart(fanData, startVal, target, floor, horizon);
+  mcDrawHistogram(terminal, startVal, target, floor);
+  mcDrawRuinChart(paths, floor, nPaths, horizon);
+}
+
+// ── Fan chart ─────────────────────────────────────────────────────────────
+function mcDrawFanChart(fanData, startVal, target, floor, horizon) {
+  const wrap = document.getElementById('mc-fan-wrap');
+  if (!wrap) return;
+  d3.select(wrap).selectAll('*').remove();
+
+  const margin = {top:16, right:80, bottom:32, left:16};
+  const W = wrap.clientWidth || 700, H = wrap.clientHeight || 300;
+  const iw = W - margin.left - margin.right, ih = H - margin.top - margin.bottom;
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+  const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const xScale = d3.scaleLinear().domain([0, horizon]).range([0, iw]);
+  const allVals = fanData.flatMap(d => [d.p5, d.p95]);
+  const vmax = d3.max(allVals) * 1.05;
+  const vmin = Math.min(0, d3.min(allVals) * 0.95);
+  const yScale = d3.scaleLinear().domain([vmin, vmax]).range([ih, 0]).nice();
+
+  // Grid lines
+  yScale.ticks(5).forEach(t => {
+    g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
+  });
+
+  // Reference lines
+  const refLine = (val, color, dash='4 3') => {
+    if (val < vmin || val > vmax) return;
+    g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(val)).attr('y2',yScale(val))
+      .attr('stroke',color).attr('stroke-width',1).attr('stroke-dasharray',dash).attr('opacity',0.6);
+  };
+  refLine(startVal, 'rgba(255,255,255,0.2)');
+  if (target > 0) refLine(target, 'var(--green)');
+  if (floor > 0)  refLine(floor,  'var(--red)');
+
+  // Band: 5–95
+  const area595 = d3.area().x(d=>xScale(d.t)).y0(d=>yScale(d.p5)).y1(d=>yScale(d.p95)).curve(d3.curveMonotoneX);
+  g.append('path').datum(fanData).attr('d',area595).attr('fill','rgba(212,164,76,0.08)');
+
+  // Band: 25–75
+  const area2575 = d3.area().x(d=>xScale(d.t)).y0(d=>yScale(d.p25)).y1(d=>yScale(d.p75)).curve(d3.curveMonotoneX);
+  g.append('path').datum(fanData).attr('d',area2575).attr('fill','rgba(212,164,76,0.16)');
+
+  // Band: 10–90
+  const area1090 = d3.area().x(d=>xScale(d.t)).y0(d=>yScale(d.p10)).y1(d=>yScale(d.p90)).curve(d3.curveMonotoneX);
+  g.append('path').datum(fanData).attr('d',area1090).attr('fill','rgba(212,164,76,0.05)');
+
+  // Median line
+  const medLine = d3.line().x(d=>xScale(d.t)).y(d=>yScale(d.p50)).curve(d3.curveMonotoneX);
+  g.append('path').datum(fanData).attr('d',medLine).attr('fill','none').attr('stroke','var(--amber)').attr('stroke-width',2);
+
+  // Axes
+  g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).ticks(Math.min(horizon,10)).tickFormat(d => 'Yr '+d).tickSize(3)).select('.domain').remove();
+  g.append('g').attr('transform',`translate(${iw+8},0)`).call(d3.axisRight(yScale).ticks(5).tickFormat(v => mcFmtDollar(v)).tickSize(0)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','10').attr('font-family',"'IBM Plex Mono'");
+
+  // Hover crosshair
+  const vline = g.append('line').attr('class','fred-crosshair').attr('y1',0).attr('y2',ih).style('display','none');
+  const fanTT = (() => {
+    const d = document.createElement('div');
+    Object.assign(d.style,{position:'absolute',pointerEvents:'none',opacity:'0',background:'var(--bg4)',border:'1px solid var(--border2)',padding:'10px 14px',borderRadius:'4px',fontFamily:"'IBM Plex Mono'",fontSize:'11px',zIndex:'50',whiteSpace:'nowrap',transition:'opacity 0.1s',boxShadow:'0 4px 20px rgba(0,0,0,0.5)',lineHeight:'1.7'});
+    wrap.appendChild(d); return d;
+  })();
+
+  svg.on('mousemove', function(event) {
+    const [mx] = d3.pointer(event, g.node());
+    const yr = Math.round(xScale.invert(mx));
+    const idx = Math.max(0, Math.min(horizon, yr));
+    const d = fanData[idx];
+    if (!d) return;
+    const x = xScale(d.t);
+    vline.attr('x1',x).attr('x2',x).style('display',null);
+    fanTT.style.opacity = '1';
+    fanTT.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:6px">Year ${d.t}</div>`
+      + [['95th', d.p95,'var(--text2)'],['75th', d.p75,'var(--text2)'],['50th (median)', d.p50,'var(--amber)'],['25th', d.p25,'var(--text2)'],['5th', d.p5,'var(--text2)']]
+        .map(([lbl,val,col]) => `<div style="display:flex;justify-content:space-between;gap:20px"><span style="color:${col}">${lbl}</span><span style="color:${col};font-weight:500">${mcFmtDollar(val)}</span></div>`).join('');
+    const bx = wrap.getBoundingClientRect();
+    const ex = event.clientX - bx.left;
+    fanTT.style.left = (ex > W/2 ? ex - fanTT.offsetWidth - 12 : ex + 12) + 'px';
+    fanTT.style.top = '12px';
+  }).on('mouseleave', () => { vline.style('display','none'); fanTT.style.opacity='0'; });
+}
+
+// ── Histogram ─────────────────────────────────────────────────────────────
+function mcDrawHistogram(terminal, startVal, target, floor) {
+  const wrap = document.getElementById('mc-hist-wrap');
+  if (!wrap) return;
+  d3.select(wrap).selectAll('*').remove();
+
+  const margin = {top:14, right:14, bottom:32, left:12};
+  const W = wrap.clientWidth || 340, H = wrap.clientHeight || 220;
+  const iw = W - margin.left - margin.right, ih = H - margin.top - margin.bottom;
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+  const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const arr = [...terminal];
+  const xScale = d3.scaleLinear().domain([d3.min(arr)*0.9, d3.max(arr)*1.05]).range([0,iw]).nice();
+  const bins = d3.bin().domain(xScale.domain()).thresholds(40)(arr);
+  const yScale = d3.scaleLinear().domain([0, d3.max(bins, d=>d.length)]).range([ih,0]).nice();
+
+  yScale.ticks(4).forEach(t => {
+    g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
+  });
+
+  g.selectAll('rect').data(bins).join('rect')
+    .attr('x', d => xScale(d.x0)+1).attr('width', d => Math.max(0, xScale(d.x1)-xScale(d.x0)-2))
+    .attr('y', d => yScale(d.length)).attr('height', d => ih - yScale(d.length))
+    .attr('fill', d => d.x0 >= target ? 'rgba(76,175,130,0.55)' : d.x1 <= floor ? 'rgba(224,85,85,0.55)' : 'rgba(212,164,76,0.45)')
+    .attr('rx', 1);
+
+  // Reference lines
+  const vRef = (val, color, lbl) => {
+    if (val < xScale.domain()[0] || val > xScale.domain()[1]) return;
+    const x = xScale(val);
+    g.append('line').attr('x1',x).attr('x2',x).attr('y1',0).attr('y2',ih).attr('stroke',color).attr('stroke-width',1.5).attr('stroke-dasharray','4 3');
+    g.append('text').attr('x',x+3).attr('y',10).attr('fill',color).attr('font-size',9).attr('font-family',"'IBM Plex Mono'").text(lbl);
+  };
+  vRef(startVal, 'rgba(255,255,255,0.3)', 'Start');
+  if (target > 0) vRef(target, 'var(--green)', 'Target');
+  if (floor > 0)  vRef(floor,  'var(--red)', 'Floor');
+  vRef(mcPercentile([...terminal],50), 'var(--amber)', 'P50');
+
+  g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).ticks(4).tickFormat(v=>mcFmtDollar(v)).tickSize(3)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','9').attr('font-family',"'IBM Plex Mono'");
+}
+
+// ── Ruin probability chart ────────────────────────────────────────────────
+function mcDrawRuinChart(paths, floor, nPaths, horizon) {
+  const wrap = document.getElementById('mc-ruin-wrap');
+  if (!wrap) return;
+  d3.select(wrap).selectAll('*').remove();
+
+  // Compute P(ruin by year t): % of paths ever below floor up to t
+  const cumulRuinData = Array.from({length: horizon+1}, (_,t) => {
+    let cnt = 0;
+    for (let p = 0; p < nPaths; p++) {
+      for (let s = 1; s <= t; s++) {
+        if (paths[s][p] <= floor) { cnt++; break; }
+      }
+    }
+    return { t, pct: cnt / nPaths * 100 };
+  });
+
+  const margin = {top:14, right:14, bottom:32, left:12};
+  const W = wrap.clientWidth || 340, H = wrap.clientHeight || 220;
+  const iw = W - margin.left - margin.right, ih = H - margin.top - margin.bottom;
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+  const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const xScale = d3.scaleLinear().domain([0, horizon]).range([0, iw]);
+  const maxPct = Math.max(5, d3.max(cumulRuinData, d=>d.pct) * 1.1);
+  const yScale = d3.scaleLinear().domain([0, maxPct]).range([ih, 0]).nice();
+
+  yScale.ticks(4).forEach(t => {
+    g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
+  });
+
+  const area = d3.area().x(d=>xScale(d.t)).y0(ih).y1(d=>yScale(d.pct)).curve(d3.curveMonotoneX);
+  const line = d3.line().x(d=>xScale(d.t)).y(d=>yScale(d.pct)).curve(d3.curveMonotoneX);
+
+  g.append('path').datum(cumulRuinData).attr('d',area).attr('fill','rgba(224,85,85,0.12)');
+  g.append('path').datum(cumulRuinData).attr('d',line).attr('fill','none').attr('stroke','var(--red)').attr('stroke-width',1.5);
+
+  g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).ticks(Math.min(horizon,8)).tickFormat(d=>'Yr '+d).tickSize(3)).select('.domain').remove();
+  g.append('g').attr('transform',`translate(${iw},0)`).call(d3.axisRight(yScale).ticks(4).tickFormat(d=>d.toFixed(1)+'%').tickSize(0)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','9').attr('font-family',"'IBM Plex Mono'");
+
+  // Hover
+  const vline2 = g.append('line').attr('class','fred-crosshair').attr('y1',0).attr('y2',ih).style('display','none');
+  const rdot   = g.append('circle').attr('r',4).attr('class','fred-hover-dot').style('display','none').attr('fill','var(--red)');
+  const ruinTT = (() => {
+    const d = document.createElement('div');
+    Object.assign(d.style,{position:'absolute',pointerEvents:'none',opacity:'0',background:'var(--bg4)',border:'1px solid var(--border2)',padding:'8px 12px',borderRadius:'4px',fontFamily:"'IBM Plex Mono'",fontSize:'11px',zIndex:'50',whiteSpace:'nowrap',transition:'opacity 0.1s',boxShadow:'0 4px 20px rgba(0,0,0,0.5)'});
+    wrap.appendChild(d); return d;
+  })();
+  svg.on('mousemove', function(event) {
+    const [mx] = d3.pointer(event, g.node());
+    const yr = Math.max(0, Math.min(horizon, Math.round(xScale.invert(mx))));
+    const d = cumulRuinData[yr];
+    if (!d) return;
+    const x = xScale(d.t), y = yScale(d.pct);
+    vline2.attr('x1',x).attr('x2',x).style('display',null);
+    rdot.attr('cx',x).attr('cy',y).style('display',null);
+    ruinTT.style.opacity='1';
+    ruinTT.innerHTML=`<div style="color:var(--text3);font-size:10px;margin-bottom:4px">Year ${d.t}</div><div style="color:var(--red);font-size:14px;font-weight:500">${d.pct.toFixed(2)}%</div><div style="color:var(--text3);font-size:9px">paths below floor</div>`;
+    const bx = wrap.getBoundingClientRect();
+    const ex = event.clientX - bx.left;
+    ruinTT.style.left = (ex > W/2 ? ex-ruinTT.offsetWidth-10 : ex+10)+'px';
+    ruinTT.style.top = '20px';
+  }).on('mouseleave',()=>{vline2.style('display','none');rdot.style('display','none');ruinTT.style.opacity='0';});
+}
+
+window.mcAddRow = mcAddRow;
+window.mcRemoveRow = mcRemoveRow;
+window.mcRun = mcRun;
+window.mcToggleCorr = mcToggleCorr;
+window.mcCorrEdit = mcCorrEdit;
 </script>
 </body>
 </html>
