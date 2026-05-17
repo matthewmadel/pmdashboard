@@ -1136,7 +1136,7 @@ a      { color: inherit; text-decoration: none; }
           <button class="mk-tab" onclick="mkShowPanel('cmd',this)" data-panel="cmd">Commodities</button>
           <button class="mk-tab" onclick="mkShowPanel('fx',this)" data-panel="fx">FX</button>
           <button class="mk-tab" onclick="mkShowPanel('vol',this)" data-panel="vol">Volatility</button>
-          <button class="mk-tab" onclick="mkShowPanel('crypto',this);cryptoBoot()" data-panel="crypto">Crypto</button>
+          <button class="mk-tab" onclick="mkShowPanel('crypto',this)" data-panel="crypto">Crypto</button>
         </div>
 
         <div class="page-body" style="gap:12px;">
@@ -3240,6 +3240,7 @@ window.mkShowPanel = function(panel, btn) {
   document.querySelectorAll('[data-mkpanel]').forEach(el => {
     el.classList.toggle('active', el.dataset.mkpanel === panel);
   });
+  if (panel === 'crypto') { cryptoBoot(); return; }
   // Pre-load intraday data for this panel
   mkLoadIntraday(panel).then(() => {
     mkRenderTable(panel);
@@ -3255,6 +3256,7 @@ window.mkNavPanel = function(panel) {
   document.querySelectorAll('[data-mkpanel]').forEach(el => {
     el.classList.toggle('active', el.dataset.mkpanel === panel);
   });
+  if (panel === 'crypto') cryptoBoot();
 };
 
 window.mkSelectTicker = function(panel, ticker) {
