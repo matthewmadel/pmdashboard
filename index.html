@@ -3406,6 +3406,10 @@ window.mkBoot = function() {
   )).then(() => mkScheduleAuto());
 };
 
+// Expose utilities needed by crypto section
+window.mkCalcReturn = mkCalcReturn;
+window.mkPeriodStartDate = mkPeriodStartDate;
+
 })();
 
 async function fredBoot() {
