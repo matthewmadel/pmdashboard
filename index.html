@@ -874,7 +874,7 @@ a      { color: inherit; text-decoration: none; }
                 <div class="nav-item" onclick="mkNavPanel('vol')" data-label="Volatility" data-mkpanel="vol">
                   <div class="nav-dot"></div>Volatility
                 </div>
-                <div class="nav-item" onclick="showPage('crypto')" data-label="Crypto">
+                <div class="nav-item" onclick="showPage('crypto');cryptoBoot()" data-label="Crypto">
                   <div class="nav-dot"></div>Crypto<span class="nav-item-badge">CR</span>
                 </div>
               </div>
@@ -1289,20 +1289,38 @@ a      { color: inherit; text-decoration: none; }
       <div class="section-page" id="page-crypto">
         <div class="page-header">
           <div class="page-title-group">
-            <div class="page-title">Crypto <span class="page-title-badge">Live</span></div>
-            <div class="page-subtitle">Bitcoin · Ethereum · digital assets</div>
+            <div class="page-title">Crypto <span class="page-title-badge">Yahoo Finance</span></div>
+            <div class="page-subtitle">Digital assets · prices updated daily</div>
+          </div>
+          <div class="page-controls">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="crypto-last-update">—</span>
           </div>
         </div>
-        <div class="page-body">
-          <div class="stat-row">
-            <div class="stat-card"><div class="stat-label">Bitcoin</div><div class="stat-val">$62,840</div><div class="stat-chg up">▲ +2.1%</div></div>
-            <div class="stat-card"><div class="stat-label">Ethereum</div><div class="stat-val">$3,124</div><div class="stat-chg up">▲ +1.4%</div></div>
-            <div class="stat-card"><div class="stat-label">Mkt Cap</div><div class="stat-val">$2.3T</div><div class="stat-chg up">▲ +1.8%</div></div>
-          </div>
+        <div class="page-body" style="gap:12px;">
           <div class="chart-container">
-            <div class="chart-container-header"><div class="chart-container-title">BTC / ETH — Price History</div></div>
-            <div class="pm-chart-wrap" id="chart-crypto" style="height:300px"></div>
+            <div class="chart-container-header">
+              <div>
+                <div class="chart-container-title" id="crypto-chart-title">Select an asset</div>
+                <div id="crypto-chart-price" style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--text);margin-top:2px"></div>
+                <div id="crypto-chart-stat" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px"></div>
+              </div>
+              <div class="pill-group" id="crypto-periods"></div>
+            </div>
+            <div class="pm-chart-wrap" id="crypto-chart-wrap" style="height:240px;position:relative;">
+              <div class="mk-chart-overlay" id="crypto-chart-overlay">Select an asset above</div>
+            </div>
           </div>
+          <div class="data-table-wrap" style="overflow-x:auto;">
+            <table class="data-table" style="min-width:860px;">
+              <thead><tr>
+                <th style="text-align:left;min-width:160px">Asset</th>
+                <th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
+                <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y</th><th>5Y</th>
+              </tr></thead>
+              <tbody id="crypto-tbody"></tbody>
+            </table>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">Prices in USD via Yahoo Finance. Data updated daily.</div>
         </div>
       </div>
 
@@ -3189,6 +3207,25 @@ const MK_DATA_URLS = {
   credit: './markets_credit.json',
   vol:    './markets_vol.json',
 };
+
+const CRYPTO_DATA_URL = './markets_crypto.json';
+const CRYPTO_TICKERS = [
+  {t:'BTC-USD',  n:'Bitcoin',   d:2},
+  {t:'ETH-USD',  n:'Ethereum',  d:2},
+  {t:'BNB-USD',  n:'BNB',       d:2},
+  {t:'SOL-USD',  n:'Solana',    d:2},
+  {t:'XRP-USD',  n:'XRP',       d:4},
+  {t:'DOGE-USD', n:'Dogecoin',  d:4},
+  {t:'ADA-USD',  n:'Cardano',   d:4},
+  {t:'AVAX-USD', n:'Avalanche', d:2},
+  {t:'LINK-USD', n:'Chainlink', d:2},
+  {t:'DOT-USD',  n:'Polkadot',  d:2},
+  {t:'LTC-USD',  n:'Litecoin',  d:2},
+  {t:'UNI-USD',  n:'Uniswap',   d:2},
+  {t:'ATOM-USD', n:'Cosmos',    d:2},
+];
+const MK_TABLE_PERIODS_CRYPTO = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y'];
+let cryptoState = { prices:{}, rawHistory:{}, selected:null, period:'1Y', booted:false };
 const mkPanelLoaded = {}; // tracks which panels have been fetched
 
 // Period boundary helpers — returns ISO date string for start of period
@@ -3397,6 +3434,160 @@ async function fredBoot() {
 
   fredLoadHeaderTickers();
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   CRYPTO PAGE
+══════════════════════════════════════════════════════════════════════ */
+
+async function cryptoBoot() {
+  if (cryptoState.booted) return;
+  cryptoState.booted = true;
+
+  // Render period pills
+  const pillWrap = document.getElementById('crypto-periods');
+  if (pillWrap) {
+    pillWrap.innerHTML = MK_TABLE_PERIODS_CRYPTO.map(p =>
+      `<button class="pill${p===cryptoState.period?' active':''}" onclick="cryptoSetPeriod('${p}')">${p}</button>`
+    ).join('');
+  }
+
+  // Load data
+  try {
+    const r = await fetch(CRYPTO_DATA_URL + '?_=' + Date.now());
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    if (j.quotes)  Object.entries(j.quotes).forEach(([k,q]) => { cryptoState.prices[k] = q; });
+    if (j.history) Object.entries(j.history).forEach(([k,rows]) => { cryptoState.rawHistory[k] = rows; });
+    const upEl = document.getElementById('crypto-last-update');
+    if (upEl && j.updated_at) upEl.textContent = new Date(j.updated_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  } catch(e) {
+    console.warn('markets_crypto.json not found:', e.message);
+  }
+
+  cryptoRenderTable();
+  // Auto-select Bitcoin
+  cryptoSelect('BTC-USD');
+}
+
+function cryptoRenderTable() {
+  const tbody = document.getElementById('crypto-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = CRYPTO_TICKERS.map(item => {
+    const q = cryptoState.prices[item.t];
+    const rows = cryptoState.rawHistory[item.t];
+    const sel = cryptoState.selected === item.t ? ' style="background:rgba(212,164,76,0.05)"' : '';
+    const priceStr = q ? '$' + q.price.toLocaleString('en-US', {minimumFractionDigits:item.d, maximumFractionDigits:item.d}) : '<span class="mk-loading">···</span>';
+    const periodCells = MK_TABLE_PERIODS_CRYPTO.map(period => {
+      if (period === '1D') {
+        if (!q) return '<td>—</td>';
+        const cls = q.changePct > 0.05 ? 'up' : q.changePct < -0.05 ? 'dn' : 'flat';
+        return `<td><span class="${cls}">${q.changePct>=0?'▲ +':'▼ '}${Math.abs(q.changePct).toFixed(2)}%</span></td>`;
+      }
+      const ret = rows ? mkCalcReturn(rows, period) : null;
+      if (ret == null) return '<td>—</td>';
+      const cls = ret > 0.05 ? 'up' : ret < -0.05 ? 'dn' : 'flat';
+      return `<td><span class="${cls}">${ret>=0?'+':''}${ret.toFixed(2)}%</span></td>`;
+    }).join('');
+    return `<tr class="mk-row"${sel} onclick="cryptoSelect('${item.t}')" style="cursor:pointer">
+      <td>${item.n}</td>
+      <td style="text-align:right;font-family:var(--mono);font-weight:500;color:var(--text)">${priceStr}</td>
+      ${periodCells}
+    </tr>`;
+  }).join('');
+}
+
+function cryptoSelect(ticker) {
+  cryptoState.selected = ticker;
+  cryptoRenderTable();
+  cryptoRenderChart();
+}
+
+function cryptoSetPeriod(period) {
+  cryptoState.period = period;
+  document.querySelectorAll('#crypto-periods .pill').forEach(b => {
+    b.classList.toggle('active', b.textContent === period);
+  });
+  cryptoRenderChart();
+}
+
+function cryptoRenderChart() {
+  const ticker = cryptoState.selected;
+  const period = cryptoState.period;
+  const wrap    = document.getElementById('crypto-chart-wrap');
+  const overlay = document.getElementById('crypto-chart-overlay');
+  const titleEl = document.getElementById('crypto-chart-title');
+  const priceEl = document.getElementById('crypto-chart-price');
+  const statEl  = document.getElementById('crypto-chart-stat');
+
+  if (!ticker || !wrap) return;
+  const item = CRYPTO_TICKERS.find(t => t.t === ticker);
+  if (titleEl) titleEl.textContent = item ? item.n : ticker;
+
+  const q = cryptoState.prices[ticker];
+  if (priceEl && q) {
+    const priceStr = '$' + q.price.toLocaleString('en-US', {minimumFractionDigits:item?.d||2, maximumFractionDigits:item?.d||2});
+    const cls = q.changePct > 0.05 ? 'up' : q.changePct < -0.05 ? 'dn' : 'flat';
+    priceEl.innerHTML = `${priceStr} <span class="${cls}" style="font-size:11px;margin-left:6px">${q.changePct>=0?'▲ +':'▼ '}${Math.abs(q.changePct).toFixed(2)}% 1D</span>`;
+  }
+
+  const rows = cryptoState.rawHistory[ticker];
+  if (!rows || rows.length < 2) { if(overlay) { overlay.classList.remove('hidden'); overlay.textContent='No data'; } return; }
+  if (overlay) overlay.classList.add('hidden');
+
+  const startDate = mkPeriodStartDate(period);
+  const filtered = startDate ? rows.filter(r => r.date >= startDate) : rows;
+  if (filtered.length < 2) { if(overlay) { overlay.classList.remove('hidden'); overlay.textContent='No data for period'; } return; }
+
+  const first = filtered[0].close, last = filtered[filtered.length-1].close;
+  const ret = ((last - first) / first) * 100;
+  if (statEl) {
+    const cls = ret > 0.05 ? 'up' : ret < -0.05 ? 'dn' : 'flat';
+    statEl.innerHTML = `${period} return: <span class="${cls}">${ret>=0?'+':''}${ret.toFixed(2)}%</span>`;
+  }
+
+  // D3 chart (same as mkRenderChart)
+  d3.select(wrap).select('svg').remove();
+  const margin = {top:14, right:72, bottom:28, left:8};
+  const W = wrap.clientWidth || 700, H = wrap.clientHeight || 240;
+  const iw = W - margin.left - margin.right, ih = H - margin.top - margin.bottom;
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+  const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+  const dates = filtered.map(r => new Date(r.date + 'T12:00:00'));
+  const prices = filtered.map(r => r.close);
+  const xScale = d3.scaleTime().domain(d3.extent(dates)).range([0,iw]);
+  const [vmin,vmax] = d3.extent(prices);
+  const pad = (vmax-vmin)*0.07 || 1;
+  const yScale = d3.scaleLinear().domain([vmin-pad, vmax+pad]).range([ih,0]).nice();
+  const color = ret >= 0 ? 'var(--green)' : 'var(--red)';
+  const colorHex = ret >= 0 ? '#4caf82' : '#e05555';
+
+  yScale.ticks(4).forEach(t => {
+    g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
+  });
+
+  const defs = svg.append('defs');
+  const gradId = 'cg-' + ticker.replace(/[^a-z0-9]/gi,'');
+  const grad = defs.append('linearGradient').attr('id',gradId).attr('x1','0').attr('x2','0').attr('y1','0').attr('y2','1');
+  grad.append('stop').attr('offset','0%').attr('stop-color',colorHex).attr('stop-opacity',0.18);
+  grad.append('stop').attr('offset','100%').attr('stop-color',colorHex).attr('stop-opacity',0.01);
+
+  const area = d3.area().x((_,i)=>xScale(dates[i])).y0(ih).y1((_,i)=>yScale(prices[i])).curve(d3.curveMonotoneX);
+  const line = d3.line().x((_,i)=>xScale(dates[i])).y((_,i)=>yScale(prices[i])).curve(d3.curveMonotoneX);
+
+  g.append('path').datum(prices).attr('d',area).attr('fill',`url(#${gradId})`);
+  g.append('path').datum(prices).attr('d',line).attr('fill','none').attr('stroke',color).attr('stroke-width',1.5);
+
+  g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).ticks(5).tickSize(3).tickFormat(d3.timeFormat('%b %y'))).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','10').attr('font-family',"'IBM Plex Mono'");
+  g.selectAll('.tick line').attr('stroke','rgba(255,255,255,0.08)');
+
+  g.append('g').attr('transform',`translate(${iw+8},0)`).call(d3.axisRight(yScale).ticks(4).tickFormat(v => '$'+(v>=1000?Math.round(v/1000)+'K':Math.round(v))).tickSize(0)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','10').attr('font-family',"'IBM Plex Mono'");
+}
+
+window.cryptoBoot = cryptoBoot;
+window.cryptoSelect = cryptoSelect;
+window.cryptoSetPeriod = cryptoSetPeriod;
 </script>
 </body>
 </html>
