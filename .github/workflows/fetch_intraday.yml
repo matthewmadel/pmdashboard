@@ -1,0 +1,44 @@
+name: Fetch Intraday Data
+
+on:
+  schedule:
+    # Every 5 minutes, 9 AM – 5 PM UTC-4 (EDT) = 13:00 – 21:00 UTC
+    # Covers pre-market through after-hours; yfinance returns empty outside trading hours
+    - cron: "*/5 13-21 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  intraday:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-yfinance-${{ runner.os }}
+
+      - name: Install dependencies
+        run: pip install yfinance --quiet
+
+      - name: Fetch intraday data
+        run: python fetch_intraday.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add markets_intraday_*.json
+          git diff --staged --quiet || git commit -m "intraday: $(date -u +%H:%M) UTC"
+          git push

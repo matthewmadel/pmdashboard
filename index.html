@@ -2768,6 +2768,19 @@ async function fredLoadHeaderTickers() {
 /* ══════════════════════════════════════════════════════════════════════
    BOOT
 ══════════════════════════════════════════════════════════════════════ */
+// ── Intraday constants (global) ───────────────────────────────────────────────
+const INTRADAY_URLS = {
+  eq:     './markets_intraday_eq.json',
+  fx:     './markets_intraday_fx.json',
+  cmd:    './markets_intraday_cmd.json',
+  credit: './markets_intraday_credit.json',
+  vol:    './markets_intraday_vol.json',
+  crypto: './markets_intraday_crypto.json',
+};
+// bars: panel → ticker → [[timestamp_sec, close], ...]
+// quotes: panel → ticker → {price, prev, change, changePct}
+const mkIntraday = { bars: {}, quotes: {}, loaded: {} };
+
 // ── Crypto constants (global — used by cryptoBoot outside the IIFE) ──────────
 const CRYPTO_DATA_URL = './markets_crypto.json';
 const CRYPTO_TICKERS = [
@@ -3041,12 +3054,29 @@ function mkRenderChart(panel) {
   if (statEl) statEl.textContent = '';
 
   mkFetchHistory(ticker, period).then(h => {
+    // For 1D period, substitute intraday bars if available
+    const intradayBars = period === '1D' && mkIntraday.bars[panel]?.[ticker];
+    if (intradayBars && intradayBars.length >= 2) {
+      h = {
+        timestamps: intradayBars.map(b => b[0]),
+        prices:     intradayBars.map(b => b[1]),
+      };
+    }
+
     if (!h) { if(overlay){overlay.textContent='No data available';} return; }
     if (overlay) overlay.classList.add('hidden');
 
     const first=h.prices[0], last=h.prices[h.prices.length-1];
     let ret = first ? ((last-first)/first)*100 : null;
     let retLabel = period;
+
+    // For 1D with intraday data, use prev close for accurate return
+    if (period === '1D' && intradayBars) {
+      const prevClose = mkIntraday.quotes[panel]?.[ticker]?.prev;
+      if (prevClose && last) {
+        ret = ((last - prevClose) / prevClose) * 100;
+      }
+    }
 
     // Annualize for periods > 1Y
     if (ret != null && last && first) {
@@ -3093,6 +3123,19 @@ function mkRenderChart(panel) {
     yScale.ticks(4).forEach(t => {
       g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
     });
+
+    // Previous close reference line for 1D intraday chart
+    if (period === '1D' && intradayBars) {
+      const prevClose = mkIntraday.quotes[panel]?.[ticker]?.prev;
+      if (prevClose) {
+        g.append('line')
+          .attr('x1', 0).attr('x2', iw)
+          .attr('y1', yScale(prevClose)).attr('y2', yScale(prevClose))
+          .attr('stroke', 'rgba(148,163,184,0.4)')
+          .attr('stroke-width', 1)
+          .attr('stroke-dasharray', '4 3');
+      }
+    }
 
     // x axis
     g.append('g').attr('transform',`translate(0,${ih+6})`)
@@ -3159,6 +3202,22 @@ function mkRenderChart(panel) {
 }
 
 /* ── interaction ────────────────────────────────────────────────────── */
+async function mkLoadIntraday(panel) {
+  if (mkIntraday.loaded[panel] || !INTRADAY_URLS[panel]) return;
+  try {
+    const r = await fetch(INTRADAY_URLS[panel] + '?_=' + Date.now());
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j.intraday) mkIntraday.bars[panel]   = j.intraday;
+    if (j.quotes)   mkIntraday.quotes[panel] = j.quotes;
+    mkIntraday.loaded[panel] = true;
+    // Update live quotes in mkState so 1D table column reflects intraday price
+    if (j.quotes) Object.entries(j.quotes).forEach(([k, q]) => { mkState.prices[k] = q; });
+  } catch(e) {
+    // Intraday file not yet generated — silently ignore
+  }
+}
+
 window.mkShowPanel = function(panel, btn) {
   [...MK_PANELS, 'crypto'].forEach(p => document.getElementById(`mk-panel-${p}`)?.classList.remove('active'));
   document.getElementById(`mk-panel-${panel}`)?.classList.add('active');
@@ -3168,6 +3227,11 @@ window.mkShowPanel = function(panel, btn) {
   // Sync left nav
   document.querySelectorAll('[data-mkpanel]').forEach(el => {
     el.classList.toggle('active', el.dataset.mkpanel === panel);
+  });
+  // Pre-load intraday data for this panel
+  mkLoadIntraday(panel).then(() => {
+    mkRenderTable(panel);
+    if (mkState.selected[panel]) mkRenderChart(panel);
   });
 };
 
