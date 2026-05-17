@@ -854,8 +854,27 @@ a      { color: inherit; text-decoration: none; }
             <span>Markets</span><span class="nav-section-arrow">▼</span>
           </div>
           <div class="nav-items">
-            <div class="nav-item active" onclick="showPage('markets');mkBoot()" data-label="Markets Overview">
-              <div class="nav-dot"></div>Markets Overview<span class="nav-item-badge">MKT</span>
+            <div class="nav-sub-group open" id="nsg-markets-ov">
+              <div class="nav-sub-header" onclick="toggleSubGroup('nsg-markets-ov');showPage('markets');mkBoot()">
+                <span class="nav-section-emoji">📊</span>Markets Overview<span class="nav-sub-arrow">▼</span>
+              </div>
+              <div class="nav-sub-items">
+                <div class="nav-item" onclick="showPage('markets');mkBoot();mkNavPanel('eq')" data-label="Equities">
+                  <div class="nav-dot"></div>Equities
+                </div>
+                <div class="nav-item" onclick="showPage('markets');mkBoot();mkNavPanel('credit')" data-label="Fixed Income">
+                  <div class="nav-dot"></div>Fixed Income
+                </div>
+                <div class="nav-item" onclick="showPage('markets');mkBoot();mkNavPanel('cmd')" data-label="Commodities">
+                  <div class="nav-dot"></div>Commodities
+                </div>
+                <div class="nav-item" onclick="showPage('markets');mkBoot();mkNavPanel('fx')" data-label="FX">
+                  <div class="nav-dot"></div>FX
+                </div>
+                <div class="nav-item" onclick="showPage('markets');mkBoot();mkNavPanel('vol')" data-label="Volatility">
+                  <div class="nav-dot"></div>Volatility
+                </div>
+              </div>
             </div>
             <div class="nav-item" onclick="showPage('crypto')" data-label="Crypto">
               <div class="nav-dot"></div>Crypto<span class="nav-item-badge">CR</span>
@@ -1113,10 +1132,9 @@ a      { color: inherit; text-decoration: none; }
         <!-- ── asset class tabs ── -->
         <div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;flex-shrink:0;">
           <button class="mk-tab active" onclick="mkShowPanel('eq',this)" data-panel="eq">Equities</button>
-          <button class="mk-tab" onclick="mkShowPanel('rates',this)" data-panel="rates">Rates</button>
-          <button class="mk-tab" onclick="mkShowPanel('fx',this)" data-panel="fx">FX</button>
+          <button class="mk-tab" onclick="mkShowPanel('credit',this)" data-panel="credit">Fixed Income</button>
           <button class="mk-tab" onclick="mkShowPanel('cmd',this)" data-panel="cmd">Commodities</button>
-          <button class="mk-tab" onclick="mkShowPanel('credit',this)" data-panel="credit">Credit</button>
+          <button class="mk-tab" onclick="mkShowPanel('fx',this)" data-panel="fx">FX</button>
           <button class="mk-tab" onclick="mkShowPanel('vol',this)" data-panel="vol">Volatility</button>
         </div>
 
@@ -1124,14 +1142,14 @@ a      { color: inherit; text-decoration: none; }
 
           <!-- ── EQUITIES ── -->
           <div class="mk-panel active" id="mk-panel-eq">
-            <div class="stat-row" id="mk-cards-eq"></div>
             <div class="chart-container">
               <div class="chart-container-header">
-                <div class="chart-container-title" id="mk-chart-title-eq">Select an instrument</div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-eq"></span>
-                  <div class="pill-group" id="mk-periods-eq"></div>
+                <div>
+                  <div class="chart-container-title" id="mk-chart-title-eq">Select an instrument</div>
+                  <div id="mk-chart-price-eq" style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--text);margin-top:2px"></div>
+                  <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px" id="mk-chart-stat-eq"></div>
                 </div>
+                <div class="pill-group" id="mk-periods-eq"></div>
               </div>
               <div class="pm-chart-wrap" id="mk-chart-wrap-eq" style="height:240px;position:relative;">
                 <div class="mk-chart-overlay" id="mk-chart-overlay-eq">Select an instrument above</div>
@@ -1150,72 +1168,44 @@ a      { color: inherit; text-decoration: none; }
             <div style="font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.8;">ETF proxies: EAFE→EFA, MSCI EM→EEM. Yahoo Finance 15-min delay.</div>
           </div>
 
-          <!-- ── RATES ── -->
-          <div class="mk-panel" id="mk-panel-rates">
-            <div class="stat-row" id="mk-cards-rates"></div>
+          <!-- ── FIXED INCOME ── -->
+          <div class="mk-panel" id="mk-panel-credit">
             <div class="chart-container">
               <div class="chart-container-header">
-                <div class="chart-container-title" id="mk-chart-title-rates">Select an instrument</div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-rates"></span>
-                  <div class="pill-group" id="mk-periods-rates"></div>
+                <div>
+                  <div class="chart-container-title" id="mk-chart-title-credit">Select an instrument</div>
+                  <div id="mk-chart-price-credit" style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--text);margin-top:2px"></div>
+                  <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px" id="mk-chart-stat-credit"></div>
                 </div>
+                <div class="pill-group" id="mk-periods-credit"></div>
               </div>
-              <div class="pm-chart-wrap" id="mk-chart-wrap-rates" style="height:240px;position:relative;">
-                <div class="mk-chart-overlay" id="mk-chart-overlay-rates">Select an instrument above</div>
+              <div class="pm-chart-wrap" id="mk-chart-wrap-credit" style="height:240px;position:relative;">
+                <div class="mk-chart-overlay" id="mk-chart-overlay-credit">Select an instrument above</div>
               </div>
             </div>
             <div class="data-table-wrap" style="overflow-x:auto;">
-              <table class="data-table" style="min-width:860px;" id="mk-table-rates">
+              <table class="data-table" style="min-width:860px;" id="mk-table-credit">
                 <thead><tr>
                   <th style="text-align:left;min-width:160px">Instrument</th>
                   <th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
                   <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y</th><th>5Y</th>
                 </tr></thead>
-                <tbody id="mk-tbody-rates"></tbody>
+                <tbody id="mk-tbody-credit"></tbody>
               </table>
             </div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">Yields via CBOE indices (^IRX ^FVX ^TNX ^TYX). Values in %.</div>
-          </div>
-
-          <!-- ── FX ── -->
-          <div class="mk-panel" id="mk-panel-fx">
-            <div class="stat-row" id="mk-cards-fx"></div>
-            <div class="chart-container">
-              <div class="chart-container-header">
-                <div class="chart-container-title" id="mk-chart-title-fx">Select an instrument</div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-fx"></span>
-                  <div class="pill-group" id="mk-periods-fx"></div>
-                </div>
-              </div>
-              <div class="pm-chart-wrap" id="mk-chart-wrap-fx" style="height:240px;position:relative;">
-                <div class="mk-chart-overlay" id="mk-chart-overlay-fx">Select an instrument above</div>
-              </div>
-            </div>
-            <div class="data-table-wrap" style="overflow-x:auto;">
-              <table class="data-table" style="min-width:860px;" id="mk-table-fx">
-                <thead><tr>
-                  <th style="text-align:left;min-width:160px">Pair</th>
-                  <th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
-                  <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y</th><th>5Y</th>
-                </tr></thead>
-                <tbody id="mk-tbody-fx"></tbody>
-              </table>
-            </div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">FX spot rates. Real-time where available. DXY via ICE futures (DX-Y.NYB).</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">ETF prices. LQD=US IG, HYG=US HY, BKLN=Loans, AGG=US Agg, IAGG=Global Agg, EMB=EM Sovereign.</div>
           </div>
 
           <!-- ── COMMODITIES ── -->
           <div class="mk-panel" id="mk-panel-cmd">
-            <div class="stat-row" id="mk-cards-cmd"></div>
             <div class="chart-container">
               <div class="chart-container-header">
-                <div class="chart-container-title" id="mk-chart-title-cmd">Select an instrument</div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-cmd"></span>
-                  <div class="pill-group" id="mk-periods-cmd"></div>
+                <div>
+                  <div class="chart-container-title" id="mk-chart-title-cmd">Select an instrument</div>
+                  <div id="mk-chart-price-cmd" style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--text);margin-top:2px"></div>
+                  <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px" id="mk-chart-stat-cmd"></div>
                 </div>
+                <div class="pill-group" id="mk-periods-cmd"></div>
               </div>
               <div class="pm-chart-wrap" id="mk-chart-wrap-cmd" style="height:240px;position:relative;">
                 <div class="mk-chart-overlay" id="mk-chart-overlay-cmd">Select an instrument above</div>
@@ -1234,44 +1224,44 @@ a      { color: inherit; text-decoration: none; }
             <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">Front-month futures. Commodity indices via ETF proxies (DJP, GSG). URA proxy for Uranium.</div>
           </div>
 
-          <!-- ── CREDIT ── -->
-          <div class="mk-panel" id="mk-panel-credit">
-            <div class="stat-row" id="mk-cards-credit"></div>
+          <!-- ── FX ── -->
+          <div class="mk-panel" id="mk-panel-fx">
             <div class="chart-container">
               <div class="chart-container-header">
-                <div class="chart-container-title" id="mk-chart-title-credit">Select an instrument</div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-credit"></span>
-                  <div class="pill-group" id="mk-periods-credit"></div>
+                <div>
+                  <div class="chart-container-title" id="mk-chart-title-fx">Select an instrument</div>
+                  <div id="mk-chart-price-fx" style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--text);margin-top:2px"></div>
+                  <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px" id="mk-chart-stat-fx"></div>
                 </div>
+                <div class="pill-group" id="mk-periods-fx"></div>
               </div>
-              <div class="pm-chart-wrap" id="mk-chart-wrap-credit" style="height:240px;position:relative;">
-                <div class="mk-chart-overlay" id="mk-chart-overlay-credit">Select an instrument above</div>
+              <div class="pm-chart-wrap" id="mk-chart-wrap-fx" style="height:240px;position:relative;">
+                <div class="mk-chart-overlay" id="mk-chart-overlay-fx">Select an instrument above</div>
               </div>
             </div>
             <div class="data-table-wrap" style="overflow-x:auto;">
-              <table class="data-table" style="min-width:860px;" id="mk-table-credit">
+              <table class="data-table" style="min-width:860px;" id="mk-table-fx">
                 <thead><tr>
-                  <th style="text-align:left;min-width:160px">Instrument</th>
+                  <th style="text-align:left;min-width:160px">Pair</th>
                   <th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
                   <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y</th><th>5Y</th>
                 </tr></thead>
-                <tbody id="mk-tbody-credit"></tbody>
+                <tbody id="mk-tbody-fx"></tbody>
               </table>
             </div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">ETF prices shown (not spreads). LQD=US IG, HYG=US HY, BKLN=Loans, AGG=US Agg, AGGG=Global Agg, LQDE=Euro IG, IHYG=Euro HY, EMB=EM Sovereign.</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">FX spot rates. Real-time where available. DXY via ICE futures (DX-Y.NYB).</div>
           </div>
 
           <!-- ── VOLATILITY ── -->
           <div class="mk-panel" id="mk-panel-vol">
-            <div class="stat-row" id="mk-cards-vol"></div>
             <div class="chart-container">
               <div class="chart-container-header">
-                <div class="chart-container-title" id="mk-chart-title-vol">Select an instrument</div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="mk-chart-stat-vol"></span>
-                  <div class="pill-group" id="mk-periods-vol"></div>
+                <div>
+                  <div class="chart-container-title" id="mk-chart-title-vol">Select an instrument</div>
+                  <div id="mk-chart-price-vol" style="font-family:var(--mono);font-size:15px;font-weight:500;color:var(--text);margin-top:2px"></div>
+                  <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px" id="mk-chart-stat-vol"></div>
                 </div>
+                <div class="pill-group" id="mk-periods-vol"></div>
               </div>
               <div class="pm-chart-wrap" id="mk-chart-wrap-vol" style="height:240px;position:relative;">
                 <div class="mk-chart-overlay" id="mk-chart-overlay-vol">Select an instrument above</div>
@@ -2783,7 +2773,7 @@ async function fredLoadHeaderTickers() {
 (function(){
 'use strict';
 
-const MK_PANELS = ['eq','rates','fx','cmd','credit','vol'];
+const MK_PANELS = ['eq','credit','cmd','fx','vol'];
 const MK_PERIODS = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y','7Y','10Y','20Y','30Y','All'];
 const MK_TABLE_PERIODS = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y'];
 
@@ -3022,12 +3012,26 @@ function mkRenderChart(panel) {
   const overlay = document.getElementById(`mk-chart-overlay-${panel}`);
   const titleEl = document.getElementById(`mk-chart-title-${panel}`);
   const statEl  = document.getElementById(`mk-chart-stat-${panel}`);
+  const priceEl = document.getElementById(`mk-chart-price-${panel}`);
 
   if (!ticker || !wrap) { if(overlay) overlay.classList.remove('hidden'); return; }
 
   const item = TICKERS.find(t=>t.t===ticker);
   if (titleEl) titleEl.textContent = item ? item.n : ticker;
   if (overlay) { overlay.classList.remove('hidden'); overlay.textContent = 'Loading…'; }
+
+  // Show price + 1D change in header
+  if (priceEl) {
+    const q = mkState.prices[ticker];
+    if (q) {
+      const priceStr = mkFmtPrice(q.price, item?.d, item?.yield);
+      const chgCls = q.changePct > 0.05 ? 'up' : q.changePct < -0.05 ? 'dn' : 'flat';
+      const chgStr = `${q.changePct >= 0 ? '▲ +' : '▼ '}${Math.abs(q.changePct).toFixed(2)}%`;
+      priceEl.innerHTML = `${priceStr} <span class="${chgCls}" style="font-size:11px;margin-left:6px">${chgStr} 1D</span>`;
+    } else {
+      priceEl.textContent = '';
+    }
+  }
 
   mkFetchHistory(ticker, period).then(h => {
     if (!h) { if(overlay){overlay.textContent='No data available';} return; }
@@ -3039,7 +3043,7 @@ function mkRenderChart(panel) {
     if (statEl && ret!=null) {
       const sign = ret>=0?'+':'';
       const cls = ret>0.05?'up':ret<-0.05?'dn':'flat';
-      statEl.innerHTML = `${period}: <span class="${cls}">${sign}${ret.toFixed(2)}%</span>`;
+      statEl.innerHTML = `${period} return: <span class="${cls}">${sign}${ret.toFixed(2)}%</span>`;
     }
 
     // D3 chart
@@ -3136,7 +3140,12 @@ window.mkShowPanel = function(panel, btn) {
   MK_PANELS.forEach(p => document.getElementById(`mk-panel-${p}`)?.classList.remove('active'));
   document.getElementById(`mk-panel-${panel}`)?.classList.add('active');
   document.querySelectorAll('#page-markets .mk-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
+  else document.querySelector(`#page-markets .mk-tab[data-panel="${panel}"]`)?.classList.add('active');
+};
+
+window.mkNavPanel = function(panel) {
+  mkShowPanel(panel, null);
 };
 
 window.mkSelectTicker = function(panel, ticker) {
@@ -3164,7 +3173,6 @@ window.mkSelectPeriod = function(panel, period) {
 
 const MK_DATA_URLS = {
   eq:     './markets_eq.json',
-  rates:  './markets_rates.json',
   fx:     './markets_fx.json',
   cmd:    './markets_cmd.json',
   credit: './markets_credit.json',
