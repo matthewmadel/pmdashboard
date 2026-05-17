@@ -4911,7 +4911,7 @@ const CMA_DATA = [
   { cat:'ra', label:'Real Assets',           name:'Global Timberland',            ret:6.3,  yoy:100,  vol:9.0,  approxVol:true },
   { cat:'ra', label:'Real Assets',           name:'Global Farmland',              ret:6.8,  yoy:20,   vol:8.5,  approxVol:true },
 ];
-CMA_DATA.forEach(d => { d.sharpe = (d.ret - CMA_RF) / d.vol; });
+CMA_DATA.forEach((d, i) => { d._idx = i; d.sharpe = (d.ret - CMA_RF) / d.vol; });
 
 // Map JPM label → Monte Carlo asset class
 function cmaToMcClass(d) {
@@ -4965,7 +4965,7 @@ function cmaRender() {
         <div class="cma-bar-bg"><div class="cma-bar-fill" style="width:${bw}%"></div></div>
         <span class="${sCls}" style="font-family:var(--mono);font-size:10px;min-width:32px;">${sStr}</span>
       </div></td>
-      <td><button class="cma-add-btn" onclick="cmaAddToPortfolio(${JSON.stringify(d.name)},${JSON.stringify(mcCls)},${d.ret},${d.vol})">+ Use</button></td>
+      <td><button class="cma-add-btn" onclick="cmaAddToPortfolio(${d._idx})">+ Use</button></td>
     </tr>`;
   });
   tbody.innerHTML = html;
@@ -4989,11 +4989,12 @@ window.cmaSort = function(col) {
   cmaRender();
 };
 
-window.cmaAddToPortfolio = function(name, cls, ret, vol) {
-  // Switch to Simulator tab, add a pre-filled row
+window.cmaAddToPortfolio = function(idx) {
+  const d = CMA_DATA[idx];
+  if (!d) return;
+  const cls = cmaToMcClass(d);
   mcShowTab('simulator', document.getElementById('mc-tab-btn-simulator'));
-  mcAddRow(name, cls, '', ret.toFixed(1), vol.toFixed(1), '0');
-  // Scroll portfolio table into view
+  mcAddRow(d.name, cls, '', d.ret.toFixed(1), d.vol.toFixed(1), '0');
   const tbody = document.getElementById('mc-asset-tbody');
   if (tbody) tbody.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
