@@ -3674,6 +3674,38 @@ function cryptoRenderChart() {
 
   g.append('g').attr('transform',`translate(${iw+8},0)`).call(d3.axisRight(yScale).ticks(4).tickFormat(v => '$'+(v>=1000?Math.round(v/1000)+'K':Math.round(v))).tickSize(0)).select('.domain').remove();
   g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','10').attr('font-family',"'IBM Plex Mono'");
+
+  // Crosshair + hover tooltip
+  const vline = g.append('line').attr('class','fred-crosshair').attr('y1',0).attr('y2',ih).style('display','none');
+  const dot   = g.append('circle').attr('r',4).attr('class','fred-hover-dot').style('display','none');
+  const ttId  = 'crypto-chart-tt';
+  let tt = document.getElementById(ttId);
+  if (!tt) {
+    tt = document.createElement('div');
+    tt.id = ttId;
+    Object.assign(tt.style, {position:'absolute',pointerEvents:'none',opacity:'0',background:'var(--bg4)',border:'1px solid var(--border2)',padding:'8px 12px',borderRadius:'4px',fontFamily:"'IBM Plex Mono'",fontSize:'11px',zIndex:'50',whiteSpace:'nowrap',transition:'opacity 0.1s',boxShadow:'0 4px 20px rgba(0,0,0,0.5)'});
+    wrap.appendChild(tt);
+  }
+  svg.on('mousemove', function(event) {
+    const [mx] = d3.pointer(event, g.node());
+    const date = xScale.invert(mx);
+    const idx  = d3.bisectLeft(dates, date);
+    const i    = Math.max(0, Math.min(prices.length-1, idx));
+    if (prices[i] == null) return;
+    const x = xScale(dates[i]), y = yScale(prices[i]);
+    vline.attr('x1',x).attr('x2',x).style('display',null);
+    dot.attr('cx',x).attr('cy',y).style('display',null);
+    const dateStr = dates[i].toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const priceLabel = '$' + prices[i].toLocaleString('en-US',{minimumFractionDigits:item?.d||2,maximumFractionDigits:item?.d||2});
+    tt.style.opacity = '1';
+    tt.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${dateStr}</div><div style="color:var(--amber);font-size:14px;font-weight:500">${priceLabel}</div>`;
+    const bx = wrap.getBoundingClientRect();
+    const ex = event.clientX - bx.left;
+    tt.style.left = (ex > W/2 ? ex - tt.offsetWidth - 10 : ex + 10) + 'px';
+    tt.style.top  = '20px';
+  }).on('mouseleave', () => {
+    vline.style('display','none'); dot.style('display','none'); tt.style.opacity = '0';
+  });
 }
 
 window.cryptoBoot = cryptoBoot;
