@@ -1765,7 +1765,7 @@ const FRED_SERIES_META = {
 const FRED_DEFAULT_TRANSFORM = {
   CPIAUCSL:'yoy',CPILFESL:'yoy',PCEPI:'yoy',PCEPILFE:'yoy',
   PPIFID:'yoy',PPIACO:'yoy',INDPRO:'yoy',RSXFS:'yoy',
-  CSUSHPISA:'yoy',CES0500000003:'yoy',
+  CSUSHPISA:'yoy',CES0500000003:'yoy',GDPC1:'yoy',
 };
 
 const FRED_DEFINITIONS = {
@@ -2861,15 +2861,15 @@ const TICKERS = [
   {t:'ZS=F',   n:'Soybeans',            g:'Agriculture',       p:'cmd',    d:2, card:false},
   {t:'KC=F',   n:'Coffee',              g:'Agriculture',       p:'cmd',    d:2, card:false},
   {t:'LBS=F',  n:'Lumber',              g:'Agriculture',       p:'cmd',    d:2, card:false},
-  // CREDIT
-  {t:'LQD',    n:'U.S. IG Corporate',   g:'U.S. Credit',       p:'credit', d:2, card:true,  etf:true},
-  {t:'HYG',    n:'U.S. High Yield',     g:'U.S. Credit',       p:'credit', d:2, card:true,  etf:true},
-  {t:'BKLN',   n:'Senior Loans',        g:'U.S. Credit',       p:'credit', d:2, card:false, etf:true},
-  {t:'AGG',    n:'U.S. Aggregate',      g:'U.S. Credit',       p:'credit', d:2, card:false, etf:true},
-  {t:'AGGG',   n:'Global Aggregate',    g:'Global Fixed',      p:'credit', d:2, card:false, etf:true},
-  {t:'LQDE',   n:'Euro IG Corporate',   g:'Global Credit',     p:'credit', d:2, card:false, etf:true},
-  {t:'IHYG',   n:'Euro High Yield',     g:'Global Credit',     p:'credit', d:2, card:false, etf:true},
-  {t:'EMB',    n:'EM Sovereign USD',    g:'Global Credit',     p:'credit', d:2, card:false, etf:true},
+  // FIXED INCOME
+  {t:'AGG',    n:'U.S. Aggregate',      g:'U.S. Fixed Income', p:'credit', d:2, card:true,  etf:true},
+  {t:'LQD',    n:'U.S. IG Corporate',   g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
+  {t:'HYG',    n:'U.S. High Yield',     g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
+  {t:'BKLN',   n:'Senior Loans',        g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
+  {t:'AGGG',   n:'Global Aggregate',    g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
+  {t:'LQDE',   n:'Euro IG Corporate',   g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
+  {t:'IHYG',   n:'Euro High Yield',     g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
+  {t:'EMB',    n:'EM Sovereign USD',    g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
   // VOLATILITY
   {t:'^VIX',   n:'VIX',                 g:'Volatility',        p:'vol',    d:2, card:true},
 ];
@@ -3058,14 +3058,28 @@ function mkRenderChart(panel) {
     if (overlay) overlay.classList.add('hidden');
 
     const first=h.prices[0], last=h.prices[h.prices.length-1];
-    const ret = first ? ((last-first)/first)*100 : null;
+    let ret = first ? ((last-first)/first)*100 : null;
+    let retLabel = period;
+
+    // Annualize for periods > 1Y
+    if (ret != null && last && first) {
+      const yrs = parseInt(period);
+      if ([3,5,7,10,15,20,30].includes(yrs)) {
+        const startD = mkPeriodStartDate(period);
+        const actualYears = startD ? (Date.now() - new Date(startD)) / (365.25*24*60*60*1000) : yrs;
+        if (actualYears > 1.5) {
+          ret = (Math.pow(last/first, 1/actualYears) - 1) * 100;
+          retLabel = `${period} ann.`;
+        }
+      }
+    }
 
     // Update price line to show price + selected period return
     if (priceEl && ret != null) {
       const q = mkState.prices[ticker];
       const priceStr = q ? mkFmtPrice(q.price, item?.d, item?.yield) : '';
       const cls = ret > 0.05 ? 'up' : ret < -0.05 ? 'dn' : 'flat';
-      priceEl.innerHTML = `${priceStr} <span class="${cls}" style="font-size:11px;margin-left:6px">${ret>=0?'▲ +':'▼ '}${Math.abs(ret).toFixed(2)}% ${period}</span>`;
+      priceEl.innerHTML = `${priceStr} <span class="${cls}" style="font-size:11px;margin-left:6px">${ret>=0?'▲ +':'▼ '}${Math.abs(ret).toFixed(2)}% ${retLabel}</span>`;
     }
 
     // D3 chart
@@ -3340,6 +3354,21 @@ mkRenderTable = function(panel) {
   if (!tbody) return;
   const items = TICKERS.filter(t => t.p === panel);
   let html = '', lastGroup = null;
+
+  // Sort periods by actual calendar days (shortest→longest)
+  const periodDays = p => {
+    const s = mkPeriodStartDate(p);
+    return s ? (Date.now() - new Date(s)) / 86400000 : Infinity;
+  };
+  const sortedPeriods = [...MK_TABLE_PERIODS].sort((a, b) => periodDays(a) - periodDays(b));
+
+  // Update thead to match sorted order
+  const thead = document.querySelector(`#mk-table-${panel} thead tr`);
+  if (thead) {
+    const annSet = new Set(['3Y','5Y','7Y','10Y','15Y','20Y','30Y']);
+    thead.innerHTML = `<th style="text-align:left;min-width:160px">Instrument</th><th>Ticker</th><th>Last</th>`
+      + sortedPeriods.map(p => `<th>${p}${annSet.has(p)?' (ann.)':''}</th>`).join('');
+  }
   items.forEach(item => {
     if (item.g !== lastGroup) {
       html += `<tr class="mk-group-hdr"><td colspan="13">${item.g}</td></tr>`;
@@ -3350,7 +3379,7 @@ mkRenderTable = function(panel) {
     const priceStr = q ? mkFmtPrice(q.price, item.d, item.yield) : '<span class="mk-loading">···</span>';
     const etfTag = item.etf ? ' <span style="font-size:8px;color:var(--text3);font-family:var(--mono)">ETF</span>' : '';
     const rows = mkState.rawHistory[item.t];
-    const periodCells = MK_TABLE_PERIODS.map(period => {
+    const periodCells = sortedPeriods.map(period => {
       if (period === '1D') {
         return `<td>${q ? mkFmtChg(q.changePct) : '<span style="color:var(--text3)">—</span>'}</td>`;
       }
