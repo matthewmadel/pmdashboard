@@ -2433,19 +2433,6 @@ function ycDrawTable(curves) {
     </tr>`;
   });
 
-  const pv = primary.values;
-  const get = label => { const i=YC_TENORS.findIndex(t=>t.label===label); return i>=0?pv[i]:null; };
-  const sp_10_2  = get('10Y')!=null&&get('2Y')!=null  ? (get('10Y')-get('2Y')).toFixed(2)  : '—';
-  const sp_10_3m = get('10Y')!=null&&get('3M')!=null  ? (get('10Y')-get('3M')).toFixed(2)  : '—';
-  const sp_30_2  = get('30Y')!=null&&get('2Y')!=null  ? (get('30Y')-get('2Y')).toFixed(2)  : '—';
-  html += `<tr class="yc-spreads-row">
-    <td>Key Spreads (Primary)</td>
-    <td colspan="${YC_TENORS.length}" style="text-align:left;padding-left:10px">
-      10Y–2Y: <span style="color:${parseFloat(sp_10_2)<0?'var(--red)':'var(--green)'}">${sp_10_2}%</span>
-      &nbsp;&nbsp; 10Y–3M: <span style="color:${parseFloat(sp_10_3m)<0?'var(--red)':'var(--green)'}">${sp_10_3m}%</span>
-      &nbsp;&nbsp; 30Y–2Y: <span style="color:${parseFloat(sp_30_2)<0?'var(--red)':'var(--green)'}">${sp_30_2}%</span>
-    </td>
-  </tr>`;
   html += '</tbody></table>';
   wrap.innerHTML = html;
 }
