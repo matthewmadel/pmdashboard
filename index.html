@@ -859,19 +859,19 @@ a      { color: inherit; text-decoration: none; }
                 <span class="nav-section-emoji">📊</span>Markets Overview<span class="nav-sub-arrow">▼</span>
               </div>
               <div class="nav-sub-items">
-                <div class="nav-item" onclick="showPage('markets');mkBoot();mkNavPanel('eq')" data-label="Equities">
+                <div class="nav-item" onclick="mkNavPanel('eq')" data-label="Equities" data-mkpanel="eq">
                   <div class="nav-dot"></div>Equities
                 </div>
-                <div class="nav-item" onclick="showPage('markets');mkBoot();mkNavPanel('credit')" data-label="Fixed Income">
+                <div class="nav-item" onclick="mkNavPanel('credit')" data-label="Fixed Income" data-mkpanel="credit">
                   <div class="nav-dot"></div>Fixed Income
                 </div>
-                <div class="nav-item" onclick="showPage('markets');mkBoot();mkNavPanel('cmd')" data-label="Commodities">
+                <div class="nav-item" onclick="mkNavPanel('cmd')" data-label="Commodities" data-mkpanel="cmd">
                   <div class="nav-dot"></div>Commodities
                 </div>
-                <div class="nav-item" onclick="showPage('markets');mkBoot();mkNavPanel('fx')" data-label="FX">
+                <div class="nav-item" onclick="mkNavPanel('fx')" data-label="FX" data-mkpanel="fx">
                   <div class="nav-dot"></div>FX
                 </div>
-                <div class="nav-item" onclick="showPage('markets');mkBoot();mkNavPanel('vol')" data-label="Volatility">
+                <div class="nav-item" onclick="mkNavPanel('vol')" data-label="Volatility" data-mkpanel="vol">
                   <div class="nav-dot"></div>Volatility
                 </div>
               </div>
@@ -3145,7 +3145,13 @@ window.mkShowPanel = function(panel, btn) {
 };
 
 window.mkNavPanel = function(panel) {
+  showPage('markets');
+  mkBoot();
   mkShowPanel(panel, null);
+  // showPage activates items matching 'markets' — override to highlight only this panel
+  document.querySelectorAll('[data-mkpanel]').forEach(el => {
+    el.classList.toggle('active', el.dataset.mkpanel === panel);
+  });
 };
 
 window.mkSelectTicker = function(panel, ticker) {
