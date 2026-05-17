@@ -755,6 +755,58 @@ a      { color: inherit; text-decoration: none; }
 .fred-annotation-line { stroke: rgba(255,255,255,0.2); stroke-width: 1; stroke-dasharray: 3 3; }
 .fred-annotation-label { fill: var(--text3); font-family: 'IBM Plex Mono'; font-size: 9px; }
 
+/* ── Monte Carlo — CMA table ──────────────────────────────────────────── */
+.cma-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11px; }
+.cma-table thead th {
+  padding:8px 12px; text-align:right; font-size:9px; letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--text3); border-bottom:1px solid var(--border);
+  font-weight:400; white-space:nowrap; cursor:pointer; user-select:none;
+}
+.cma-table thead th:first-child,
+.cma-table thead th:nth-child(2) { text-align:left; }
+.cma-table thead th:hover { color:var(--text2); }
+.cma-table thead th.cma-sorted { color:var(--amber); }
+.cma-group-row td {
+  background:var(--bg3); color:var(--amber); font-size:9px; letter-spacing:0.1em;
+  text-transform:uppercase; padding:6px 12px;
+  border-top:1px solid var(--border); border-bottom:1px solid var(--border2);
+}
+.cma-data-row { border-bottom:1px solid rgba(255,255,255,0.03); }
+.cma-data-row:hover td { background:var(--bg3); }
+.cma-data-row td { padding:7px 12px; text-align:right; white-space:nowrap; color:var(--text2); }
+.cma-data-row td:first-child {
+  text-align:left; color:var(--text3); font-size:9px; letter-spacing:0.05em;
+  text-transform:uppercase; padding-left:20px;
+}
+.cma-data-row td:nth-child(2) { text-align:left; color:var(--text); }
+.cma-ret  { color:var(--amber) !important; font-weight:500; }
+.cma-up   { color:var(--green); }
+.cma-dn   { color:var(--red); }
+.cma-flat { color:var(--text3); }
+.cma-sharpe-wrap { display:flex; align-items:center; gap:7px; justify-content:flex-end; }
+.cma-bar-bg   { width:48px; height:3px; background:var(--bg4); overflow:hidden; flex-shrink:0; }
+.cma-bar-fill { height:100%; background:var(--amber); }
+.cma-add-btn {
+  padding:3px 8px; font-family:var(--mono); font-size:9px; color:var(--text3);
+  border:1px solid var(--border2); border-radius:3px; cursor:pointer;
+  transition:all 0.12s; white-space:nowrap;
+}
+.cma-add-btn:hover { color:var(--amber); border-color:var(--amber); }
+.cma-filter-bar {
+  display:flex; gap:6px; flex-wrap:wrap; align-items:center;
+  padding:12px 24px; border-bottom:1px solid var(--border);
+  background:var(--bg2);
+}
+.cma-filter-label { font-family:var(--mono); font-size:9px; color:var(--text3); letter-spacing:0.08em; text-transform:uppercase; }
+.cma-filter-btn {
+  font-family:var(--mono); font-size:9px; color:var(--text3);
+  border:1px solid var(--border2); background:transparent;
+  padding:4px 10px; border-radius:3px; cursor:pointer; letter-spacing:0.05em;
+  text-transform:uppercase; transition:all 0.12s;
+}
+.cma-filter-btn:hover { color:var(--text2); border-color:var(--border3); }
+.cma-filter-btn.active { background:var(--amber); border-color:var(--amber); color:var(--bg); }
+.cma-sort-group { margin-left:auto; display:flex; gap:6px; align-items:center; }
 /* ── Monte Carlo Tool ─────────────────────────────────────────────────── */
 .mc-layout {
   display: grid; grid-template-columns: 380px 1fr; gap: 16px;
@@ -1492,6 +1544,14 @@ a      { color: inherit; text-decoration: none; }
           </div>
         </div>
 
+        <!-- MC tab bar -->
+        <div style="background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 24px;flex-shrink:0;">
+          <button class="mk-tab active" id="mc-tab-btn-simulator" onclick="mcShowTab('simulator',this)">Simulator</button>
+          <button class="mk-tab" id="mc-tab-btn-cma" onclick="mcShowTab('cma',this)">Return Assumptions</button>
+        </div>
+
+        <!-- Simulator panel -->
+        <div id="mc-panel-simulator" style="display:flex;flex:1;min-height:0;overflow:hidden;">
         <div class="mc-layout">
 
           <!-- ── LEFT: Inputs ───────────────────────────────── -->
@@ -1690,7 +1750,57 @@ a      { color: inherit; text-decoration: none; }
             </div><!-- /mc-results -->
           </div><!-- /mc-right -->
         </div><!-- /mc-layout -->
-      </div>
+        </div><!-- /mc-panel-simulator -->
+
+        <!-- Return Assumptions panel -->
+        <div id="mc-panel-cma" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+
+          <!-- filter/sort bar -->
+          <div class="cma-filter-bar">
+            <span class="cma-filter-label">Filter</span>
+            <button class="cma-filter-btn active" onclick="cmaFilter('all',this)">All</button>
+            <button class="cma-filter-btn" onclick="cmaFilter('eq',this)">Equities</button>
+            <button class="cma-filter-btn" onclick="cmaFilter('fi',this)">Fixed Income</button>
+            <button class="cma-filter-btn" onclick="cmaFilter('pm',this)">Private Markets</button>
+            <button class="cma-filter-btn" onclick="cmaFilter('hf',this)">Hedge Funds</button>
+            <button class="cma-filter-btn" onclick="cmaFilter('ra',this)">Real Assets</button>
+            <div class="cma-sort-group">
+              <span class="cma-filter-label">Sort</span>
+              <button class="cma-filter-btn" onclick="cmaSort('ret')">Return ↓</button>
+              <button class="cma-filter-btn" onclick="cmaSort('sharpe')">Sharpe ↓</button>
+              <button class="cma-filter-btn" onclick="cmaSort('vol')">Vol ↓</button>
+            </div>
+          </div>
+
+          <!-- table -->
+          <div style="overflow-y:auto;flex:1;">
+            <table class="cma-table">
+              <thead><tr>
+                <th style="width:110px" onclick="cmaSort('label')">Category</th>
+                <th onclick="cmaSort('name')">Asset Class</th>
+                <th onclick="cmaSort('ret')" id="cma-th-ret">Return</th>
+                <th onclick="cmaSort('yoy')" id="cma-th-yoy">YoY Δ</th>
+                <th onclick="cmaSort('vol')" id="cma-th-vol">Volatility</th>
+                <th onclick="cmaSort('sharpe')" id="cma-th-sharpe">Sharpe</th>
+                <th style="width:60px"></th>
+              </tr></thead>
+              <tbody id="cma-tbody"></tbody>
+            </table>
+
+            <!-- footnotes -->
+            <div style="padding:16px 24px 24px;display:flex;flex-direction:column;gap:6px;">
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:4px;">Methodology &amp; Source</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.7;display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;">
+                <span>Source: J.P. Morgan Asset Management, 2026 Long-Term Capital Market Assumptions (30th Annual Edition). USD matrix, p. 82. Estimates as of September 30, 2025.</span>
+                <span>Returns are compound (geometric) annual returns over a 10–15 year horizon. Sharpe ratios = (return − 3.1% RF) ÷ volatility. † verified against JPM Exhibit 7A. * vol approximated.</span>
+                <span>‡ Venture Capital, PE Secondaries, PE Co-Investments are derived from JPM alternatives narrative and cross-referenced against Cambridge Associates, Hamilton Lane, and Stepstone 2025–2026 publications.</span>
+                <span>YoY Δ compares 2026 vs. 2025 LTCMA. Click "+" on any row to add it to the Simulator portfolio with JPM's return and volatility pre-filled.</span>
+              </div>
+            </div>
+          </div>
+        </div><!-- /mc-panel-cma -->
+
+      </div><!-- /page-monte-carlo -->
 
       <!-- ════════════════════════════════════════
            PAGE: CORRELATION
@@ -4696,6 +4806,197 @@ window.mcRemoveFlow = mcRemoveFlow;
 window.mcRun = mcRun;
 window.mcToggleCorr = mcToggleCorr;
 window.mcCorrEdit = mcCorrEdit;
+
+/* ══════════════════════════════════════════════════════════════════════
+   MONTE CARLO — TAB SWITCHING
+══════════════════════════════════════════════════════════════════════ */
+window.mcShowTab = function(tab, btn) {
+  ['simulator','cma'].forEach(t => {
+    const p = document.getElementById('mc-panel-' + t);
+    if (p) p.style.display = 'none';
+  });
+  const panel = document.getElementById('mc-panel-' + tab);
+  if (panel) { panel.style.display = 'flex'; panel.style.flexDirection = 'column'; }
+  document.querySelectorAll('#page-monte-carlo .mk-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (tab === 'cma') cmaRender();
+};
+
+/* ══════════════════════════════════════════════════════════════════════
+   RETURN ASSUMPTIONS — JPM 2026 LTCMA DATA
+══════════════════════════════════════════════════════════════════════ */
+const CMA_RF = 3.1;
+const CMA_DATA = [
+  // ── U.S. Equities
+  { cat:'eq', label:'U.S. Equities',         name:'U.S. Large Cap',               ret:6.7,  yoy:0,    vol:16.5, verified:true },
+  { cat:'eq', label:'U.S. Equities',         name:'U.S. Mid Cap',                 ret:7.0,  yoy:10,   vol:18.5 },
+  { cat:'eq', label:'U.S. Equities',         name:'U.S. Small Cap',               ret:6.9,  yoy:-10,  vol:20.2 },
+  { cat:'eq', label:'U.S. Equities',         name:'U.S. Value',                   ret:7.7,  yoy:20,   vol:17.8 },
+  { cat:'eq', label:'U.S. Equities',         name:'U.S. Momentum',                ret:7.6,  yoy:30,   vol:19.5 },
+  { cat:'eq', label:'U.S. Equities',         name:'U.S. Quality',                 ret:6.6,  yoy:10,   vol:15.4 },
+  { cat:'eq', label:'U.S. Equities',         name:'U.S. Min. Volatility',         ret:7.0,  yoy:20,   vol:12.8 },
+  { cat:'eq', label:'U.S. Equities',         name:'U.S. Dividend Yield',          ret:7.5,  yoy:15,   vol:14.9 },
+  // ── Intl Developed
+  { cat:'eq', label:'Intl Developed',        name:'EAFE Equity',                  ret:7.5,  yoy:10,   vol:17.6, verified:true },
+  { cat:'eq', label:'Intl Developed',        name:'Euro Area Large Cap',          ret:7.8,  yoy:5,    vol:18.3 },
+  { cat:'eq', label:'Intl Developed',        name:'UK Large Cap',                 ret:6.6,  yoy:-20,  vol:15.9 },
+  { cat:'eq', label:'Intl Developed',        name:'Japan Equity',                 ret:8.8,  yoy:40,   vol:20.1 },
+  { cat:'eq', label:'Intl Developed',        name:'Hong Kong Equity',             ret:7.4,  yoy:0,    vol:21.6 },
+  // ── Emerging Markets
+  { cat:'eq', label:'Emerging Markets',      name:'EM Equity (Broad)',            ret:7.8,  yoy:0,    vol:20.9, verified:true },
+  { cat:'eq', label:'Emerging Markets',      name:'AC Asia ex-Japan',             ret:7.9,  yoy:10,   vol:21.0 },
+  { cat:'eq', label:'Emerging Markets',      name:'Chinese Domestic Equity',      ret:8.8,  yoy:30,   vol:28.7 },
+  { cat:'eq', label:'Other Equity',          name:'Global Convertibles (Hdgd)',   ret:6.7,  yoy:10,   vol:13.0 },
+  // ── U.S. Government
+  { cat:'fi', label:'U.S. Government',       name:'U.S. Cash / T-Bills',          ret:3.1,  yoy:-20,  vol:0.5 },
+  { cat:'fi', label:'U.S. Government',       name:'U.S. Interm. Treasuries',      ret:4.0,  yoy:-10,  vol:3.5, verified:true },
+  { cat:'fi', label:'U.S. Government',       name:'U.S. Long Treasuries',         ret:4.9,  yoy:40,   vol:13.0, verified:true },
+  { cat:'fi', label:'U.S. Government',       name:'10-Year Treasury',             ret:4.6,  yoy:40,   vol:7.0 },
+  { cat:'fi', label:'U.S. Government',       name:'TIPS',                         ret:4.3,  yoy:20,   vol:6.2 },
+  // ── U.S. Credit
+  { cat:'fi', label:'U.S. Credit',           name:'U.S. Aggregate Bonds',         ret:4.8,  yoy:10,   vol:4.8, verified:true },
+  { cat:'fi', label:'U.S. Credit',           name:'U.S. Inv. Grade Corporate',    ret:5.2,  yoy:0,    vol:7.4, verified:true },
+  { cat:'fi', label:'U.S. Credit',           name:'U.S. High Yield',              ret:6.1,  yoy:0,    vol:8.7, verified:true },
+  { cat:'fi', label:'U.S. Credit',           name:'U.S. Short Duration Govt/Cr',  ret:4.0,  yoy:0,    vol:1.7 },
+  { cat:'fi', label:'U.S. Credit',           name:'U.S. Long Duration Govt/Cr',   ret:5.2,  yoy:20,   vol:14.3 },
+  { cat:'fi', label:'U.S. Credit',           name:'U.S. Long Corporate',          ret:5.4,  yoy:10,   vol:15.1 },
+  { cat:'fi', label:'U.S. Credit',           name:'U.S. Securitized',             ret:5.2,  yoy:0,    vol:4.2 },
+  { cat:'fi', label:'U.S. Credit',           name:'Leveraged Loans',              ret:6.2,  yoy:-10,  vol:7.2 },
+  { cat:'fi', label:'U.S. Credit',           name:'Direct Lending',               ret:7.7,  yoy:-50,  vol:9.0 },
+  // ── U.S. Municipal
+  { cat:'fi', label:'U.S. Municipal',        name:'U.S. Muni 1–15yr Blend',       ret:3.8,  yoy:0,    vol:3.6 },
+  { cat:'fi', label:'U.S. Municipal',        name:'U.S. Muni High Yield',         ret:5.3,  yoy:10,   vol:8.1 },
+  // ── Global Fixed Income
+  { cat:'fi', label:'Global Fixed Income',   name:'World Govt Bonds (Hdgd)',      ret:4.3,  yoy:10,   vol:4.1 },
+  { cat:'fi', label:'Global Fixed Income',   name:'World Govt Bonds (Unhdgd)',    ret:4.3,  yoy:10,   vol:9.2 },
+  { cat:'fi', label:'Global Fixed Income',   name:'World ex-U.S. Govt (Hdgd)',    ret:4.2,  yoy:5,    vol:4.6 },
+  // ── Emerging Fixed Income
+  { cat:'fi', label:'Emerging Fixed Income', name:'EM Sovereign Debt',            ret:6.3,  yoy:10,   vol:8.8, verified:true },
+  { cat:'fi', label:'Emerging Fixed Income', name:'EM Local Currency Debt',       ret:6.7,  yoy:15,   vol:10.5 },
+  { cat:'fi', label:'Emerging Fixed Income', name:'EM Corporate Bonds',           ret:6.1,  yoy:5,    vol:9.0 },
+  // ── Private Equity
+  { cat:'pm', label:'Private Equity',        name:'PE — Small Cap',               ret:10.1, yoy:20,   vol:19.8, verified:true },
+  { cat:'pm', label:'Private Equity',        name:'PE — Mid Cap',                 ret:9.9,  yoy:10,   vol:19.8 },
+  { cat:'pm', label:'Private Equity',        name:'PE — Large/Mega Cap',          ret:10.2, yoy:10,   vol:19.8, verified:true },
+  { cat:'pm', label:'Private Equity',        name:'Venture Capital',              ret:12.3, yoy:0,    vol:28.0, approxVol:true, derived:true },
+  { cat:'pm', label:'Private Equity',        name:'PE Secondaries',               ret:10.8, yoy:0,    vol:16.5, approxVol:true, derived:true },
+  { cat:'pm', label:'Private Equity',        name:'PE Co-Investments',            ret:11.0, yoy:0,    vol:20.5, approxVol:true, derived:true },
+  // ── Private Credit
+  { cat:'pm', label:'Private Credit',        name:'Private Credit (Broad)',       ret:8.2,  yoy:-10,  vol:9.0 },
+  { cat:'pm', label:'Private Credit',        name:'Commercial Mortgage Loans',    ret:6.2,  yoy:10,   vol:8.0 },
+  // ── Real Estate
+  { cat:'pm', label:'U.S. Real Estate',      name:'U.S. Core Real Estate',        ret:8.2,  yoy:30,   vol:11.4, verified:true },
+  { cat:'pm', label:'U.S. Real Estate',      name:'U.S. Value-Added RE',          ret:10.5, yoy:20,   vol:14.5 },
+  { cat:'pm', label:'Intl Real Estate',      name:'Euro Core Real Estate',        ret:6.9,  yoy:0,    vol:11.0 },
+  { cat:'pm', label:'Intl Real Estate',      name:'Euro Value-Added RE',          ret:10.1, yoy:0,    vol:14.0 },
+  { cat:'pm', label:'Intl Real Estate',      name:'Asia-Pacific Core RE',         ret:8.4,  yoy:10,   vol:13.0 },
+  { cat:'pm', label:'REITs',                 name:'U.S. REITs',                   ret:7.5,  yoy:80,   vol:18.5 },
+  { cat:'pm', label:'REITs',                 name:'European REITs',               ret:6.7,  yoy:-200, vol:19.0 },
+  { cat:'pm', label:'REITs',                 name:'Asia-Pacific REITs',           ret:8.1,  yoy:10,   vol:18.2 },
+  { cat:'pm', label:'REITs',                 name:'Global REITs Composite',       ret:8.7,  yoy:20,   vol:18.3 },
+  // ── Infrastructure
+  { cat:'pm', label:'Infrastructure',        name:'Core Infrastructure',          ret:7.0,  yoy:10,   vol:9.5 },
+  { cat:'pm', label:'Infrastructure',        name:'Opportunistic Infrastructure', ret:9.0,  yoy:20,   vol:13.5 },
+  { cat:'pm', label:'Transport',             name:'Global Transport',             ret:7.4,  yoy:10,   vol:14.0, approxVol:true },
+  // ── Hedge Funds
+  { cat:'hf', label:'Hedge Funds',           name:'Diversified / Multi-Strategy', ret:5.3,  yoy:10,   vol:4.9 },
+  { cat:'hf', label:'Hedge Funds',           name:'Equity Long Bias',             ret:5.5,  yoy:20,   vol:7.9 },
+  { cat:'hf', label:'Hedge Funds',           name:'Event-Driven',                 ret:5.2,  yoy:10,   vol:6.0 },
+  { cat:'hf', label:'Hedge Funds',           name:'Relative Value',               ret:5.7,  yoy:10,   vol:5.4 },
+  { cat:'hf', label:'Hedge Funds',           name:'Macro',                        ret:4.1,  yoy:10,   vol:5.0 },
+  { cat:'hf', label:'Hedge Funds',           name:'Conservative',                 ret:4.0,  yoy:10,   vol:3.4 },
+  // ── Real Assets
+  { cat:'ra', label:'Real Assets',           name:'Commodities (Broad)',          ret:3.1,  yoy:0,    vol:14.5 },
+  { cat:'ra', label:'Real Assets',           name:'Gold',                         ret:4.1,  yoy:100,  vol:15.5, approxVol:true },
+  { cat:'ra', label:'Real Assets',           name:'Global Timberland',            ret:6.3,  yoy:100,  vol:9.0,  approxVol:true },
+  { cat:'ra', label:'Real Assets',           name:'Global Farmland',              ret:6.8,  yoy:20,   vol:8.5,  approxVol:true },
+];
+CMA_DATA.forEach(d => { d.sharpe = (d.ret - CMA_RF) / d.vol; });
+
+// Map JPM label → Monte Carlo asset class
+function cmaToMcClass(d) {
+  const l = d.label.toLowerCase();
+  if (l.includes('u.s. equit') || l.includes('other equity')) return 'US Equity';
+  if (l.includes('intl dev') || l.includes('emerging market') && d.cat === 'eq') return 'Intl Equity';
+  if (d.cat === 'fi') return 'Bonds';
+  if (l.includes('real estate') || l.includes('reit') || l.includes('infra') || l.includes('transport') || l.includes('timberland') || l.includes('farmland')) return 'Real Estate';
+  if (l.includes('real asset') || l.includes('commodit')) return 'Commodities';
+  if (l.includes('hedge')) return 'Other';
+  if (l.includes('private equity') || l.includes('venture') || l.includes('private credit')) return 'Other';
+  return 'Other';
+}
+
+let cmaFilterCat = 'all', cmaSortCol = null, cmaSortAsc = false;
+
+function cmaRows() {
+  let r = CMA_DATA.filter(d => cmaFilterCat === 'all' || d.cat === cmaFilterCat);
+  if (cmaSortCol) r = [...r].sort((a, b) => cmaSortAsc ? a[cmaSortCol] - b[cmaSortCol] : b[cmaSortCol] - a[cmaSortCol]);
+  return r;
+}
+
+function cmaYoY(v) {
+  if (!v) return `<span class="cma-flat">—</span>`;
+  const s = v > 0 ? '+' : '';
+  return `<span class="${v > 0 ? 'cma-up' : 'cma-dn'}">${s}${(v / 100).toFixed(2)}%</span>`;
+}
+
+function cmaRender() {
+  const tbody = document.getElementById('cma-tbody');
+  if (!tbody) return;
+  let html = '', lastLabel = null;
+  cmaRows().forEach(d => {
+    if (!cmaSortCol && d.label !== lastLabel) {
+      html += `<tr class="cma-group-row"><td colspan="7">${d.label}</td></tr>`;
+      lastLabel = d.label;
+    }
+    const bw = Math.min(100, Math.max(0, d.sharpe / 0.65 * 100)).toFixed(1);
+    const sCls = d.sharpe >= 0.4 ? 'cma-up' : d.sharpe <= 0.1 ? 'cma-dn' : '';
+    const vStr = d.vol.toFixed(1) + '%' + (d.approxVol ? ' *' : '');
+    const sStr = d.sharpe.toFixed(2) + (d.verified ? ' †' : '');
+    const dBadge = d.derived ? ' <span style="color:var(--amber);font-size:8px">‡</span>' : '';
+    const mcCls = cmaToMcClass(d);
+    html += `<tr class="cma-data-row">
+      <td>${cmaSortCol ? d.label : ''}</td>
+      <td>${d.name}${dBadge}</td>
+      <td class="cma-ret">${d.ret.toFixed(1)}%</td>
+      <td>${cmaYoY(d.yoy)}</td>
+      <td>${vStr}</td>
+      <td><div class="cma-sharpe-wrap">
+        <div class="cma-bar-bg"><div class="cma-bar-fill" style="width:${bw}%"></div></div>
+        <span class="${sCls}" style="font-family:var(--mono);font-size:10px;min-width:32px;">${sStr}</span>
+      </div></td>
+      <td><button class="cma-add-btn" onclick="cmaAddToPortfolio(${JSON.stringify(d.name)},${JSON.stringify(mcCls)},${d.ret},${d.vol})">+ Use</button></td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+
+  // Update sorted column header highlight
+  ['ret','yoy','vol','sharpe'].forEach(col => {
+    const th = document.getElementById('cma-th-' + col);
+    if (th) th.classList.toggle('cma-sorted', cmaSortCol === col);
+  });
+}
+
+window.cmaFilter = function(cat, btn) {
+  cmaFilterCat = cat; cmaSortCol = null;
+  document.querySelectorAll('.cma-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  cmaRender();
+};
+
+window.cmaSort = function(col) {
+  cmaSortCol === col ? (cmaSortAsc = !cmaSortAsc) : (cmaSortCol = col, cmaSortAsc = false);
+  cmaRender();
+};
+
+window.cmaAddToPortfolio = function(name, cls, ret, vol) {
+  // Switch to Simulator tab, add a pre-filled row
+  mcShowTab('simulator', document.getElementById('mc-tab-btn-simulator'));
+  mcAddRow(name, cls, '', ret.toFixed(1), vol.toFixed(1), '0');
+  // Scroll portfolio table into view
+  const tbody = document.getElementById('mc-asset-tbody');
+  if (tbody) tbody.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
 </script>
 </body>
 </html>
