@@ -1646,7 +1646,7 @@ a      { color: inherit; text-decoration: none; }
             </div>
 
             <!-- Results (hidden until run) -->
-            <div id="mc-results" style="display:none;display:flex;flex-direction:column;gap:12px;">
+            <div id="mc-results" style="display:none;flex-direction:column;gap:12px;">
 
               <!-- Summary stat cards -->
               <div class="mc-stat-grid" id="mc-stat-grid"></div>
@@ -4289,69 +4289,78 @@ function mcRun() {
   const btn = document.getElementById('mc-run-btn');
   btn.disabled = true; btn.textContent = 'Running…';
 
-  // Run simulation async to let UI update
+  // Pre-compute per-asset drift constants
+  const muNet = assets.map(a => a.mu - a.fee - 0.5 * a.sig * a.sig);
+  const targetWeights = assets.map(a => a.w);
+
+  // Run simulation async to let UI update first
   setTimeout(() => {
-    // paths[t][p] = portfolio value at year t, path p
-    const paths = Array.from({length: horizon + 1}, () => new Float64Array(nPaths));
-    const maxDD  = new Float64Array(nPaths);  // max drawdown per path
-    const ruined = new Uint8Array(nPaths);     // ever hit floor
+    try {
+      const paths = Array.from({length: horizon + 1}, () => new Float64Array(nPaths));
+      const maxDD  = new Float64Array(nPaths);
+      const ruined = new Uint8Array(nPaths);
 
-    for (let p = 0; p < nPaths; p++) {
-      let weights  = assets.map(a => a.w);
-      let assetVal = assets.map(a => startVal * a.w);
-      let peak     = startVal;
-      paths[0][p]  = startVal;
+      // Pre-allocate scratch arrays (avoid per-iteration GC pressure)
+      const zBase = new Float64Array(n);
+      const z     = new Float64Array(n);
+      const aVal  = new Float64Array(n); // asset values for current path
 
-      for (let t = 1; t <= horizon; t++) {
-        // Correlated draws
-        const zBase = Array.from({length:n}, () => model === 'tstudent' ? mcRandT(df) : mcRandn());
-        const z = new Float64Array(n);
-        for (let i = 0; i < n; i++)
-          for (let j = 0; j <= i; j++)
-            z[i] += L[i][j] * zBase[j];
+      for (let p = 0; p < nPaths; p++) {
+        // Initialise asset values
+        for (let i = 0; i < n; i++) aVal[i] = startVal * targetWeights[i];
+        let peak = startVal;
+        paths[0][p] = startVal;
 
-        // Grow each asset
-        let total = 0;
-        for (let i = 0; i < n; i++) {
-          const mu  = assets[i].mu - assets[i].fee;
-          const sig = assets[i].sig;
-          const ret = Math.exp((mu - sig*sig/2) + sig * z[i]) - 1;
-          assetVal[i] *= (1 + ret);
-          total += assetVal[i];
-        }
+        for (let t = 1; t <= horizon; t++) {
+          // Correlated normal draws via Cholesky
+          for (let i = 0; i < n; i++) zBase[i] = model === 'tstudent' ? mcRandT(df) : mcRandn();
+          for (let i = 0; i < n; i++) {
+            z[i] = 0;
+            for (let j = 0; j <= i; j++) z[i] += L[i][j] * zBase[j];
+          }
 
-        // Cash flow
-        if (t >= flowStart && t <= flowEnd) {
-          let cf = 0;
-          if (flowType === 'fixed')  cf = flowAmt;
-          else if (flowType === 'real') cf = flowAmt * Math.pow(1 + inflation, t - 1);
-          else if (flowType === 'pct')  cf = total * (flowAmt / 100);
-          total += cf;
+          // Grow each asset (log-normal GBM)
+          let total = 0;
+          for (let i = 0; i < n; i++) {
+            aVal[i] *= Math.exp(muNet[i] + assets[i].sig * z[i]);
+            total += aVal[i];
+          }
+
+          // Annual rebalancing
+          if (total > 0 && rebal === 'annual') {
+            for (let i = 0; i < n; i++) aVal[i] = total * targetWeights[i];
+          }
+
+          // Cash flow (applied after rebalancing)
+          if (t >= flowStart && t <= flowEnd && flowAmt !== 0) {
+            let cf = 0;
+            if (flowType === 'fixed')       cf = flowAmt;
+            else if (flowType === 'real')   cf = flowAmt * Math.pow(1 + inflation, t - 1);
+            else if (flowType === 'pct')    cf = total * (flowAmt / 100);
+            total += cf;
+            if (total < 0) total = 0;
+            // Redistribute to target weights after cash flow
+            for (let i = 0; i < n; i++) aVal[i] = total * targetWeights[i];
+          }
+
           if (total < 0) total = 0;
-          // Spread cash flow proportionally
-          const scale = total > 0 ? total / (total - cf || 1) : 0;
-          for (let i = 0; i < n; i++) assetVal[i] = total * weights[i];
+          paths[t][p] = total;
+
+          if (total > peak) peak = total;
+          const dd = peak > 0 ? (peak - total) / peak : 0;
+          if (dd > maxDD[p]) maxDD[p] = dd;
+          if (total <= floor) ruined[p] = 1;
         }
-
-        // Rebalancing
-        if (total > 0 && (rebal === 'annual' || (rebal === 'quarterly' && t % 0.25 === 0))) {
-          assetVal = assets.map(a => total * a.w);
-        }
-
-        if (total < 0) total = 0;
-        paths[t][p] = total;
-
-        // Track peak & drawdown
-        if (total > peak) peak = total;
-        const dd = peak > 0 ? (peak - total) / peak : 0;
-        if (dd > maxDD[p]) maxDD[p] = dd;
-        if (total <= floor) ruined[p] = 1;
       }
-    }
 
-    btn.disabled = false; btn.textContent = 'Run Simulation';
-    mcShowResults(paths, maxDD, ruined, assets, startVal, horizon, target, floor, nPaths);
-  }, 20);
+      btn.disabled = false; btn.textContent = 'Run Simulation';
+      mcShowResults(paths, maxDD, ruined, assets, startVal, horizon, target, floor, nPaths);
+    } catch(err) {
+      btn.disabled = false; btn.textContent = 'Run Simulation';
+      console.error('Monte Carlo error:', err);
+      alert('Simulation error: ' + err.message + '\n\nCheck browser console for details.');
+    }
+  }, 30);
 }
 
 // ── Results rendering ─────────────────────────────────────────────────────
@@ -4362,40 +4371,47 @@ function mcShowResults(paths, maxDD, ruined, assets, startVal, horizon, target, 
   res.style.flexDirection = 'column';
   res.style.gap = '12px';
 
-  const terminal = paths[horizon];
-  const pctLevels = [5, 10, 25, 50, 75, 90, 95];
+  const terminal = Array.from(paths[horizon]); // copy to regular array
 
-  // Percentile fan data (year by year)
-  const fanData = Array.from({length: horizon+1}, (_,t) => {
-    const yr = paths[t];
+  // Pre-sort terminal values and maxDD once — used everywhere below
+  const sortedTerminal = [...terminal].sort((a, b) => a - b);
+  const sortedMaxDD    = Array.from(maxDD).sort((a, b) => a - b);
+
+  // Fast percentile from pre-sorted array
+  const pctFrom = (sorted, p) => {
+    const idx = (p / 100) * (sorted.length - 1);
+    const lo = Math.floor(idx), hi = Math.ceil(idx);
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+  };
+
+  // Fan chart data — sort each year's values once
+  const pctLevels = [5, 10, 25, 50, 75, 90, 95];
+  const fanData = Array.from({length: horizon + 1}, (_, t) => {
+    const sorted = Array.from(paths[t]).sort((a, b) => a - b);
     const row = {t};
-    pctLevels.forEach(p => row['p'+p] = mcPercentile(yr, p));
+    pctLevels.forEach(p => row['p' + p] = pctFrom(sorted, p));
     return row;
   });
 
-  // Stats
-  const med      = mcPercentile(terminal, 50);
-  const cvar95   = (() => {
-    const sorted = [...terminal].sort((a,b) => a-b);
-    const cutoff = Math.floor(nPaths * 0.05);
-    const worst  = sorted.slice(0, cutoff);
-    return worst.reduce((s,v) => s+v, 0) / worst.length;
-  })();
-  const pSuccess = [...terminal].filter(v => v >= target).length / nPaths * 100;
-  const pRuin    = [...ruined].filter(v => v === 1).length / nPaths * 100;
-  const medCAGR  = (Math.pow(Math.max(med, 0) / startVal, 1 / horizon) - 1) * 100;
-  const medDD    = mcPercentile([...maxDD], 50) * 100;
+  // Summary stats
+  const med      = pctFrom(sortedTerminal, 50);
+  const cutoff   = Math.max(1, Math.floor(nPaths * 0.05));
+  const cvar95   = sortedTerminal.slice(0, cutoff).reduce((s, v) => s + v, 0) / cutoff;
+  const pSuccess = terminal.filter(v => v >= target).length / nPaths * 100;
+  const pRuin    = Array.from(ruined).filter(v => v === 1).length / nPaths * 100;
+  const medCAGR  = startVal > 0 ? (Math.pow(Math.max(med, 1e-6) / startVal, 1 / horizon) - 1) * 100 : 0;
+  const medDD    = pctFrom(sortedMaxDD, 50) * 100;
 
   // Stat cards
   const statDefs = [
-    { label:'Median Terminal', val: mcFmtDollar(med), sub: `vs. ${mcFmtDollar(startVal)} start`, cls: '' },
-    { label:'P(Success)', val: pSuccess.toFixed(1)+'%', sub:`≥ ${mcFmtDollar(target)} target`, cls: pSuccess>=70?'mc-stat-good':pSuccess>=40?'mc-stat-warn':'mc-stat-bad' },
-    { label:'P(Ruin)', val: pRuin.toFixed(1)+'%', sub:`≤ ${mcFmtDollar(floor)} floor`, cls: pRuin<=5?'mc-stat-good':pRuin<=20?'mc-stat-warn':'mc-stat-bad' },
-    { label:'Median CAGR', val: (medCAGR>=0?'+':'')+medCAGR.toFixed(2)+'%', sub:'annualized', cls: medCAGR>=0?'mc-stat-good':'mc-stat-bad' },
-    { label:'CVaR 95%', val: mcFmtDollar(cvar95), sub:'avg of worst 5%', cls: cvar95<startVal?'mc-stat-bad':'mc-stat-warn' },
-    { label:'Median Max Drawdown', val: '-'+medDD.toFixed(1)+'%', sub:'across all paths', cls: medDD>30?'mc-stat-bad':medDD>15?'mc-stat-warn':'mc-stat-good' },
-    { label:'5th Pct Terminal', val: mcFmtDollar(mcPercentile(terminal,5)), sub:'worst-case scenario', cls: 'mc-stat-bad' },
-    { label:'95th Pct Terminal', val: mcFmtDollar(mcPercentile(terminal,95)), sub:'best-case scenario', cls: 'mc-stat-good' },
+    { label:'Median Terminal',      val: mcFmtDollar(med),                    sub: `vs. ${mcFmtDollar(startVal)} start`, cls: '' },
+    { label:'P(Success)',           val: pSuccess.toFixed(1) + '%',            sub: `≥ ${mcFmtDollar(target)} target`,   cls: pSuccess >= 70 ? 'mc-stat-good' : pSuccess >= 40 ? 'mc-stat-warn' : 'mc-stat-bad' },
+    { label:'P(Ruin)',              val: pRuin.toFixed(1) + '%',               sub: `≤ ${mcFmtDollar(floor)} floor`,     cls: pRuin <= 5 ? 'mc-stat-good' : pRuin <= 20 ? 'mc-stat-warn' : 'mc-stat-bad' },
+    { label:'Median CAGR',         val: (medCAGR >= 0 ? '+' : '') + medCAGR.toFixed(2) + '%', sub: 'annualized',        cls: medCAGR >= 0 ? 'mc-stat-good' : 'mc-stat-bad' },
+    { label:'CVaR 95%',            val: mcFmtDollar(cvar95),                  sub: 'avg of worst 5%',                   cls: cvar95 < startVal ? 'mc-stat-bad' : 'mc-stat-warn' },
+    { label:'Median Max Drawdown', val: '-' + medDD.toFixed(1) + '%',         sub: 'across all paths',                  cls: medDD > 30 ? 'mc-stat-bad' : medDD > 15 ? 'mc-stat-warn' : 'mc-stat-good' },
+    { label:'5th Pct Terminal',    val: mcFmtDollar(pctFrom(sortedTerminal, 5)),  sub: 'worst-case scenario',           cls: 'mc-stat-bad' },
+    { label:'95th Pct Terminal',   val: mcFmtDollar(pctFrom(sortedTerminal, 95)), sub: 'best-case scenario',            cls: 'mc-stat-good' },
   ];
   document.getElementById('mc-stat-grid').innerHTML = statDefs.map(s => `
     <div class="mc-stat-card">
@@ -4404,24 +4420,19 @@ function mcShowResults(paths, maxDD, ruined, assets, startVal, horizon, target, 
       <div class="mc-stat-sub">${s.sub}</div>
     </div>`).join('');
 
-  // Percentile table
+  // Percentile table — use pre-sorted arrays, one lookup per row
   const pctRows = [5, 10, 25, 50, 75, 90, 95].map(p => {
-    const tv   = mcPercentile(terminal, p);
-    const cagr = (Math.pow(Math.max(tv,0)/startVal, 1/horizon) - 1) * 100;
-    const dd   = mcPercentile([...maxDD].filter((_,i) => {
-      const sorted = [...terminal].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
-      const cutIdx = Math.floor(p/100 * nPaths);
-      return i === sorted[Math.min(cutIdx, nPaths-1)].i;
-    }), 50) * 100;
-    const ddApprox = mcPercentile([...maxDD], p) * 100;
-    const vs   = ((tv - startVal) / startVal * 100);
+    const tv   = pctFrom(sortedTerminal, p);
+    const ddP  = pctFrom(sortedMaxDD, p) * 100;
+    const cagr = startVal > 0 ? (Math.pow(Math.max(tv, 1e-6) / startVal, 1 / horizon) - 1) * 100 : 0;
+    const vs   = startVal > 0 ? (tv - startVal) / startVal * 100 : 0;
     const color = tv >= target ? 'var(--green)' : tv <= floor ? 'var(--red)' : 'var(--text)';
     return `<tr>
       <td>${p}th percentile</td>
       <td style="color:${color};font-weight:500">${mcFmtDollar(tv)}</td>
-      <td style="color:${vs>=0?'var(--green)':'var(--red)'}">${vs>=0?'+':''}${vs.toFixed(1)}%</td>
-      <td style="color:${cagr>=0?'var(--green)':'var(--red)'}">${cagr>=0?'+':''}${cagr.toFixed(2)}%</td>
-      <td style="color:var(--amber)">-${ddApprox.toFixed(1)}%</td>
+      <td style="color:${vs >= 0 ? 'var(--green)' : 'var(--red)'}">${vs >= 0 ? '+' : ''}${vs.toFixed(1)}%</td>
+      <td style="color:${cagr >= 0 ? 'var(--green)' : 'var(--red)'}">${cagr >= 0 ? '+' : ''}${cagr.toFixed(2)}%</td>
+      <td style="color:var(--amber)">-${ddP.toFixed(1)}%</td>
     </tr>`;
   });
   document.getElementById('mc-pct-tbody').innerHTML = pctRows.join('');
@@ -4562,15 +4573,17 @@ function mcDrawRuinChart(paths, floor, nPaths, horizon) {
   if (!wrap) return;
   d3.select(wrap).selectAll('*').remove();
 
-  // Compute P(ruin by year t): % of paths ever below floor up to t
-  const cumulRuinData = Array.from({length: horizon+1}, (_,t) => {
-    let cnt = 0;
-    for (let p = 0; p < nPaths; p++) {
-      for (let s = 1; s <= t; s++) {
-        if (paths[s][p] <= floor) { cnt++; break; }
-      }
+  // Single O(H×N) pass: find first ruin year per path
+  const ruinCounts = new Int32Array(horizon + 2);
+  for (let p = 0; p < nPaths; p++) {
+    for (let t = 1; t <= horizon; t++) {
+      if (paths[t][p] <= floor) { ruinCounts[t]++; break; }
     }
-    return { t, pct: cnt / nPaths * 100 };
+  }
+  let cum = 0;
+  const cumulRuinData = Array.from({length: horizon + 1}, (_, t) => {
+    cum += ruinCounts[t];
+    return { t, pct: cum / nPaths * 100 };
   });
 
   const margin = {top:14, right:14, bottom:32, left:12};
