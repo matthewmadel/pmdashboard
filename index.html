@@ -3142,6 +3142,10 @@ window.mkShowPanel = function(panel, btn) {
   document.querySelectorAll('#page-markets .mk-tab').forEach(b=>b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   else document.querySelector(`#page-markets .mk-tab[data-panel="${panel}"]`)?.classList.add('active');
+  // Sync left nav
+  document.querySelectorAll('[data-mkpanel]').forEach(el => {
+    el.classList.toggle('active', el.dataset.mkpanel === panel);
+  });
 };
 
 window.mkNavPanel = function(panel) {
