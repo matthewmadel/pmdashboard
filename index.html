@@ -1194,7 +1194,7 @@ a      { color: inherit; text-decoration: none; }
                 <tbody id="mk-tbody-credit"></tbody>
               </table>
             </div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">ETF prices. LQD=US IG, HYG=US HY, BKLN=Loans, AGG=US Agg, IAGG=Global Agg, EMB=EM Sovereign.</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">ETF prices. AGG=US Agg, LQD=US IG, HYG=US HY, BKLN=Loans, IAGG=Global Agg, VCIT=US IG Interm., HYXU=Intl HY, EMB=EM Sovereign.</div>
           </div>
 
           <!-- ── COMMODITIES ── -->
@@ -2812,7 +2812,7 @@ const TICKERS = [
   {t:'^RLV',   n:'Russell 1000 Value',  g:'U.S.',              p:'eq',     d:2, card:false},
   {t:'^RUT',   n:'Russell 2000',        g:'U.S.',              p:'eq',     d:2, card:true},
   {t:'EFA',    n:'MSCI EAFE',           g:'Developed Intl',    p:'eq',     d:2, card:true, etf:true},
-  {t:'^STOXX', n:'Stoxx 600',           g:'Developed Intl',    p:'eq',     d:2, card:false},
+  {t:'^STOXX', n:'Euro Stoxx 50',        g:'Developed Intl',    p:'eq',     d:2, card:false},
   {t:'^GDAXI', n:'DAX',                 g:'Developed Intl',    p:'eq',     d:2, card:false},
   {t:'^FTSE',  n:'FTSE 100',            g:'Developed Intl',    p:'eq',     d:2, card:false},
   {t:'^N225',  n:'Nikkei 225',          g:'Developed Intl',    p:'eq',     d:2, card:false},
@@ -2860,15 +2860,15 @@ const TICKERS = [
   {t:'ZW=F',   n:'Wheat',               g:'Agriculture',       p:'cmd',    d:2, card:false},
   {t:'ZS=F',   n:'Soybeans',            g:'Agriculture',       p:'cmd',    d:2, card:false},
   {t:'KC=F',   n:'Coffee',              g:'Agriculture',       p:'cmd',    d:2, card:false},
-  {t:'LBS=F',  n:'Lumber',              g:'Agriculture',       p:'cmd',    d:2, card:false},
+  {t:'LBS=F',  n:'Global Timber & Forestry',g:'Timber',          p:'cmd',    d:2, card:false, etf:true},
   // FIXED INCOME
   {t:'AGG',    n:'U.S. Aggregate',      g:'U.S. Fixed Income', p:'credit', d:2, card:true,  etf:true},
   {t:'LQD',    n:'U.S. IG Corporate',   g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
   {t:'HYG',    n:'U.S. High Yield',     g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
   {t:'BKLN',   n:'Senior Loans',        g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
   {t:'AGGG',   n:'Global Aggregate',    g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
-  {t:'LQDE',   n:'Euro IG Corporate',   g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
-  {t:'IHYG',   n:'Euro High Yield',     g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
+  {t:'LQDE',   n:'U.S. IG Corp (Interm.)',g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
+  {t:'IHYG',   n:'Intl High Yield',     g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
   {t:'EMB',    n:'EM Sovereign USD',    g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
   // VOLATILITY
   {t:'^VIX',   n:'VIX',                 g:'Volatility',        p:'vol',    d:2, card:true},

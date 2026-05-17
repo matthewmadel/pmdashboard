@@ -88,7 +88,7 @@ TICKERS = [
     {"key": "^RUT",    "fetch": "IWM",        "name": "Russell 2000",         "panel": "eq"},
     # Developed Intl
     {"key": "EFA",     "fetch": "EFA",        "name": "MSCI EAFE",            "panel": "eq"},
-    {"key": "^STOXX",  "fetch": "FEZ",        "name": "Stoxx 600",            "panel": "eq"},
+    {"key": "^STOXX",  "fetch": "FEZ",        "name": "Euro Stoxx 50",        "panel": "eq"},
     {"key": "^GDAXI",  "fetch": "^GDAXI",     "name": "DAX",                  "panel": "eq"},
     {"key": "^FTSE",   "fetch": "^FTSE",      "name": "FTSE 100",             "panel": "eq"},
     {"key": "^N225",   "fetch": "^N225",      "name": "Nikkei 225",           "panel": "eq"},
@@ -140,7 +140,7 @@ TICKERS = [
     {"key": "ZW=F",    "fetch": "ZW=F",      "name": "Wheat",                 "panel": "cmd"},
     {"key": "ZS=F",    "fetch": "ZS=F",      "name": "Soybeans",              "panel": "cmd"},
     {"key": "KC=F",    "fetch": "KC=F",      "name": "Coffee",                "panel": "cmd"},
-    {"key": "LBS=F",   "fetch": "WOOD",      "name": "Lumber",                "panel": "cmd"},
+    {"key": "LBS=F",   "fetch": "WOOD",      "name": "Global Timber & Forestry","panel": "cmd"},
 
     # ── CREDIT ────────────────────────────────────────────────────────────────
     {"key": "LQD",     "fetch": "LQD",       "name": "U.S. IG Corporate",     "panel": "credit"},
@@ -148,8 +148,8 @@ TICKERS = [
     {"key": "BKLN",    "fetch": "BKLN",      "name": "Senior Loans",          "panel": "credit"},
     {"key": "AGG",     "fetch": "AGG",        "name": "U.S. Aggregate",       "panel": "credit"},
     {"key": "AGGG",    "fetch": "IAGG",      "name": "Global Aggregate",       "panel": "credit"},
-    {"key": "LQDE",    "fetch": "VCIT",      "name": "Euro IG Corporate",      "panel": "credit"},
-    {"key": "IHYG",    "fetch": "HYXU",      "name": "Euro High Yield",        "panel": "credit"},
+    {"key": "LQDE",    "fetch": "VCIT",      "name": "U.S. IG Corp (Interm.)", "panel": "credit"},
+    {"key": "IHYG",    "fetch": "HYXU",      "name": "Intl High Yield",        "panel": "credit"},
     {"key": "EMB",     "fetch": "EMB",       "name": "EM Sovereign USD",       "panel": "credit"},
 
     # ── VOLATILITY ────────────────────────────────────────────────────────────
