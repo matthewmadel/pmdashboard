@@ -811,6 +811,47 @@ a      { color: inherit; text-decoration: none; }
 .cma-filter-btn:hover { color:var(--text2); border-color:var(--border3); }
 .cma-filter-btn.active { background:var(--amber); border-color:var(--amber); color:var(--bg); }
 .cma-sort-group { margin-left:auto; display:flex; gap:6px; align-items:center; }
+/* ── Factor Explorer ──────────────────────────────────────────────────── */
+.fe-layout { display:grid; grid-template-columns:340px 1fr; gap:16px; flex:1; min-height:0; padding:20px 24px; overflow:hidden; }
+.fe-left  { display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-right:4px; }
+.fe-right { display:flex; flex-direction:column; gap:12px; overflow-y:auto; }
+.fe-section { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.fe-section-header { padding:10px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.fe-section-title { font-size:11px; font-weight:500; color:var(--text2); letter-spacing:0.04em; text-transform:uppercase; }
+.fe-section-body  { padding:14px; display:flex; flex-direction:column; gap:10px; }
+.fe-input { width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius); padding:7px 10px; font-family:var(--mono); font-size:12px; color:var(--text); transition:border-color 0.15s; }
+.fe-input:focus { outline:none; border-color:var(--amber); }
+.fe-select { width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius); padding:7px 10px; font-family:var(--mono); font-size:11px; color:var(--text); appearance:none; cursor:pointer; }
+.fe-label { font-family:var(--mono); font-size:9px; color:var(--text3); letter-spacing:0.07em; text-transform:uppercase; }
+.fe-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.fe-field { display:flex; flex-direction:column; gap:4px; }
+.fe-holding-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:10px; }
+.fe-holding-table th { padding:5px 6px; text-align:left; font-size:9px; letter-spacing:0.05em; text-transform:uppercase; color:var(--text3); border-bottom:1px solid var(--border); font-weight:500; }
+.fe-holding-table td { padding:4px 3px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle; }
+.fe-holding-table input, .fe-holding-table select { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:3px; padding:5px 6px; font-family:var(--mono); font-size:10px; color:var(--text); }
+.fe-holding-table input:focus, .fe-holding-table select:focus { outline:none; border-color:var(--amber); }
+.fe-run-btn { width:100%; padding:11px; background:var(--amber); color:var(--bg); font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; border-radius:var(--radius); cursor:pointer; transition:background 0.15s; }
+.fe-run-btn:hover { background:var(--amber2); }
+.fe-run-btn:disabled { background:var(--bg4); color:var(--text3); cursor:not-allowed; }
+.fe-add-btn { font-family:var(--mono); font-size:10px; color:var(--text3); padding:5px 10px; border:1px dashed var(--border2); border-radius:var(--radius); width:100%; text-align:left; cursor:pointer; transition:all 0.12s; }
+.fe-add-btn:hover { color:var(--amber); border-color:var(--amber); }
+.fe-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.fe-stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; }
+.fe-stat-label { font-family:var(--mono); font-size:9px; color:var(--text3); letter-spacing:0.07em; text-transform:uppercase; margin-bottom:4px; }
+.fe-stat-val   { font-family:var(--mono); font-size:17px; font-weight:500; color:var(--text); }
+.fe-stat-sub   { font-family:var(--mono); font-size:9px; color:var(--text3); margin-top:2px; }
+.fe-beta-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11px; }
+.fe-beta-table th { padding:7px 12px; text-align:right; font-size:9px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text3); border-bottom:1px solid var(--border); font-weight:500; }
+.fe-beta-table th:first-child { text-align:left; }
+.fe-beta-table td { padding:7px 12px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.03); color:var(--text2); }
+.fe-beta-table td:first-child { text-align:left; color:var(--text); font-weight:500; }
+.fe-beta-table tr:hover td { background:var(--bg3); }
+.fe-sig { color:var(--green); font-size:9px; }
+.fe-insig { color:var(--text3); font-size:9px; }
+.fe-factor-pill { font-family:var(--mono); font-size:9px; padding:3px 8px; border:1px solid var(--border2); border-radius:3px; cursor:pointer; color:var(--text3); transition:all 0.12s; }
+.fe-factor-pill:hover { color:var(--text); border-color:var(--border3); }
+.fe-factor-pill.active { background:var(--amber); border-color:var(--amber); color:var(--bg); }
+.fe-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:180px; gap:8px; color:var(--text3); font-family:var(--mono); font-size:11px; }
 /* ── Monte Carlo Tool ─────────────────────────────────────────────────── */
 .mc-layout {
   display: grid; grid-template-columns: 380px 1fr; gap: 16px;
@@ -1257,6 +1298,9 @@ a      { color: inherit; text-decoration: none; }
             <div class="nav-item" onclick="showPage('monte-carlo')" data-label="Monte Carlo">
               <div class="nav-dot"></div>Monte Carlo<span class="nav-item-badge">MC</span>
             </div>
+            <div class="nav-item" onclick="showPage('factor-explorer');feBoot()" data-label="Factor Explorer">
+              <div class="nav-dot"></div>Factor Explorer<span class="nav-item-badge">FF6</span>
+            </div>
             <div class="nav-item" onclick="showPage('return-assumptions');cmaRender()" data-label="Return Assumptions">
               <div class="nav-dot"></div>Return Assumptions<span class="nav-item-badge">CMA</span>
             </div>
@@ -1536,6 +1580,151 @@ a      { color: inherit; text-decoration: none; }
         <!-- injected by renderMacroCB() -->
         <div class="fred-state-msg" style="flex:1"><div class="fred-spinner"></div><span>Loading…</span></div>
       </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: FACTOR EXPLORER
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-factor-explorer" style="flex-direction:column;overflow:hidden;">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Factor Explorer <span class="page-title-badge">FF5 + Momentum</span></div>
+            <div class="page-subtitle">Fama-French 5-Factor + Momentum · Daily · 1963–present · Portfolio factor decomposition</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="mk-tab active" id="fe-tab-decomp" onclick="feTab('decomp',this)" style="height:auto;padding:6px 14px;">Decomposition</button>
+            <button class="mk-tab" id="fe-tab-library" onclick="feTab('library',this)" style="height:auto;padding:6px 14px;">Factor Library</button>
+          </div>
+        </div>
+
+        <!-- ── Decomposition panel ── -->
+        <div id="fe-panel-decomp" class="fe-layout">
+
+          <!-- LEFT: inputs -->
+          <div class="fe-left">
+
+            <div class="fe-section">
+              <div class="fe-section-header">
+                <span class="fe-section-title">Portfolio</span>
+                <span id="fe-wt-total" style="font-family:var(--mono);font-size:9px;color:var(--text3)">0%</span>
+              </div>
+              <div class="fe-section-body" style="padding:10px;">
+                <table class="fe-holding-table">
+                  <thead><tr>
+                    <th style="min-width:80px">Ticker</th>
+                    <th style="width:60px">Weight %</th>
+                    <th style="width:20px"></th>
+                  </tr></thead>
+                  <tbody id="fe-holding-tbody"></tbody>
+                </table>
+                <button class="fe-add-btn" onclick="feAddHolding()">+ Add Ticker</button>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--text3)">Use tickers from the Markets dashboard (SPY, QQQ, AGG, etc.).</div>
+              </div>
+            </div>
+
+            <div class="fe-section">
+              <div class="fe-section-header"><span class="fe-section-title">Analysis Period</span></div>
+              <div class="fe-section-body">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button class="fe-factor-pill" onclick="feSetPeriod('1Y',this)">1Y</button>
+                  <button class="fe-factor-pill active" onclick="feSetPeriod('3Y',this)">3Y</button>
+                  <button class="fe-factor-pill" onclick="feSetPeriod('5Y',this)">5Y</button>
+                  <button class="fe-factor-pill" onclick="feSetPeriod('10Y',this)">10Y</button>
+                  <button class="fe-factor-pill" onclick="feSetPeriod('All',this)">All</button>
+                </div>
+                <div class="fe-row-2">
+                  <div class="fe-field"><div class="fe-label">From</div><input class="fe-input" id="fe-date-from" type="date"></div>
+                  <div class="fe-field"><div class="fe-label">To</div><input class="fe-input" id="fe-date-to" type="date"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="fe-section">
+              <div class="fe-section-header"><span class="fe-section-title">Factors</span></div>
+              <div class="fe-section-body">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;" id="fe-factor-toggles">
+                  <button class="fe-factor-pill active" data-factor="MKT_RF" onclick="feToggleFactor(this)">MKT</button>
+                  <button class="fe-factor-pill active" data-factor="SMB" onclick="feToggleFactor(this)">SMB</button>
+                  <button class="fe-factor-pill active" data-factor="HML" onclick="feToggleFactor(this)">HML</button>
+                  <button class="fe-factor-pill active" data-factor="RMW" onclick="feToggleFactor(this)">RMW</button>
+                  <button class="fe-factor-pill active" data-factor="CMA" onclick="feToggleFactor(this)">CMA</button>
+                  <button class="fe-factor-pill active" data-factor="MOM" onclick="feToggleFactor(this)">MOM</button>
+                </div>
+              </div>
+            </div>
+
+            <button class="fe-run-btn" id="fe-run-btn" onclick="feRun()">Run Decomposition</button>
+
+          </div><!-- /fe-left -->
+
+          <!-- RIGHT: outputs -->
+          <div class="fe-right">
+            <div class="fe-empty" id="fe-decomp-empty">
+              <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" fill="none" stroke-width="1.2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              <div>Add tickers, select a period, and run</div>
+            </div>
+            <div id="fe-decomp-results" style="display:none;flex-direction:column;gap:12px;">
+              <!-- Summary stats -->
+              <div class="fe-stat-grid" id="fe-stat-grid"></div>
+              <!-- Betas table -->
+              <div class="fe-section">
+                <div class="fe-section-header" style="cursor:default;"><span class="fe-section-title">Factor Loadings</span><span style="font-family:var(--mono);font-size:9px;color:var(--text3)" id="fe-obs-label"></span></div>
+                <div style="overflow-x:auto;">
+                  <table class="fe-beta-table">
+                    <thead><tr>
+                      <th style="text-align:left">Factor</th>
+                      <th>Beta</th>
+                      <th>Std Err</th>
+                      <th>t-stat</th>
+                      <th>Sig</th>
+                      <th>Ann. Contribution</th>
+                    </tr></thead>
+                    <tbody id="fe-beta-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <!-- Return attribution chart -->
+              <div class="fe-section">
+                <div class="fe-section-header" style="cursor:default;"><span class="fe-section-title">Return Attribution (Annualized)</span></div>
+                <div style="position:relative;height:200px;" id="fe-attr-wrap"></div>
+              </div>
+              <!-- Rolling betas chart -->
+              <div class="fe-section">
+                <div class="fe-section-header" style="cursor:default;">
+                  <span class="fe-section-title">Rolling Factor Betas</span>
+                  <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">126-day window</span>
+                </div>
+                <div style="position:relative;height:260px;" id="fe-rolling-wrap"></div>
+              </div>
+            </div>
+          </div><!-- /fe-right -->
+        </div><!-- /fe-panel-decomp -->
+
+        <!-- ── Factor Library panel ── -->
+        <div id="fe-panel-library" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+          <div style="padding:14px 24px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;">Factor</span>
+            <button class="fe-factor-pill active" onclick="feLibFactor('MKT_RF',this)">MKT-RF</button>
+            <button class="fe-factor-pill" onclick="feLibFactor('SMB',this)">SMB</button>
+            <button class="fe-factor-pill" onclick="feLibFactor('HML',this)">HML</button>
+            <button class="fe-factor-pill" onclick="feLibFactor('RMW',this)">RMW</button>
+            <button class="fe-factor-pill" onclick="feLibFactor('CMA',this)">CMA</button>
+            <button class="fe-factor-pill" onclick="feLibFactor('MOM',this)">MOM</button>
+            <div style="width:1px;height:16px;background:var(--border2);margin:0 4px;"></div>
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;">Period</span>
+            <button class="fe-factor-pill" onclick="feLibPeriod('5Y',this)">5Y</button>
+            <button class="fe-factor-pill" onclick="feLibPeriod('10Y',this)">10Y</button>
+            <button class="fe-factor-pill" onclick="feLibPeriod('20Y',this)">20Y</button>
+            <button class="fe-factor-pill active" onclick="feLibPeriod('All',this)">All</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 320px;gap:0;flex:1;min-height:0;overflow:hidden;">
+            <div style="position:relative;min-height:0;" id="fe-lib-chart-wrap"></div>
+            <div style="border-left:1px solid var(--border);overflow-y:auto;">
+              <div id="fe-lib-stats" style="padding:16px;display:flex;flex-direction:column;gap:10px;"></div>
+            </div>
+          </div>
+        </div><!-- /fe-panel-library -->
+
+      </div><!-- /page-factor-explorer -->
 
       <!-- ════════════════════════════════════════
            PAGE: MONTE CARLO
@@ -5033,6 +5222,686 @@ window.cmaSort    = cmaSort;
 
 // Pre-render table immediately so it's ready when tab is first clicked
 try { cmaRender(); } catch(e) { console.error('cmaRender init error:', e); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   FACTOR EXPLORER
+   Fama-French 5-Factor + Momentum, daily, 1963-present
+   OLS decomposition + rolling betas + factor library
+══════════════════════════════════════════════════════════════════════ */
+
+// ── State ────────────────────────────────────────────────────────────────
+const feState = {
+  factorData:  null,   // loaded from factors_daily.json
+  panelCache:  {},     // {panelName: panelJSON}
+  holdings:    [],     // [{id, ticker, weight}]
+  period:      '3Y',
+  activeFacs:  new Set(['MKT_RF','SMB','HML','RMW','CMA','MOM']),
+  libFactor:   'MKT_RF',
+  libPeriod:   'All',
+  holdingId:   0,
+};
+
+const FACTOR_LABELS = { MKT_RF:'MKT-RF', SMB:'SMB', HML:'HML', RMW:'RMW', CMA:'CMA', MOM:'MOM' };
+const FACTOR_COLORS = { MKT_RF:'#d4a44c', SMB:'#4a90d9', HML:'#4caf82', RMW:'#7c6fcd', CMA:'#3ab8a8', MOM:'#e05555' };
+const FACTOR_DESCS = {
+  MKT_RF: 'Market excess return (broad market minus risk-free rate)',
+  SMB:    'Small Minus Big — size premium (small-cap vs large-cap)',
+  HML:    'High Minus Low — value premium (high book-to-market vs low)',
+  RMW:    'Robust Minus Weak — profitability premium',
+  CMA:    'Conservative Minus Aggressive — investment premium',
+  MOM:    'Winners Minus Losers — momentum premium (prior 12-1 months)',
+};
+
+// Ticker → panel mapping (from our markets dashboard)
+const FE_TICKER_PANEL = {};
+(function() {
+  const map = { eq:'markets_eq.json', credit:'markets_credit.json', cmd:'markets_cmd.json',
+                fx:'markets_fx.json', vol:'markets_vol.json', crypto:'markets_crypto.json' };
+  // All tickers tracked in our dashboard panels
+  [
+    {t:'SPY',p:'eq'},{t:'QQQ',p:'eq'},{t:'IWB',p:'eq'},{t:'IWF',p:'eq'},{t:'IWD',p:'eq'},
+    {t:'IWM',p:'eq'},{t:'EFA',p:'eq'},{t:'FEZ',p:'eq'},{t:'EEM',p:'eq'},
+    {t:'AGG',p:'credit'},{t:'GOVT',p:'credit'},{t:'LQD',p:'credit'},{t:'MBB',p:'credit'},
+    {t:'HYG',p:'credit'},{t:'IAGG',p:'credit'},{t:'EMB',p:'credit'},
+    {t:'GC=F',p:'cmd'},{t:'CL=F',p:'cmd'},{t:'BZ=F',p:'cmd'},{t:'NG=F',p:'cmd'},
+    {t:'DJP',p:'cmd'},{t:'GSG',p:'cmd'},{t:'WOOD',p:'cmd'},
+    {t:'^VIX',p:'vol'},{t:'BTC-USD',p:'crypto'},{t:'ETH-USD',p:'crypto'},
+  ].forEach(({t,p}) => { FE_TICKER_PANEL[t] = './' + map[p]; });
+})();
+
+// ── Boot & tab switching ──────────────────────────────────────────────────
+let feBoooted = false;
+window.feBoot = function() {
+  if (!feBoooted) {
+    feBoooted = true;
+    feInitDates();
+    feAddHolding('SPY', '60');
+    feAddHolding('AGG', '40');
+  }
+};
+
+window.feTab = function(tab, btn) {
+  ['decomp','library'].forEach(t => {
+    const p = document.getElementById('fe-panel-' + t);
+    if (p) p.style.display = 'none';
+  });
+  const panel = document.getElementById('fe-panel-' + tab);
+  if (panel) { panel.style.display = 'flex'; panel.style.flexDirection = 'column'; if(tab==='library') panel.style.flex='1'; }
+  document.querySelectorAll('#page-factor-explorer .mk-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (tab === 'library' && feState.factorData) feRenderLibrary();
+};
+
+// ── Holdings table ────────────────────────────────────────────────────────
+window.feAddHolding = function(ticker='', weight='') {
+  const id = feState.holdingId++;
+  feState.holdings.push({ id, ticker, weight });
+  feRenderHoldings();
+};
+window.feRemoveHolding = function(id) {
+  feState.holdings = feState.holdings.filter(h => h.id !== id);
+  feRenderHoldings();
+};
+
+function feRenderHoldings() {
+  const tbody = document.getElementById('fe-holding-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = feState.holdings.map(h => `
+    <tr id="fe-hr-${h.id}">
+      <td><input value="${h.ticker}" placeholder="e.g. SPY" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase();feReadHolding(${h.id})"></td>
+      <td><input value="${h.weight}" placeholder="%" type="number" min="0" max="100" step="1" oninput="feReadHolding(${h.id})"></td>
+      <td><button class="del-btn" onclick="feRemoveHolding(${h.id})">×</button></td>
+    </tr>`).join('');
+  feUpdateWtTotal();
+}
+
+window.feReadHolding = function(id) {
+  const row = document.getElementById('fe-hr-' + id);
+  if (!row) return;
+  const h = feState.holdings.find(x => x.id === id);
+  if (!h) return;
+  h.ticker = row.querySelector('input:first-of-type').value.toUpperCase().trim();
+  h.weight = row.querySelector('input[type=number]').value;
+  feUpdateWtTotal();
+};
+
+function feUpdateWtTotal() {
+  const total = feState.holdings.reduce((s, h) => s + (parseFloat(h.weight) || 0), 0);
+  const el = document.getElementById('fe-wt-total');
+  if (!el) return;
+  el.textContent = total.toFixed(1) + '%';
+  el.style.color = Math.abs(total - 100) < 0.1 ? 'var(--green)' : Math.abs(total - 100) < 5 ? 'var(--amber)' : 'var(--red)';
+}
+
+// ── Period / factor toggles ───────────────────────────────────────────────
+function feInitDates() {
+  const to = new Date();
+  const from = new Date(to);
+  from.setFullYear(from.getFullYear() - 3);
+  const fmt = d => d.toISOString().slice(0, 10);
+  const tf = document.getElementById('fe-date-from');
+  const tt = document.getElementById('fe-date-to');
+  if (tf) tf.value = fmt(from);
+  if (tt) tt.value = fmt(to);
+}
+
+window.feSetPeriod = function(p, btn) {
+  feState.period = p;
+  document.querySelectorAll('#fe-panel-decomp .fe-factor-pill[onclick*="feSetPeriod"]').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const to = new Date();
+  const from = new Date(to);
+  if (p !== 'All') {
+    const yrs = parseInt(p);
+    from.setFullYear(from.getFullYear() - yrs);
+  } else {
+    from.setFullYear(1963);
+  }
+  const fmt = d => d.toISOString().slice(0, 10);
+  const tf = document.getElementById('fe-date-from');
+  const tt = document.getElementById('fe-date-to');
+  if (tf) tf.value = fmt(from);
+  if (tt) tt.value = fmt(to);
+};
+
+window.feToggleFactor = function(btn) {
+  const f = btn.dataset.factor;
+  if (feState.activeFacs.has(f)) {
+    if (feState.activeFacs.size <= 1) return; // keep at least one
+    feState.activeFacs.delete(f);
+    btn.classList.remove('active');
+  } else {
+    feState.activeFacs.add(f);
+    btn.classList.add('active');
+  }
+};
+
+// ── Linear algebra ────────────────────────────────────────────────────────
+function matInv(A) {
+  const n = A.length;
+  const M = A.map((row, i) => [...row, ...Array.from({length:n}, (_, j) => i === j ? 1 : 0)]);
+  for (let col = 0; col < n; col++) {
+    let maxRow = col;
+    for (let row = col+1; row < n; row++) if (Math.abs(M[row][col]) > Math.abs(M[maxRow][col])) maxRow = row;
+    [M[col], M[maxRow]] = [M[maxRow], M[col]];
+    const piv = M[col][col];
+    if (Math.abs(piv) < 1e-12) continue;
+    for (let j = 0; j < 2*n; j++) M[col][j] /= piv;
+    for (let row = 0; row < n; row++) {
+      if (row === col) continue;
+      const f = M[row][col];
+      for (let j = 0; j < 2*n; j++) M[row][j] -= f * M[col][j];
+    }
+  }
+  return M.map(row => row.slice(n));
+}
+
+function olsRegress(y, Xcols) {
+  // y: number[] of T observations (portfolio excess returns)
+  // Xcols: number[][] of k factor series (each length T)
+  // Returns {alpha, betas, se, tstats, r2, resid, yMean}
+  const T = y.length, k = Xcols.length;
+  const K = k + 1; // +1 for intercept
+
+  // Build design matrix rows: [1, f1, f2, ...]
+  const Xt = Array.from({length:K}, (_, i) =>
+    i === 0 ? new Float64Array(T).fill(1) : new Float64Array(Xcols[i-1]));
+
+  // X'X (K×K)
+  const XtX = Array.from({length:K}, (_, i) =>
+    Array.from({length:K}, (_, j) => {
+      let s = 0; for (let t = 0; t < T; t++) s += Xt[i][t] * Xt[j][t]; return s;
+    }));
+
+  // X'y (K×1)
+  const Xty = Array.from({length:K}, (_, i) => {
+    let s = 0; for (let t = 0; t < T; t++) s += Xt[i][t] * y[t]; return s;
+  });
+
+  const XtXinv = matInv(XtX);
+  const bAll = Array.from({length:K}, (_, i) =>
+    XtXinv[i].reduce((s, v, j) => s + v * Xty[j], 0));
+
+  // Residuals
+  const yhat = Array.from({length:T}, (_, t) =>
+    bAll.reduce((s, b, i) => s + b * Xt[i][t], 0));
+  const resid = y.map((yi, t) => yi - yhat[t]);
+  const rss = resid.reduce((s, r) => s + r*r, 0);
+  const yMean = y.reduce((s, v) => s+v, 0) / T;
+  const tss = y.reduce((s, yi) => s + (yi - yMean)**2, 0);
+  const r2 = Math.max(0, 1 - rss / tss);
+  const sigma2 = rss / Math.max(T - K, 1);
+
+  const se  = bAll.map((_, i) => Math.sqrt(Math.max(0, sigma2 * XtXinv[i][i])));
+  const tst = bAll.map((b, i) => se[i] > 1e-12 ? b / se[i] : 0);
+
+  return {
+    alpha: bAll[0],
+    betas: bAll.slice(1),
+    se:    se.slice(1),
+    sealpha: se[0],
+    tstats: tst.slice(1),
+    talpha: tst[0],
+    r2, resid, yMean,
+    sigma2: Math.sqrt(sigma2 * 252), // annualized tracking error
+  };
+}
+
+// ── Data loading ──────────────────────────────────────────────────────────
+async function feLoadFactors() {
+  if (feState.factorData) return feState.factorData;
+  const r = await fetch('./factors_daily.json?_=' + Date.now());
+  if (!r.ok) throw new Error('factors_daily.json not found — run fetch_factors.py');
+  feState.factorData = await r.json();
+  return feState.factorData;
+}
+
+async function feLoadPanel(url) {
+  if (feState.panelCache[url]) return feState.panelCache[url];
+  const r = await fetch(url + '?_=' + Date.now());
+  if (!r.ok) return null;
+  const data = await r.json();
+  feState.panelCache[url] = data;
+  return data;
+}
+
+// Convert price history to daily return map {date: return}
+function feHistToReturns(rows) {
+  const ret = {};
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i].close > 0 && rows[i-1].close > 0) {
+      ret[rows[i].date] = rows[i].close / rows[i-1].close - 1;
+    }
+  }
+  return ret;
+}
+
+// ── Main run ──────────────────────────────────────────────────────────────
+window.feRun = async function() {
+  // Sync holdings from DOM
+  feState.holdings.forEach(h => {
+    const row = document.getElementById('fe-hr-' + h.id);
+    if (row) {
+      h.ticker = row.querySelector('input:first-of-type').value.toUpperCase().trim();
+      h.weight = row.querySelector('input[type=number]').value;
+    }
+  });
+
+  const valid = feState.holdings.filter(h => h.ticker && parseFloat(h.weight) > 0);
+  if (valid.length === 0) { alert('Add at least one ticker with a positive weight.'); return; }
+
+  const totalWt = valid.reduce((s, h) => s + parseFloat(h.weight), 0);
+  const holdings = valid.map(h => ({ ticker: h.ticker, w: parseFloat(h.weight) / totalWt }));
+
+  const btn = document.getElementById('fe-run-btn');
+  btn.disabled = true; btn.textContent = 'Loading…';
+
+  try {
+    // Load factor data
+    const fd = await feLoadFactors();
+
+    // Load panel data for each unique ticker
+    const panelUrls = {};
+    const missing = [];
+    holdings.forEach(h => {
+      const url = FE_TICKER_PANEL[h.ticker];
+      if (url) panelUrls[h.ticker] = url;
+      else missing.push(h.ticker);
+    });
+    if (missing.length) {
+      alert(`Ticker(s) not found in dashboard data: ${missing.join(', ')}\n\nUse tickers from the Markets section (SPY, QQQ, AGG, LQD, GC=F, etc.)`);
+      btn.disabled = false; btn.textContent = 'Run Decomposition'; return;
+    }
+
+    const panelData = {};
+    const uniqueUrls = [...new Set(Object.values(panelUrls))];
+    for (const url of uniqueUrls) {
+      const panel = await feLoadPanel(url);
+      if (panel?.history) Object.entries(panel.history).forEach(([t, rows]) => {
+        panelData[t] = feHistToReturns(rows);
+      });
+    }
+
+    // Date range from inputs
+    const dateFrom = document.getElementById('fe-date-from')?.value || '';
+    const dateTo   = document.getElementById('fe-date-to')?.value   || '';
+
+    // Filter factor dates to selected range
+    const factorDates = fd.dates;
+    const activeFacs  = [...feState.activeFacs];
+    const factorCols  = activeFacs.reduce((o, f) => { o[f] = fd[f]; return o; }, {});
+
+    // Build aligned arrays: for each factor date in range, compute portfolio return
+    const portDates = [], portRet = [], portExRet = [];
+    const factorRows = activeFacs.map(() => []);
+
+    for (let i = 0; i < factorDates.length; i++) {
+      const d = factorDates[i];
+      if (dateFrom && d < dateFrom) continue;
+      if (dateTo   && d > dateTo)   continue;
+
+      // Portfolio return on this date
+      let pr = 0, allPresent = true;
+      for (const h of holdings) {
+        const r = panelData[h.ticker]?.[d];
+        if (r === undefined) { allPresent = false; break; }
+        pr += h.w * r;
+      }
+      if (!allPresent) continue;
+
+      const rf = fd.RF[i];
+      portDates.push(d);
+      portRet.push(pr);
+      portExRet.push(pr - rf); // excess return
+      activeFacs.forEach((f, fi) => factorRows[fi].push(fd[f][i]));
+    }
+
+    if (portDates.length < 30) {
+      alert(`Only ${portDates.length} overlapping observations — need at least 30. Check tickers have data in the selected period.`);
+      btn.disabled = false; btn.textContent = 'Run Decomposition'; return;
+    }
+
+    // Run OLS
+    const result = olsRegress(portExRet, factorRows);
+    result.activeFacs = activeFacs;
+    result.portDates  = portDates;
+    result.portRet    = portRet;
+    result.portExRet  = portExRet;
+    result.factorRows = factorRows;
+    result.factorMeans = activeFacs.map((_, fi) =>
+      factorRows[fi].reduce((s,v)=>s+v,0) / factorRows[fi].length);
+
+    btn.disabled = false; btn.textContent = 'Run Decomposition';
+    feShowResults(result);
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Run Decomposition';
+    console.error('Factor explorer error:', e);
+    alert('Error: ' + e.message);
+  }
+};
+
+// ── Results display ───────────────────────────────────────────────────────
+function feShowResults(res) {
+  document.getElementById('fe-decomp-empty').style.display = 'none';
+  const out = document.getElementById('fe-decomp-results');
+  out.style.display = 'flex'; out.style.flexDirection = 'column'; out.style.gap = '12px';
+
+  const T = res.portExRet.length;
+  const annAlpha  = res.alpha * 252;
+  const annAlphaP = (Math.pow(1 + res.alpha, 252) - 1) * 100;
+  const portAnnRet = (Math.pow(res.portRet.reduce((p,r)=>p*(1+r),1), 252/T) - 1) * 100;
+  const portVol = Math.sqrt(res.portRet.reduce((s,r)=>s+(r-res.yMean)**2,0)/(T-1)*252)*100;
+  const portSharpe = portVol > 0 ? ((portAnnRet - 3.1) / portVol).toFixed(2) : '—';
+
+  // Stat cards
+  document.getElementById('fe-stat-grid').innerHTML = [
+    { label:'Ann. Portfolio Return', val: (portAnnRet>=0?'+':'')+portAnnRet.toFixed(2)+'%', sub: T+' obs', cls: portAnnRet>=0?'color:var(--green)':'color:var(--red)' },
+    { label:'R²', val: (res.r2*100).toFixed(1)+'%', sub:'factor explanation', cls: '' },
+    { label:'Ann. Alpha (α)', val: (annAlphaP>=0?'+':'')+annAlphaP.toFixed(2)+'%', sub:'Jensen\'s alpha', cls: annAlphaP>=0?'color:var(--green)':'color:var(--red)' },
+    { label:'Tracking Error', val: res.sigma2.toFixed(2)+'%', sub:'annualized residual vol', cls: '' },
+  ].map(s => `<div class="fe-stat-card"><div class="fe-stat-label">${s.label}</div><div class="fe-stat-val" style="${s.cls}">${s.val}</div><div class="fe-stat-sub">${s.sub}</div></div>`).join('');
+
+  // Obs label
+  const el = document.getElementById('fe-obs-label');
+  if (el) el.textContent = `${res.portDates[0]} → ${res.portDates[res.portDates.length-1]}`;
+
+  // Beta table — alpha row first, then each factor
+  const rows = [
+    { name:'Alpha (α)', beta:res.alpha*252*100, se:res.sealpha*252*100, t:res.talpha,
+      contrib: annAlphaP, isAlpha: true }
+  ].concat(res.activeFacs.map((f, i) => ({
+    name: FACTOR_LABELS[f],
+    beta: res.betas[i],
+    se:   res.se[i],
+    t:    res.tstats[i],
+    contrib: res.betas[i] * res.factorMeans[i] * 252 * 100,
+    color: FACTOR_COLORS[f],
+  })));
+
+  document.getElementById('fe-beta-tbody').innerHTML = rows.map(r => {
+    const sig = Math.abs(r.t) > 1.96;
+    const sigMarg = Math.abs(r.t) > 1.645;
+    const sigStr = sig ? '<span class="fe-sig">✓ 95%</span>' : sigMarg ? '<span style="color:var(--amber);font-size:9px">~ 90%</span>' : '<span class="fe-insig">—</span>';
+    const tCol = Math.abs(r.t) > 1.96 ? 'var(--green)' : Math.abs(r.t) > 1.645 ? 'var(--amber)' : 'var(--text3)';
+    const betaFmt = r.isAlpha ? (r.beta>=0?'+':'')+r.beta.toFixed(3)+'%/day' : (r.beta>=0?'+':'')+r.beta.toFixed(3);
+    const seFmt   = r.isAlpha ? '±'+r.se.toFixed(3)+'%' : '±'+r.se.toFixed(4);
+    const dot = r.color ? `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${r.color};margin-right:6px;"></span>` : '';
+    return `<tr>
+      <td>${dot}${r.name}</td>
+      <td style="font-weight:500;color:var(--text)">${betaFmt}</td>
+      <td style="color:var(--text3)">${seFmt}</td>
+      <td style="color:${tCol}">${r.t.toFixed(2)}</td>
+      <td>${sigStr}</td>
+      <td style="color:${r.contrib>=0?'var(--green)':'var(--red)'};font-weight:500">${r.contrib>=0?'+':''}${r.contrib.toFixed(2)}%</td>
+    </tr>`;
+  }).join('');
+
+  // Attribution chart
+  feDrawAttribution(rows.map(r => ({ name: r.name, contrib: r.contrib, color: r.color || 'var(--amber)' })));
+
+  // Rolling betas
+  feDrawRollingBetas(res);
+}
+
+// ── Attribution bar chart ─────────────────────────────────────────────────
+function feDrawAttribution(rows) {
+  const wrap = document.getElementById('fe-attr-wrap');
+  if (!wrap) return;
+  d3.select(wrap).selectAll('*').remove();
+
+  const margin = {top:16, right:80, bottom:28, left:110};
+  const W = wrap.clientWidth || 600, H = wrap.clientHeight || 200;
+  const iw = W - margin.left - margin.right, ih = H - margin.top - margin.bottom;
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+  const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const yScale = d3.scaleBand().domain(rows.map(r=>r.name)).range([0,ih]).padding(0.3);
+  const ext = d3.extent(rows.map(r=>r.contrib));
+  const xScale = d3.scaleLinear().domain([Math.min(ext[0]*1.2,-1), Math.max(ext[1]*1.2,1)]).range([0,iw]).nice();
+  const zero = xScale(0);
+
+  // Grid + zero line
+  xScale.ticks(6).forEach(t => {
+    g.append('line').attr('class','fred-grid-line').attr('x1',xScale(t)).attr('x2',xScale(t)).attr('y1',0).attr('y2',ih);
+  });
+  g.append('line').attr('x1',zero).attr('x2',zero).attr('y1',0).attr('y2',ih)
+    .attr('stroke','rgba(255,255,255,0.15)').attr('stroke-width',1);
+
+  // Bars
+  g.selectAll('rect').data(rows).join('rect')
+    .attr('y', d => yScale(d.name))
+    .attr('x', d => d.contrib >= 0 ? zero : xScale(d.contrib))
+    .attr('width', d => Math.abs(xScale(d.contrib) - zero))
+    .attr('height', yScale.bandwidth())
+    .attr('fill', d => d.color)
+    .attr('opacity', 0.8)
+    .attr('rx', 2);
+
+  // Value labels
+  g.selectAll('text.val').data(rows).join('text')
+    .attr('class','val')
+    .attr('y', d => yScale(d.name) + yScale.bandwidth()/2 + 4)
+    .attr('x', d => d.contrib >= 0 ? xScale(d.contrib)+4 : xScale(d.contrib)-4)
+    .attr('text-anchor', d => d.contrib >= 0 ? 'start' : 'end')
+    .attr('fill', d => d.contrib >= 0 ? 'var(--green)' : 'var(--red)')
+    .attr('font-family',"'IBM Plex Mono'").attr('font-size','10')
+    .text(d => (d.contrib>=0?'+':'')+d.contrib.toFixed(2)+'%');
+
+  g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).ticks(6).tickFormat(v=>v+'%').tickSize(3)).select('.domain').remove();
+  g.append('g').call(d3.axisLeft(yScale).tickSize(0)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','10').attr('font-family',"'IBM Plex Mono'");
+}
+
+// ── Rolling betas chart ───────────────────────────────────────────────────
+function feDrawRollingBetas(res) {
+  const wrap = document.getElementById('fe-rolling-wrap');
+  if (!wrap) return;
+  d3.select(wrap).selectAll('*').remove();
+
+  const WIN = 126;
+  const T   = res.portExRet.length;
+  if (T < WIN + 10) { wrap.innerHTML = '<div class="fe-empty">Not enough data for rolling betas (need >' + WIN + ' obs)</div>'; return; }
+
+  // Compute rolling OLS — beta only (simplified: use MKT_RF as anchor for speed)
+  const rollDates = [], rollBetas = res.activeFacs.map(() => []);
+
+  for (let end = WIN; end <= T; end++) {
+    const ySlice  = res.portExRet.slice(end-WIN, end);
+    const xSlices = res.factorRows.map(col => col.slice(end-WIN, end));
+    try {
+      const r = olsRegress(ySlice, xSlices);
+      rollDates.push(res.portDates[end-1]);
+      res.activeFacs.forEach((_, fi) => rollBetas[fi].push(r.betas[fi]));
+    } catch(e) { /* skip bad windows */ }
+  }
+
+  const margin = {top:14, right:14, bottom:28, left:8};
+  const W = wrap.clientWidth || 700, H = wrap.clientHeight || 260;
+  const iw = W - margin.left - margin.right, ih = H - margin.top - margin.bottom;
+  const svg = d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+  const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const dates = rollDates.map(d => new Date(d + 'T12:00:00'));
+  const xScale = d3.scaleTime().domain(d3.extent(dates)).range([0,iw]);
+  const allVals = rollBetas.flat();
+  const yExt = d3.extent(allVals);
+  const pad = (yExt[1]-yExt[0])*0.1 || 0.1;
+  const yScale = d3.scaleLinear().domain([yExt[0]-pad, yExt[1]+pad]).range([ih,0]).nice();
+
+  yScale.ticks(5).forEach(t => {
+    g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
+  });
+  g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(0)).attr('y2',yScale(0))
+    .attr('stroke','rgba(255,255,255,0.15)').attr('stroke-width',1).attr('stroke-dasharray','4 3');
+
+  res.activeFacs.forEach((f, fi) => {
+    const lineGen = d3.line().x((_,i)=>xScale(dates[i])).y((_,i)=>yScale(rollBetas[fi][i])).curve(d3.curveMonotoneX).defined((_,i)=>rollBetas[fi][i]!=null);
+    g.append('path').datum(rollBetas[fi]).attr('d',lineGen)
+      .attr('fill','none').attr('stroke',FACTOR_COLORS[f]).attr('stroke-width',1.5).attr('opacity',0.85);
+  });
+
+  g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).ticks(6).tickFormat(d3.timeFormat('%b %y')).tickSize(3)).select('.domain').remove();
+  g.append('g').attr('transform',`translate(${iw},0)`).call(d3.axisRight(yScale).ticks(5).tickSize(0)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','10').attr('font-family',"'IBM Plex Mono'");
+
+  // Legend
+  const leg = g.append('g').attr('transform',`translate(4,4)`);
+  res.activeFacs.forEach((f, fi) => {
+    leg.append('circle').attr('cx', fi*62+6).attr('cy',0).attr('r',4).attr('fill',FACTOR_COLORS[f]);
+    leg.append('text').attr('x', fi*62+14).attr('y',4).attr('fill','#4a5068').attr('font-size','9').attr('font-family',"'IBM Plex Mono'").text(FACTOR_LABELS[f]);
+  });
+
+  // Hover
+  const vline = g.append('line').attr('class','fred-crosshair').attr('y1',0).attr('y2',ih).style('display','none');
+  const tt = (() => { const d=document.createElement('div'); Object.assign(d.style,{position:'absolute',pointerEvents:'none',opacity:'0',background:'var(--bg4)',border:'1px solid var(--border2)',padding:'8px 12px',borderRadius:'4px',fontFamily:"'IBM Plex Mono'",fontSize:'11px',zIndex:'50',whiteSpace:'nowrap',transition:'opacity 0.1s',boxShadow:'0 4px 20px rgba(0,0,0,0.5)',lineHeight:'1.7'}); wrap.appendChild(d); return d; })();
+  svg.on('mousemove', function(event) {
+    const [mx] = d3.pointer(event, g.node());
+    const date = xScale.invert(mx);
+    const idx = d3.bisectLeft(dates, date);
+    const i = Math.max(0, Math.min(rollDates.length-1, idx));
+    vline.attr('x1',xScale(dates[i])).attr('x2',xScale(dates[i])).style('display',null);
+    tt.style.opacity='1';
+    tt.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${rollDates[i]}</div>` +
+      res.activeFacs.map((f,fi)=>`<div style="display:flex;justify-content:space-between;gap:16px"><span style="color:${FACTOR_COLORS[f]}">${FACTOR_LABELS[f]}</span><span style="color:${FACTOR_COLORS[f]};font-weight:500">${(rollBetas[fi][i]>=0?'+':'')+rollBetas[fi][i].toFixed(3)}</span></div>`).join('');
+    const bx=wrap.getBoundingClientRect(); const ex=event.clientX-bx.left;
+    tt.style.left=(ex>W/2?ex-tt.offsetWidth-10:ex+10)+'px'; tt.style.top='20px';
+  }).on('mouseleave',()=>{vline.style('display','none');tt.style.opacity='0';});
+}
+
+// ── Factor Library ────────────────────────────────────────────────────────
+window.feLibFactor = function(f, btn) {
+  feState.libFactor = f;
+  document.querySelectorAll('#fe-panel-library .fe-factor-pill[onclick*="feLibFactor"]').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (feState.factorData) feRenderLibrary();
+  else feLoadFactors().then(feRenderLibrary).catch(console.error);
+};
+window.feLibPeriod = function(p, btn) {
+  feState.libPeriod = p;
+  document.querySelectorAll('#fe-panel-library .fe-factor-pill[onclick*="feLibPeriod"]').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (feState.factorData) feRenderLibrary();
+  else feLoadFactors().then(feRenderLibrary).catch(console.error);
+};
+
+function feRenderLibrary() {
+  const fd = feState.factorData;
+  if (!fd) return;
+  const f = feState.libFactor, p = feState.libPeriod;
+
+  // Filter dates
+  const cutoff = (() => {
+    if (p === 'All') return '1963-01-01';
+    const d = new Date(); d.setFullYear(d.getFullYear() - parseInt(p)); return d.toISOString().slice(0,10);
+  })();
+  const idxStart = fd.dates.findIndex(d => d >= cutoff);
+  const dates  = fd.dates.slice(idxStart);
+  const factor = fd[f].slice(idxStart);
+  const rf     = fd.RF.slice(idxStart);
+  const T = dates.length;
+  if (T < 2) return;
+
+  // Cumulative return
+  let cum = 1;
+  const cumRet = factor.map(r => { cum *= (1+r); return cum; });
+
+  // Stats
+  const annRet = (Math.pow(cumRet[T-1], 252/T) - 1) * 100;
+  const mean = factor.reduce((s,v)=>s+v,0)/T;
+  const vol  = Math.sqrt(factor.reduce((s,v)=>s+(v-mean)**2,0)/(T-1)*252)*100;
+  const rfMean = rf.reduce((s,v)=>s+v,0)/T * 252 * 100;
+  const sharpe = vol > 0 ? (annRet - rfMean) / vol : 0;
+
+  // Max drawdown
+  let peak = 1, maxDD = 0;
+  cumRet.forEach(v => { if(v>peak)peak=v; const dd=(peak-v)/peak; if(dd>maxDD)maxDD=dd; });
+
+  // Best/worst calendar year
+  const byYear = {};
+  dates.forEach((d,i) => {
+    const yr = d.slice(0,4); byYear[yr] = byYear[yr] || []; byYear[yr].push(factor[i]);
+  });
+  const yearRets = Object.entries(byYear).map(([yr, vals]) => [yr, (vals.reduce((p,r)=>p*(1+r),1)-1)*100]);
+  yearRets.sort((a,b)=>a[0].localeCompare(b[0]));
+  const bestYr  = yearRets.reduce((a,b)=>b[1]>a[1]?b:a, yearRets[0]);
+  const worstYr = yearRets.reduce((a,b)=>b[1]<a[1]?b:a, yearRets[0]);
+
+  // Render stats panel
+  const statsEl = document.getElementById('fe-lib-stats');
+  if (statsEl) {
+    const color = FACTOR_COLORS[f];
+    statsEl.innerHTML = `
+      <div style="font-family:var(--mono);font-size:11px;font-weight:500;color:${color};letter-spacing:0.05em;padding-bottom:10px;border-bottom:1px solid var(--border)">
+        ${FACTOR_LABELS[f]} — ${p === 'All' ? 'Full History' : p}
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);line-height:2;">${FACTOR_DESCS[f]}</div>
+      ${[
+        ['Ann. Return', (annRet>=0?'+':'')+annRet.toFixed(2)+'%', annRet>=0?'var(--green)':'var(--red)'],
+        ['Ann. Volatility', vol.toFixed(2)+'%', 'var(--text)'],
+        ['Sharpe Ratio', sharpe.toFixed(2), sharpe>=0.4?'var(--green)':sharpe>=0.2?'var(--amber)':'var(--red)'],
+        ['Max Drawdown', '-'+( maxDD*100).toFixed(1)+'%', 'var(--red)'],
+        ['Best Year', bestYr[0]+': '+(bestYr[1]>=0?'+':'')+bestYr[1].toFixed(1)+'%', 'var(--green)'],
+        ['Worst Year', worstYr[0]+': '+(worstYr[1]>=0?'+':'')+worstYr[1].toFixed(1)+'%', 'var(--red)'],
+        ['Observations', T.toLocaleString()+' days', 'var(--text2)'],
+      ].map(([l,v,c])=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03)"><span style="font-family:var(--mono);font-size:9px;color:var(--text3)">${l}</span><span style="font-family:var(--mono);font-size:11px;font-weight:500;color:${c}">${v}</span></div>`).join('')}
+    `;
+  }
+
+  // Chart
+  const wrap = document.getElementById('fe-lib-chart-wrap');
+  if (!wrap) return;
+  d3.select(wrap).selectAll('*').remove();
+  const margin = {top:16,right:16,bottom:32,left:8};
+  const W = wrap.clientWidth||600, H = wrap.clientHeight||320;
+  const iw=W-margin.left-margin.right, ih=H-margin.top-margin.bottom;
+  const svg=d3.select(wrap).append('svg').attr('width',W).attr('height',H);
+  const g=svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+  const dateObjs = dates.map(d=>new Date(d+'T12:00:00'));
+  const xScale = d3.scaleTime().domain(d3.extent(dateObjs)).range([0,iw]);
+  const [vmin,vmax]=d3.extent(cumRet);
+  const pad=(vmax-vmin)*0.05||0.05;
+  const yScale=d3.scaleLinear().domain([vmin-pad,vmax+pad]).range([ih,0]).nice();
+
+  yScale.ticks(5).forEach(t=>{g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));});
+  g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(1)).attr('y2',yScale(1)).attr('stroke','rgba(255,255,255,0.12)').attr('stroke-width',1).attr('stroke-dasharray','4 3');
+
+  const color = FACTOR_COLORS[f];
+  const colorHex = color;
+  const defs=svg.append('defs');
+  const gid='feg-'+f;
+  const grad=defs.append('linearGradient').attr('id',gid).attr('x1','0').attr('x2','0').attr('y1','0').attr('y2','1');
+  grad.append('stop').attr('offset','0%').attr('stop-color',colorHex).attr('stop-opacity',0.18);
+  grad.append('stop').attr('offset','100%').attr('stop-color',colorHex).attr('stop-opacity',0.01);
+
+  const area=d3.area().x((_,i)=>xScale(dateObjs[i])).y0(ih).y1((_,i)=>yScale(cumRet[i])).curve(d3.curveMonotoneX);
+  const line=d3.line().x((_,i)=>xScale(dateObjs[i])).y((_,i)=>yScale(cumRet[i])).curve(d3.curveMonotoneX);
+  g.append('path').datum(cumRet).attr('d',area).attr('fill',`url(#${gid})`);
+  g.append('path').datum(cumRet).attr('d',line).attr('fill','none').attr('stroke',color).attr('stroke-width',1.5);
+
+  g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).ticks(7).tickFormat(d3.timeFormat('%Y')).tickSize(3)).select('.domain').remove();
+  g.append('g').attr('transform',`translate(${iw},0)`).call(d3.axisRight(yScale).ticks(5).tickFormat(v=>(((v-1)*100>=0?'+':'')+((v-1)*100).toFixed(0)+'%')).tickSize(0)).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','10').attr('font-family',"'IBM Plex Mono'");
+
+  // Hover
+  const vline=g.append('line').attr('class','fred-crosshair').attr('y1',0).attr('y2',ih).style('display','none');
+  const dot=g.append('circle').attr('r',4).attr('class','fred-hover-dot').style('display','none');
+  const tt2=(()=>{const d=document.createElement('div');Object.assign(d.style,{position:'absolute',pointerEvents:'none',opacity:'0',background:'var(--bg4)',border:'1px solid var(--border2)',padding:'8px 12px',borderRadius:'4px',fontFamily:"'IBM Plex Mono'",fontSize:'11px',zIndex:'50',whiteSpace:'nowrap',transition:'opacity 0.1s',boxShadow:'0 4px 20px rgba(0,0,0,0.5)',lineHeight:'1.7'});wrap.appendChild(d);return d;})();
+  svg.on('mousemove',function(event){
+    const[mx]=d3.pointer(event,g.node());
+    const date=xScale.invert(mx);
+    const idx=Math.max(0,Math.min(T-1,d3.bisectLeft(dateObjs,date)));
+    const x=xScale(dateObjs[idx]),y=yScale(cumRet[idx]);
+    vline.attr('x1',x).attr('x2',x).style('display',null);
+    dot.attr('cx',x).attr('cy',y).style('display',null).attr('fill',color);
+    const cumPct=((cumRet[idx]-1)*100).toFixed(2);
+    const dayRet=(factor[idx]*100).toFixed(3);
+    tt2.style.opacity='1';
+    tt2.innerHTML=`<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${dates[idx]}</div><div style="color:${color};font-size:14px;font-weight:500">${cumPct>=0?'+':''}${cumPct}%</div><div style="color:var(--text3);font-size:9px">Daily: ${dayRet>=0?'+':''}${dayRet}%</div>`;
+    const bx=wrap.getBoundingClientRect();const ex=event.clientX-bx.left;
+    tt2.style.left=(ex>W/2?ex-tt2.offsetWidth-10:ex+10)+'px';tt2.style.top='20px';
+  }).on('mouseleave',()=>{vline.style('display','none');dot.style('display','none');tt2.style.opacity='0';});
+}
 </script>
 </body>
 </html>

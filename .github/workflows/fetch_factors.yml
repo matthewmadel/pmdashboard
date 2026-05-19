@@ -1,0 +1,42 @@
+name: Fetch Factor Data
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # Every Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  factors:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-requests-${{ runner.os }}
+
+      - name: Install dependencies
+        run: pip install requests --quiet
+
+      - name: Fetch Fama-French factor data
+        run: python fetch_factors.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add factors_daily.json
+          git diff --staged --quiet || git commit -m "factors: update $(date -u +%Y-%m-%d)"
+          git push
