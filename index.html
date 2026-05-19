@@ -1379,7 +1379,7 @@ a      { color: inherit; text-decoration: none; }
                 <tbody id="mk-tbody-credit"></tbody>
               </table>
             </div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">ETF prices. AGG=US Agg, LQD=US IG, HYG=US HY, BKLN=Loans, IAGG=Global Agg, VCIT=US IG Interm., HYXU=Intl HY, EMB=EM Sovereign.</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);">ETF prices. AGG=US Agg, GOVT=US Treasury, LQD=US IG Corp, MBB=US MBS, HYG=US HY, IAGG=Global Agg, EMB=EM Sovereign.</div>
           </div>
 
           <!-- ── COMMODITIES ── -->
@@ -1554,9 +1554,13 @@ a      { color: inherit; text-decoration: none; }
 
             <!-- Portfolio Builder -->
             <div class="mc-section">
-              <div class="mc-section-header">
+              <div class="mc-section-header" style="flex-wrap:wrap;gap:8px;">
                 <span class="mc-section-title">Portfolio</span>
-                <span style="font-family:var(--mono);font-size:9px;color:var(--text3)" id="mc-weight-total">0%</span>
+                <div style="display:flex;gap:14px;align-items:center;margin-left:auto;">
+                  <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">Wtd Return: <span id="mc-port-ret" style="color:var(--text2)">—</span></span>
+                  <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">Wtd Vol: <span id="mc-port-vol" style="color:var(--text2)">—</span></span>
+                  <span style="font-family:var(--mono);font-size:9px;" id="mc-weight-total">0%</span>
+                </div>
               </div>
               <div class="mc-section-body" style="padding:10px;">
                 <div style="overflow-x:auto;">
@@ -3286,12 +3290,11 @@ const TICKERS = [
   {t:'WOOD',   n:'Global Timber & Forestry',g:'Timber',          p:'cmd',    d:2, card:false, etf:true},
   // FIXED INCOME
   {t:'AGG',    n:'U.S. Aggregate',      g:'U.S. Fixed Income', p:'credit', d:2, card:true,  etf:true},
+  {t:'GOVT',   n:'U.S. Treasury Bond',  g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
   {t:'LQD',    n:'U.S. IG Corporate',   g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
+  {t:'MBB',    n:'U.S. MBS',            g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
   {t:'HYG',    n:'U.S. High Yield',     g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
-  {t:'BKLN',   n:'Senior Loans',        g:'U.S. Fixed Income', p:'credit', d:2, card:false, etf:true},
   {t:'IAGG',   n:'Global Aggregate',    g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
-  {t:'VCIT',   n:'U.S. IG Corp (Interm.)',g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
-  {t:'HYXU',   n:'Intl High Yield',     g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
   {t:'EMB',    n:'EM Sovereign USD',    g:'Global Fixed Income',p:'credit', d:2, card:false, etf:true},
   // VOLATILITY
   {t:'^VIX',   n:'VIX',                 g:'Volatility',        p:'vol',    d:2, card:true},
@@ -4211,9 +4214,45 @@ function mcRenderAssetTable() {
 function mcUpdateWeightTotal() {
   const total = mcAssets.reduce((s, a) => s + (parseFloat(a.wt) || 0), 0);
   const el = document.getElementById('mc-weight-total');
-  if (!el) return;
-  el.textContent = total.toFixed(1) + '%';
-  el.style.color = Math.abs(total - 100) < 0.1 ? 'var(--green)' : Math.abs(total - 100) < 5 ? 'var(--amber)' : 'var(--red)';
+  if (el) {
+    el.textContent = total.toFixed(1) + '%';
+    el.style.color = Math.abs(total - 100) < 0.1 ? 'var(--green)' : Math.abs(total - 100) < 5 ? 'var(--amber)' : 'var(--red)';
+  }
+
+  // Weighted portfolio return and vol
+  const valid = mcAssets.filter(a => parseFloat(a.wt) > 0 && !isNaN(parseFloat(a.ret)) && parseFloat(a.ret) !== '' && !isNaN(parseFloat(a.vol)) && parseFloat(a.vol) > 0);
+  const retEl = document.getElementById('mc-port-ret');
+  const volEl = document.getElementById('mc-port-vol');
+  if (!retEl || !volEl) return;
+
+  if (valid.length === 0 || total === 0) {
+    retEl.textContent = '—'; volEl.textContent = '—'; return;
+  }
+
+  const wts  = valid.map(a => (parseFloat(a.wt) || 0) / total);
+  const rets = valid.map(a => parseFloat(a.ret) / 100);
+  const vols = valid.map(a => parseFloat(a.vol) / 100);
+
+  // Weighted return
+  const portRet = wts.reduce((s, w, i) => s + w * rets[i], 0) * 100;
+
+  // Weighted vol using correlation matrix (w^T Σ w)
+  const n = valid.length;
+  const idxMap = valid.map(a => mcAssets.findIndex(x => x.id === a.id));
+  let portVar = 0;
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const rho = (mcCorrMatrix[idxMap[i]] && mcCorrMatrix[idxMap[i]][idxMap[j]] !== undefined)
+        ? mcCorrMatrix[idxMap[i]][idxMap[j]] : (i === j ? 1 : 0);
+      portVar += wts[i] * wts[j] * vols[i] * vols[j] * rho;
+    }
+  }
+  const portVol = Math.sqrt(Math.max(portVar, 0)) * 100;
+
+  retEl.textContent = (portRet >= 0 ? '+' : '') + portRet.toFixed(2) + '%';
+  retEl.style.color = portRet >= 0 ? 'var(--green)' : 'var(--red)';
+  volEl.textContent = portVol.toFixed(2) + '%';
+  volEl.style.color = 'var(--text2)';
 }
 
 // ── Correlation matrix ───────────────────────────────────────────────────

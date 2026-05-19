@@ -143,14 +143,13 @@ TICKERS = [
     {"key": "WOOD",    "fetch": "WOOD",      "name": "Global Timber & Forestry","panel": "cmd"},
 
     # ── CREDIT ────────────────────────────────────────────────────────────────
-    {"key": "LQD",     "fetch": "LQD",       "name": "U.S. IG Corporate",     "panel": "credit"},
-    {"key": "HYG",     "fetch": "HYG",       "name": "U.S. High Yield",       "panel": "credit"},
-    {"key": "BKLN",    "fetch": "BKLN",      "name": "Senior Loans",          "panel": "credit"},
-    {"key": "AGG",     "fetch": "AGG",        "name": "U.S. Aggregate",       "panel": "credit"},
-    {"key": "IAGG",    "fetch": "IAGG",      "name": "Global Aggregate",       "panel": "credit"},
-    {"key": "VCIT",    "fetch": "VCIT",      "name": "U.S. IG Corp (Interm.)", "panel": "credit"},
-    {"key": "HYXU",    "fetch": "HYXU",      "name": "Intl High Yield",        "panel": "credit"},
-    {"key": "EMB",     "fetch": "EMB",       "name": "EM Sovereign USD",       "panel": "credit"},
+    {"key": "AGG",     "fetch": "AGG",       "name": "U.S. Aggregate",         "panel": "credit"},
+    {"key": "GOVT",    "fetch": "GOVT",      "name": "U.S. Treasury Bond",     "panel": "credit"},
+    {"key": "LQD",     "fetch": "LQD",       "name": "U.S. IG Corporate",      "panel": "credit"},
+    {"key": "MBB",     "fetch": "MBB",       "name": "U.S. MBS",               "panel": "credit"},
+    {"key": "HYG",     "fetch": "HYG",       "name": "U.S. High Yield",        "panel": "credit"},
+    {"key": "IAGG",    "fetch": "IAGG",      "name": "Global Aggregate",        "panel": "credit"},
+    {"key": "EMB",     "fetch": "EMB",       "name": "EM Sovereign USD",        "panel": "credit"},
 
     # ── VOLATILITY ────────────────────────────────────────────────────────────
     {"key": "^VIX",    "fetch": "^VIX",      "name": "VIX",                   "panel": "vol"},
