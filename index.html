@@ -5048,13 +5048,8 @@ window.mcClear = function() {
 window.mcQuickAdd = function(idx) {
   const d = CMA_DATA[idx];
   if (!d) return;
-  const cls = cmaToMcClass(d);
-  mcAddRow(d.name, cls, '', d.ret.toFixed(1), d.vol.toFixed(1), '0');
-  // Hide empty state once first asset added
-  const empty = document.getElementById('mc-empty-state');
-  if (empty) empty.style.display = 'none';
-  const res = document.getElementById('mc-results');
-  if (res) res.style.display = 'none';
+  mcAddRow(d.name, cmaToMcClass(d), '', d.ret.toFixed(1), d.vol.toFixed(1), '0');
+  // Quick-add panel stays visible until Run Simulation is clicked
 };
 
 function mcInitQuickAdd() {
