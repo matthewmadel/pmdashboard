@@ -5038,10 +5038,49 @@ function mcRenderFlowTable() {
 
 // ── Clear simulation ──────────────────────────────────────────────────────
 window.mcClear = function() {
+  // Hide results, restore quick-add panel
   const res = document.getElementById('mc-results');
   const empty = document.getElementById('mc-empty-state');
-  if (res)   { res.style.display = 'none'; }
+  if (res)   res.style.display = 'none';
   if (empty) { empty.style.display = 'flex'; empty.style.flexDirection = 'column'; }
+
+  // Clear portfolio assets
+  mcAssets = [];
+  mcCorrMatrix = [];
+  mcRowId = 0;
+  mcRenderAssetTable();
+  mcRebuildCorr();
+
+  // Clear cash flows
+  mcFlows = [];
+  mcFlowId = 0;
+  mcRenderFlowTable();
+
+  // Reset simulation parameters to defaults
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  set('mc-start-val',  '1,000,000');
+  set('mc-horizon',    '20');
+  set('mc-inflation',  '2.5');
+  set('mc-rebal',      'annual');
+  set('mc-model',      'lognormal');
+  set('mc-npaths',     '10000');
+
+  // Reset targets & thresholds
+  set('mc-target', '2,000,000');
+  set('mc-floor',  '0');
+
+  // Reset cash flow date fields to match default horizon
+  set('mc-flow-start', '1');
+  set('mc-flow-end',   '20');
+
+  // Reset weight/port stat display
+  mcUpdateWeightTotal();
+
+  // Close correlation matrix if open
+  const corrBody = document.getElementById('mc-corr-body');
+  const corrLbl  = document.getElementById('mc-corr-toggle-label');
+  if (corrBody) corrBody.style.display = 'none';
+  if (corrLbl)  corrLbl.textContent = 'Show ▼';
 };
 
 // ── Quick-add from JPM CMA ────────────────────────────────────────────────
