@@ -3790,15 +3790,20 @@ function mkRenderChart(panel) {
 
 /* ── interaction ────────────────────────────────────────────────────── */
 async function mkLoadIntraday(panel) {
-  if (mkIntraday.loaded[panel] || !INTRADAY_URLS[panel]) return;
+  if (!INTRADAY_URLS[panel]) return;
+  // Skip if loaded within last 4 minutes (intraday refreshes every 5 min server-side)
+  const age = Date.now() - (mkIntraday.loadedAt?.[panel] || 0);
+  if (mkIntraday.loaded[panel] && age < 4 * 60 * 1000) return;
   try {
     const r = await fetch(INTRADAY_URLS[panel] + '?_=' + Date.now());
     if (!r.ok) return;
     const j = await r.json();
     if (j.intraday) mkIntraday.bars[panel]   = j.intraday;
     if (j.quotes)   mkIntraday.quotes[panel] = j.quotes;
-    mkIntraday.loaded[panel] = true;
-    // Update live quotes in mkState so 1D table column reflects intraday price
+    mkIntraday.loaded[panel]   = true;
+    mkIntraday.loadedAt        = mkIntraday.loadedAt || {};
+    mkIntraday.loadedAt[panel] = Date.now();
+    // Update live quotes so 1D table column reflects current intraday price
     if (j.quotes) Object.entries(j.quotes).forEach(([k, q]) => { mkState.prices[k] = q; });
   } catch(e) {
     // Intraday file not yet generated — silently ignore
@@ -4040,10 +4045,18 @@ window.mkRefreshAll = async function() {
   const icon = document.getElementById('mk-refresh-icon-hdr');
   if (icon) icon.classList.add('mk-spinning');
   mkState.history = {};
-  // Clear loaded flags so panels re-fetch fresh files
-  MK_PANELS.forEach(p => { delete mkPanelLoaded[p]; });
+  // Clear all cache flags so both daily and intraday data re-fetch
+  MK_PANELS.forEach(p => {
+    delete mkPanelLoaded[p];
+    delete mkIntraday.loaded[p];
+  });
   const results = await Promise.all(MK_PANELS.map(p => mkLoadCache(p)));
   if (!results.some(Boolean)) await mkFetchLiveQuotes();
+  // Re-fetch intraday for the currently active panel
+  const activePanel = MK_PANELS.find(p => document.getElementById(`mk-panel-${p}`)?.classList.contains('active'));
+  if (activePanel) {
+    await mkLoadIntraday(activePanel);
+  }
   MK_PANELS.forEach(p => { mkRenderCards(p); mkRenderTable(p); if (mkState.selected[p]) mkRenderChart(p); });
   if (icon) icon.classList.remove('mk-spinning');
 };

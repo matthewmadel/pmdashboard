@@ -1,0 +1,44 @@
+name: Fetch Market Data
+
+on:
+  schedule:
+    # 10:30 PM UTC Mon–Fri = 6:30 PM EDT / 5:30 PM EST
+    # Runs ~2.5 hrs after US market close — yfinance data settled by then
+    - cron: "30 22 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  market:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-yfinance-${{ runner.os }}
+
+      - name: Install dependencies
+        run: pip install yfinance --quiet
+
+      - name: Fetch market data
+        run: python fetch_market_data.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add markets_*.json
+          git diff --staged --quiet || git commit -m "market: daily close $(date -u +%Y-%m-%d)"
+          git push
