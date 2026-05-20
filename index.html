@@ -854,7 +854,7 @@ a      { color: inherit; text-decoration: none; }
 .fe-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:180px; gap:8px; color:var(--text3); font-family:var(--mono); font-size:11px; }
 /* ── Monte Carlo Tool ─────────────────────────────────────────────────── */
 .mc-layout {
-  display: grid; grid-template-columns: 380px 1fr; gap: 16px;
+  display: grid; grid-template-columns: 437px 1fr; gap: 16px;
   flex: 1; min-height: 0; padding: 20px 24px; overflow: hidden;
 }
 .mc-left {
@@ -1871,18 +1871,51 @@ a      { color: inherit; text-decoration: none; }
               </div>
             </div>
 
-            <!-- Run -->
+            <!-- Run + Clear -->
             <button class="mc-run-btn" id="mc-run-btn" onclick="mcRun()">Run Simulation</button>
+            <button class="mc-run-btn" id="mc-clear-btn" onclick="mcClear()" style="background:transparent;border:1px solid var(--border2);color:var(--text3);margin-top:4px;">Clear Simulation</button>
 
           </div><!-- /mc-left -->
 
           <!-- ── RIGHT: Outputs ─────────────────────────────── -->
           <div class="mc-right" id="mc-right">
 
-            <!-- empty state -->
-            <div class="mc-empty" id="mc-empty-state">
-              <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" fill="none" stroke-width="1.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-              <div>Configure your portfolio and run the simulation</div>
+            <!-- empty state: quick-add from JPM CMA -->
+            <div id="mc-empty-state" style="display:flex;flex-direction:column;gap:14px;overflow-y:auto;padding:4px 2px;">
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;">
+                Quick-Add from JPM 2026 LTCMA · click any asset to add it to your portfolio
+              </div>
+
+              <!-- U.S. Equities -->
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">U.S. Equities</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;" id="mc-qa-us-eq"></div>
+              </div>
+              <!-- Intl Equities -->
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">International Equities</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;" id="mc-qa-intl-eq"></div>
+              </div>
+              <!-- U.S. Fixed Income -->
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">U.S. Fixed Income</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;" id="mc-qa-us-fi"></div>
+              </div>
+              <!-- Global / EM Fixed Income -->
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">Global &amp; EM Fixed Income</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;" id="mc-qa-gl-fi"></div>
+              </div>
+              <!-- Real Assets -->
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">Real Assets &amp; Commodities</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;" id="mc-qa-real"></div>
+              </div>
+              <!-- Alternatives -->
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">Alternatives</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;" id="mc-qa-alts"></div>
+              </div>
             </div>
 
             <!-- Results (hidden until run) -->
@@ -5003,13 +5036,75 @@ function mcRenderFlowTable() {
   });
 }
 
+// ── Clear simulation ──────────────────────────────────────────────────────
+window.mcClear = function() {
+  const res = document.getElementById('mc-results');
+  const empty = document.getElementById('mc-empty-state');
+  if (res)   { res.style.display = 'none'; }
+  if (empty) { empty.style.display = 'flex'; empty.style.flexDirection = 'column'; }
+};
+
+// ── Quick-add from JPM CMA ────────────────────────────────────────────────
+window.mcQuickAdd = function(idx) {
+  const d = CMA_DATA[idx];
+  if (!d) return;
+  const cls = cmaToMcClass(d);
+  mcAddRow(d.name, cls, '', d.ret.toFixed(1), d.vol.toFixed(1), '0');
+  // Hide empty state once first asset added
+  const empty = document.getElementById('mc-empty-state');
+  if (empty) empty.style.display = 'none';
+  const res = document.getElementById('mc-results');
+  if (res) res.style.display = 'none';
+};
+
+function mcInitQuickAdd() {
+  // Curated selection of the most portfolio-relevant CMA assets, keyed by _idx
+  const groups = {
+    'mc-qa-us-eq':   ['U.S. Large Cap','U.S. Mid Cap','U.S. Small Cap','U.S. Value','U.S. Growth'.replace('Growth','Momentum'),'U.S. Momentum','U.S. Min. Volatility','U.S. Dividend Yield'],
+    'mc-qa-intl-eq': ['EAFE Equity','Euro Area Large Cap','Japan Equity','EM Equity (Broad)','AC Asia ex-Japan','Chinese Domestic Equity'],
+    'mc-qa-us-fi':   ['U.S. Cash / T-Bills','U.S. Interm. Treasuries','U.S. Long Treasuries','TIPS','U.S. Aggregate Bonds','U.S. Inv. Grade Corporate','U.S. High Yield','U.S. Securitized','Leveraged Loans'],
+    'mc-qa-gl-fi':   ['World Govt Bonds (Hdgd)','EM Sovereign Debt','EM Local Currency Debt','Direct Lending'],
+    'mc-qa-real':    ['Commodities (Broad)','Gold','Global Timberland','Global Farmland','U.S. Core Real Estate','U.S. REITs','Core Infrastructure'],
+    'mc-qa-alts':    ['PE — Large/Mega Cap','PE — Mid Cap','Venture Capital','PE Secondaries','Private Credit (Broad)','Diversified / Multi-Strategy','Equity Long Bias','Relative Value'],
+  };
+
+  // Build name→idx lookup from CMA_DATA
+  const nameToIdx = {};
+  CMA_DATA.forEach(d => { nameToIdx[d.name] = d._idx; });
+
+  Object.entries(groups).forEach(([containerId, names]) => {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = names.map(name => {
+      const idx = nameToIdx[name];
+      if (idx === undefined) return '';
+      const d = CMA_DATA[idx];
+      return `<button onclick="mcQuickAdd(${idx})" style="
+        font-family:var(--mono);font-size:9px;color:var(--text2);
+        border:1px solid var(--border2);border-radius:3px;
+        padding:4px 8px;cursor:pointer;background:var(--bg3);
+        transition:all 0.12s;text-align:left;line-height:1.5;
+      " onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'"
+         onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">
+        <div>${name}</div>
+        <div style="color:var(--text3);font-size:8px">${d.ret.toFixed(1)}% ret · ${d.vol.toFixed(1)}% vol</div>
+      </button>`;
+    }).join('');
+  });
+}
+
 window.mcAddRow = mcAddRow;
 window.mcRemoveRow = mcRemoveRow;
 window.mcAddFlow = mcAddFlow;
 window.mcRemoveFlow = mcRemoveFlow;
 window.mcRun = mcRun;
+window.mcClear = mcClear;
+window.mcQuickAdd = mcQuickAdd;
 window.mcToggleCorr = mcToggleCorr;
 window.mcCorrEdit = mcCorrEdit;
+
+// Initialise quick-add buttons after CMA_DATA is populated
+try { mcInitQuickAdd(); } catch(e) { console.error('mcInitQuickAdd:', e); }
 
 /* ══════════════════════════════════════════════════════════════════════
    MONTE CARLO — TAB SWITCHING
