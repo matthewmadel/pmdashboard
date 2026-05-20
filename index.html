@@ -5058,38 +5058,36 @@ window.mcQuickAdd = function(idx) {
 };
 
 function mcInitQuickAdd() {
-  // Curated selection of the most portfolio-relevant CMA assets, keyed by _idx
-  const groups = {
-    'mc-qa-us-eq':   ['U.S. Large Cap','U.S. Mid Cap','U.S. Small Cap','U.S. Value','U.S. Growth'.replace('Growth','Momentum'),'U.S. Momentum','U.S. Min. Volatility','U.S. Dividend Yield'],
-    'mc-qa-intl-eq': ['EAFE Equity','Euro Area Large Cap','Japan Equity','EM Equity (Broad)','AC Asia ex-Japan','Chinese Domestic Equity'],
-    'mc-qa-us-fi':   ['U.S. Cash / T-Bills','U.S. Interm. Treasuries','U.S. Long Treasuries','TIPS','U.S. Aggregate Bonds','U.S. Inv. Grade Corporate','U.S. High Yield','U.S. Securitized','Leveraged Loans'],
-    'mc-qa-gl-fi':   ['World Govt Bonds (Hdgd)','EM Sovereign Debt','EM Local Currency Debt','Direct Lending'],
-    'mc-qa-real':    ['Commodities (Broad)','Gold','Global Timberland','Global Farmland','U.S. Core Real Estate','U.S. REITs','Core Infrastructure'],
-    'mc-qa-alts':    ['PE — Large/Mega Cap','PE — Mid Cap','Venture Capital','PE Secondaries','Private Credit (Broad)','Diversified / Multi-Strategy','Equity Long Bias','Relative Value'],
-  };
+  // Filter CMA_DATA by category/label — no fragile name matching
+  const groups = [
+    { id: 'mc-qa-us-eq',
+      fn: d => d.cat === 'eq' && d.label === 'U.S. Equities' },
+    { id: 'mc-qa-intl-eq',
+      fn: d => d.cat === 'eq' && (d.label === 'Intl Developed' || d.label === 'Emerging Markets' || d.label === 'Other Equity') },
+    { id: 'mc-qa-us-fi',
+      fn: d => d.cat === 'fi' && (d.label === 'U.S. Government' || d.label === 'U.S. Credit' || d.label === 'U.S. Municipal') },
+    { id: 'mc-qa-gl-fi',
+      fn: d => d.cat === 'fi' && (d.label === 'Global Fixed Income' || d.label === 'Emerging Fixed Income') },
+    { id: 'mc-qa-real',
+      fn: d => d.cat === 'ra' || (d.cat === 'pm' && (d.label === 'U.S. Real Estate' || d.label === 'Intl Real Estate' || d.label === 'REITs' || d.label === 'Infrastructure' || d.label === 'Transport')) },
+    { id: 'mc-qa-alts',
+      fn: d => d.cat === 'hf' || (d.cat === 'pm' && (d.label === 'Private Equity' || d.label === 'Private Credit')) },
+  ];
 
-  // Build name→idx lookup from CMA_DATA
-  const nameToIdx = {};
-  CMA_DATA.forEach(d => { nameToIdx[d.name] = d._idx; });
-
-  Object.entries(groups).forEach(([containerId, names]) => {
-    const el = document.getElementById(containerId);
+  groups.forEach(({ id, fn }) => {
+    const el = document.getElementById(id);
     if (!el) return;
-    el.innerHTML = names.map(name => {
-      const idx = nameToIdx[name];
-      if (idx === undefined) return '';
-      const d = CMA_DATA[idx];
-      return `<button onclick="mcQuickAdd(${idx})" style="
+    el.innerHTML = CMA_DATA.filter(fn).map(d => `
+      <button onclick="mcQuickAdd(${d._idx})" style="
         font-family:var(--mono);font-size:9px;color:var(--text2);
         border:1px solid var(--border2);border-radius:3px;
-        padding:4px 8px;cursor:pointer;background:var(--bg3);
-        transition:all 0.12s;text-align:left;line-height:1.5;
+        padding:5px 9px;cursor:pointer;background:var(--bg3);
+        transition:all 0.12s;text-align:left;line-height:1.6;white-space:nowrap;
       " onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'"
          onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">
-        <div>${name}</div>
-        <div style="color:var(--text3);font-size:8px">${d.ret.toFixed(1)}% ret · ${d.vol.toFixed(1)}% vol</div>
-      </button>`;
-    }).join('');
+        <div>${d.name}${d.derived ? ' ‡' : ''}</div>
+        <div style="color:var(--text3);font-size:8px">${d.ret.toFixed(1)}% · ${d.vol.toFixed(1)}% vol</div>
+      </button>`).join('');
   });
 }
 
@@ -5103,8 +5101,7 @@ window.mcQuickAdd = mcQuickAdd;
 window.mcToggleCorr = mcToggleCorr;
 window.mcCorrEdit = mcCorrEdit;
 
-// Initialise quick-add buttons after CMA_DATA is populated
-try { mcInitQuickAdd(); } catch(e) { console.error('mcInitQuickAdd:', e); }
+// mcInitQuickAdd() is called below after CMA_DATA is fully defined
 
 /* ══════════════════════════════════════════════════════════════════════
    MONTE CARLO — TAB SWITCHING
@@ -5217,6 +5214,9 @@ const CMA_DATA = [
   { cat:'ra', label:'Real Assets',           name:'Global Farmland',              ret:6.8,  yoy:20,   vol:8.5,  approxVol:true },
 ];
 CMA_DATA.forEach((d, i) => { d._idx = i; d.sharpe = (d.ret - CMA_RF) / d.vol; });
+
+// Now safe to initialise MC quick-add buttons (CMA_DATA is fully populated)
+try { mcInitQuickAdd(); } catch(e) { console.error('mcInitQuickAdd:', e); }
 
 // Map JPM label → Monte Carlo asset class
 function cmaToMcClass(d) {
