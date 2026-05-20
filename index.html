@@ -3979,10 +3979,19 @@ async function mkLoadCache(panel) {
 
     mkPanelLoaded[panel] = true;
 
-    // Update timestamp from first panel to load
+    // Track the most-stale updated_at across all panels
+    if (j.updated_at) {
+      if (!mkState.dataUpdatedAt || j.updated_at < mkState.dataUpdatedAt) {
+        mkState.dataUpdatedAt = j.updated_at;
+      }
+    }
+
+    // Show timestamp header from first panel loaded
     const upEl = document.getElementById('mk-last-update-hdr');
     if (upEl && j.updated_at && !upEl.dataset.set) {
-      upEl.textContent = new Date(j.updated_at).toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+      const stale = mkIsDataStale(j.updated_at);
+      upEl.textContent = new Date(j.updated_at).toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) + (stale ? ' ⚠' : '');
+      upEl.style.color = stale ? 'var(--amber)' : 'var(--text3)';
       upEl.dataset.set = '1';
     }
     return true;
@@ -3992,21 +4001,56 @@ async function mkLoadCache(panel) {
   }
 }
 
-/* ── live proxy fallback (1D quotes only) ────────────────────────────── */
+/* ── staleness check ─────────────────────────────────────────────────── */
+function mkIsDataStale(updatedAtStr) {
+  if (!updatedAtStr) return true;
+  const updated = new Date(updatedAtStr);
+  const now = new Date();
+  // Always stale if older than 24 hours
+  if (now - updated > 24 * 3600 * 1000) return true;
+  // Stale if data predates today's market open (~13:00 UTC = 9 AM ET)
+  const todayOpen = new Date(now);
+  todayOpen.setUTCHours(13, 0, 0, 0);
+  const isWeekday = now.getUTCDay() >= 1 && now.getUTCDay() <= 5;
+  if (isWeekday && now > todayOpen && updated < todayOpen) return true;
+  return false;
+}
+
+/* ── live quote fetch via multi-symbol Yahoo endpoint ────────────────── */
+// Uses allorigins CORS proxy + Yahoo v7 multi-symbol endpoint
+// Fetches up to 20 symbols per call — far faster than one-at-a-time
 async function mkFetchLiveQuotes() {
   const icon = document.getElementById('mk-refresh-icon-hdr');
   if (icon) icon.classList.add('mk-spinning');
-  const BATCH = 6;
-  const tickers = TICKERS.map(t => t.t);
-  for (let i = 0; i < tickers.length; i += BATCH) {
-    await Promise.all(tickers.slice(i, i + BATCH).map(async tk => {
-      const q = await mkFetchQuote(tk);
-      if (q) mkState.prices[tk] = q;
-    }));
+
+  const syms = TICKERS.map(t => t.t);
+  const BATCH = 20;
+  let anyOk = false;
+
+  for (let i = 0; i < syms.length; i += BATCH) {
+    const chunk = syms.slice(i, i + BATCH).join(',');
+    const yUrl  = `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(chunk)}&fields=regularMarketPrice,regularMarketPreviousClose,regularMarketChange,regularMarketChangePercent`;
+    const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(yUrl)}`;
+    try {
+      const r = await fetch(proxy, { signal: AbortSignal.timeout(10000) });
+      if (!r.ok) continue;
+      const data = await r.json();
+      (data?.quoteResponse?.result || []).forEach(q => {
+        const price     = q.regularMarketPrice;
+        const prev      = q.regularMarketPreviousClose ?? price;
+        const change    = q.regularMarketChange    ?? (price - prev);
+        const changePct = q.regularMarketChangePercent ?? (prev ? change / prev * 100 : 0);
+        if (price) { mkState.prices[q.symbol] = { price, prev, change, changePct }; anyOk = true; }
+      });
+    } catch(e) { /* proxy unavailable — silently continue */ }
     MK_PANELS.forEach(p => { mkRenderCards(p); mkRenderTable(p); });
   }
+
   const upEl = document.getElementById('mk-last-update-hdr');
-  if (upEl) upEl.textContent = 'Live · ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+  if (upEl && anyOk) {
+    upEl.textContent = 'Live · ' + new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+    upEl.dataset.set = '1';
+  }
   if (icon) icon.classList.remove('mk-spinning');
 }
 
@@ -4078,19 +4122,21 @@ window.mkRefreshAll = async function() {
   const icon = document.getElementById('mk-refresh-icon-hdr');
   if (icon) icon.classList.add('mk-spinning');
   mkState.history = {};
+  mkState.dataUpdatedAt = null;
+  const upEl = document.getElementById('mk-last-update-hdr');
+  if (upEl) { upEl.dataset.set = ''; upEl.style.color = 'var(--text3)'; }
   // Clear all cache flags so both daily and intraday data re-fetch
   MK_PANELS.forEach(p => {
     delete mkPanelLoaded[p];
     delete mkIntraday.loaded[p];
   });
-  const results = await Promise.all(MK_PANELS.map(p => mkLoadCache(p)));
-  if (!results.some(Boolean)) await mkFetchLiveQuotes();
+  await Promise.all(MK_PANELS.map(p => mkLoadCache(p)));
   // Re-fetch intraday for the currently active panel
   const activePanel = MK_PANELS.find(p => document.getElementById(`mk-panel-${p}`)?.classList.contains('active'));
-  if (activePanel) {
-    await mkLoadIntraday(activePanel);
-  }
+  if (activePanel) await mkLoadIntraday(activePanel);
   MK_PANELS.forEach(p => { mkRenderCards(p); mkRenderTable(p); if (mkState.selected[p]) mkRenderChart(p); });
+  // Always fetch live quotes — overrides stale JSON prices with current market data
+  mkFetchLiveQuotes();
   if (icon) icon.classList.remove('mk-spinning');
 };
 
@@ -4113,13 +4159,17 @@ window.mkBoot = function() {
   });
 
   // Load equities first (visible panel), then all others in parallel
-  mkLoadCache('eq').then(ok => {
+  mkLoadCache('eq').then(() => {
     mkRenderCards('eq'); mkRenderTable('eq');
-    if (!ok) mkFetchLiveQuotes();
   });
   Promise.all(MK_PANELS.filter(p => p !== 'eq').map(p =>
     mkLoadCache(p).then(() => { mkRenderCards(p); mkRenderTable(p); })
-  )).then(() => mkScheduleAuto());
+  )).then(() => {
+    mkScheduleAuto();
+    // Always fetch live quotes after JSON loads to get current prices
+    // Runs in background — doesn't block rendering
+    mkFetchLiveQuotes();
+  });
 };
 
 // Expose utilities needed by crypto section
