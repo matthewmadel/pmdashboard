@@ -2844,8 +2844,8 @@ const FRED_NAV = [
 
 /* ── Series metadata ─────────────────────────────────────────────────── */
 const FRED_SERIES_META = {
-  FEDFUNDS:{unit:'%',fmt:'rate'},SOFR:{unit:'%',fmt:'rate'},
-  SOFR30DAYAVG:{unit:'%',fmt:'rate'},SOFR90DAYAVG:{unit:'%',fmt:'rate'},SOFR180DAYAVG:{unit:'%',fmt:'rate'},
+  FEDFUNDS:{unit:'%',fmt:'rate'},SOFR:{unit:'%',fmt:'rate4'},
+  SOFR30DAYAVG:{unit:'%',fmt:'rate4'},SOFR90DAYAVG:{unit:'%',fmt:'rate4'},SOFR180DAYAVG:{unit:'%',fmt:'rate4'},
   DTB3:{unit:'%',fmt:'rate'},
   DGS2:{unit:'%',fmt:'rate'},DGS5:{unit:'%',fmt:'rate'},DGS10:{unit:'%',fmt:'rate'},
   DGS30:{unit:'%',fmt:'rate'},T10Y2Y:{unit:'%',fmt:'rate'},T10Y3M:{unit:'%',fmt:'rate'},
@@ -2951,6 +2951,7 @@ function fredFmtVal(v, seriesId, transform) {
   if (transform === 'yoy' || transform === 'mom') return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
   switch (meta.fmt) {
     case 'rate':     return v.toFixed(2) + '%';
+    case 'rate4':    return v.toFixed(4) + '%';
     case 'pct':      return v.toFixed(1) + '%';
     case 'idx':      return v.toFixed(1);
     case 'dollar_b': return '$' + (v >= 1000 ? (v/1000).toFixed(2)+'T' : v.toFixed(0)+'B');
