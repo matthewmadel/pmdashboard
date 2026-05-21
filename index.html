@@ -2951,7 +2951,7 @@ function fredFmtVal(v, seriesId, transform) {
   if (transform === 'yoy' || transform === 'mom') return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
   switch (meta.fmt) {
     case 'rate':     return v.toFixed(2) + '%';
-    case 'rate4':    return v.toFixed(4) + '%';
+    case 'rate4':    return v.toFixed(3) + '%';
     case 'pct':      return v.toFixed(1) + '%';
     case 'idx':      return v.toFixed(1);
     case 'dollar_b': return '$' + (v >= 1000 ? (v/1000).toFixed(2)+'T' : v.toFixed(0)+'B');
