@@ -5700,34 +5700,49 @@ function feUpdateWtTotal() {
 }
 
 // ── Period / factor toggles ───────────────────────────────────────────────
+
+// Return local date string YYYY-MM-DD without UTC conversion
+function feLocalFmt(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+// Last completed market close: yesterday, rolling back over weekends
+function fePrevClose() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);          // go back one calendar day
+  const dow = d.getDay();
+  if (dow === 0) d.setDate(d.getDate() - 2); // landed on Sunday → Friday
+  if (dow === 6) d.setDate(d.getDate() - 1); // landed on Saturday → Friday
+  return d;
+}
+
 function feInitDates() {
-  const to = new Date();
+  const to   = fePrevClose();
   const from = new Date(to);
   from.setFullYear(from.getFullYear() - 3);
-  const fmt = d => d.toISOString().slice(0, 10);
   const tf = document.getElementById('fe-date-from');
   const tt = document.getElementById('fe-date-to');
-  if (tf) tf.value = fmt(from);
-  if (tt) tt.value = fmt(to);
+  if (tf) tf.value = feLocalFmt(from);
+  if (tt) tt.value = feLocalFmt(to);
 }
 
 window.feSetPeriod = function(p, btn) {
   feState.period = p;
   document.querySelectorAll('#fe-panel-decomp .fe-factor-pill[onclick*="feSetPeriod"]').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  const to = new Date();
+  const to   = fePrevClose();
   const from = new Date(to);
   if (p !== 'All') {
-    const yrs = parseInt(p);
-    from.setFullYear(from.getFullYear() - yrs);
+    from.setFullYear(from.getFullYear() - parseInt(p));
   } else {
     from.setFullYear(1963);
   }
-  const fmt = d => d.toISOString().slice(0, 10);
   const tf = document.getElementById('fe-date-from');
   const tt = document.getElementById('fe-date-to');
-  if (tf) tf.value = fmt(from);
-  if (tt) tt.value = fmt(to);
+  if (tf) tf.value = feLocalFmt(from);
+  if (tt) tt.value = feLocalFmt(to);
 };
 
 window.feToggleFactor = function(btn) {
