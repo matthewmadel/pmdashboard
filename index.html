@@ -1233,9 +1233,6 @@ a      { color: inherit; text-decoration: none; }
                 <div class="nav-item" onclick="showFredPage('series','FEDFUNDS')" data-label="Fed Funds Rate" data-series="FEDFUNDS">
                   <div class="nav-dot"></div>Fed Funds Rate<span class="nav-item-badge">FEDFUNDS</span>
                 </div>
-                <div class="nav-item" onclick="showFredPage('series','SOFR')" data-label="SOFR" data-series="SOFR">
-                  <div class="nav-dot"></div>SOFR<span class="nav-item-badge">SOFR</span>
-                </div>
                 <div class="nav-item" onclick="showFredPage('series','DTB3')" data-label="3M Treasury" data-series="DTB3">
                   <div class="nav-dot"></div>3M Treasury<span class="nav-item-badge">DTB3</span>
                 </div>
@@ -1256,6 +1253,18 @@ a      { color: inherit; text-decoration: none; }
                 </div>
                 <div class="nav-item" onclick="showFredPage('series','T10Y3M')" data-label="10Y-3M Spread" data-series="T10Y3M">
                   <div class="nav-dot"></div>10Y–3M Spread<span class="nav-item-badge">T10Y3M</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','SOFR')" data-label="SOFR" data-series="SOFR">
+                  <div class="nav-dot"></div>SOFR<span class="nav-item-badge">SOFR</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','SOFR30DAYAVG')" data-label="SOFR 30-Day Avg" data-series="SOFR30DAYAVG">
+                  <div class="nav-dot"></div>SOFR 30-Day Avg<span class="nav-item-badge">S30D</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','SOFR90DAYAVG')" data-label="SOFR 90-Day Avg" data-series="SOFR90DAYAVG">
+                  <div class="nav-dot"></div>SOFR 90-Day Avg<span class="nav-item-badge">S90D</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','SOFR180DAYAVG')" data-label="SOFR 180-Day Avg" data-series="SOFR180DAYAVG">
+                  <div class="nav-dot"></div>SOFR 180-Day Avg<span class="nav-item-badge">S180D</span>
                 </div>
               </div>
             </div>
@@ -1342,7 +1351,6 @@ a      { color: inherit; text-decoration: none; }
                   <div class="nav-sub-items">
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','BAMLH0A0HYM2')" data-label="HY Credit Spread" data-series="BAMLH0A0HYM2"><div class="nav-dot"></div>HY Credit Spread<span class="nav-item-badge">HYSPR</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','BAMLC0A0CM')" data-label="IG Credit Spread" data-series="BAMLC0A0CM"><div class="nav-dot"></div>IG Credit Spread<span class="nav-item-badge">IGSPR</span></div>
-                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','TEDRATE')" data-label="TED Spread" data-series="TEDRATE"><div class="nav-dot"></div>TED Spread<span class="nav-item-badge">TED</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','TOTCI')" data-label="C&I Loans" data-series="TOTCI"><div class="nav-dot"></div>C&amp;I Loans<span class="nav-item-badge">TOTCI</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','TOTALSL')" data-label="Consumer Credit" data-series="TOTALSL"><div class="nav-dot"></div>Consumer Credit<span class="nav-item-badge">CONSC</span></div>
                   </div>
@@ -2762,7 +2770,6 @@ const FRED_NAV = [
   { emoji:'📈', label:'Interest Rates & Yield Curve', id:'rates', items:[
     { label:'Yield Curve Visualizer', id:'__yc__', ticker:'CURVE', special:true },
     { label:'Fed Funds Rate', id:'FEDFUNDS', ticker:'FEDFUNDS' },
-    { label:'SOFR', id:'SOFR', ticker:'SOFR' },
     { label:'3M Treasury', id:'DTB3', ticker:'DTB3' },
     { label:'2Y Treasury', id:'DGS2', ticker:'DGS2' },
     { label:'5Y Treasury', id:'DGS5', ticker:'DGS5' },
@@ -2770,6 +2777,10 @@ const FRED_NAV = [
     { label:'30Y Treasury', id:'DGS30', ticker:'DGS30' },
     { label:'10Y–2Y Spread', id:'T10Y2Y', ticker:'T10Y2Y' },
     { label:'10Y–3M Spread', id:'T10Y3M', ticker:'T10Y3M' },
+    { label:'SOFR', id:'SOFR', ticker:'SOFR' },
+    { label:'SOFR 30-Day Avg', id:'SOFR30DAYAVG', ticker:'S30D' },
+    { label:'SOFR 90-Day Avg', id:'SOFR90DAYAVG', ticker:'S90D' },
+    { label:'SOFR 180-Day Avg', id:'SOFR180DAYAVG', ticker:'S180D' },
   ]},
   { emoji:'🏦', label:'Monetary Policy & Fed Balance Sheet', id:'fed', items:[
     { label:'Fed Balance Sheet', id:'WALCL', ticker:'WALCL' },
@@ -2811,7 +2822,6 @@ const FRED_NAV = [
   { emoji:'💳', label:'Credit & Financial Conditions', id:'credit', items:[
     { label:'HY Credit Spread', id:'BAMLH0A0HYM2', ticker:'HYSPR' },
     { label:'IG Credit Spread', id:'BAMLC0A0CM', ticker:'IGSPR' },
-    { label:'TED Spread', id:'TEDRATE', ticker:'TED' },
     { label:'C&I Loans', id:'TOTCI', ticker:'TOTCI' },
     { label:'Consumer Credit', id:'TOTALSL', ticker:'CONSC' },
   ]},
@@ -2834,7 +2844,9 @@ const FRED_NAV = [
 
 /* ── Series metadata ─────────────────────────────────────────────────── */
 const FRED_SERIES_META = {
-  FEDFUNDS:{unit:'%',fmt:'rate'},SOFR:{unit:'%',fmt:'rate'},DTB3:{unit:'%',fmt:'rate'},
+  FEDFUNDS:{unit:'%',fmt:'rate'},SOFR:{unit:'%',fmt:'rate'},
+  SOFR30DAYAVG:{unit:'%',fmt:'rate'},SOFR90DAYAVG:{unit:'%',fmt:'rate'},SOFR180DAYAVG:{unit:'%',fmt:'rate'},
+  DTB3:{unit:'%',fmt:'rate'},
   DGS2:{unit:'%',fmt:'rate'},DGS5:{unit:'%',fmt:'rate'},DGS10:{unit:'%',fmt:'rate'},
   DGS30:{unit:'%',fmt:'rate'},T10Y2Y:{unit:'%',fmt:'rate'},T10Y3M:{unit:'%',fmt:'rate'},
   WALCL:{unit:'$M',fmt:'dollar_m'},M2SL:{unit:'$B',fmt:'dollar_b'},
@@ -2851,7 +2863,7 @@ const FRED_SERIES_META = {
   EXHOSLUSM495S:{unit:'K',fmt:'num_k'},CSUSHPISA:{unit:'idx',fmt:'idx'},
   MORTGAGE30US:{unit:'%',fmt:'rate'},
   BAMLH0A0HYM2:{unit:'%',fmt:'rate'},BAMLC0A0CM:{unit:'%',fmt:'rate'},
-  TEDRATE:{unit:'%',fmt:'rate'},TOTCI:{unit:'$M',fmt:'dollar_m'},TOTALSL:{unit:'$B',fmt:'dollar_b'},
+  TOTCI:{unit:'$M',fmt:'dollar_m'},TOTALSL:{unit:'$B',fmt:'dollar_b'},
   DTWEXBGS:{unit:'idx',fmt:'idx'},BOPGSTB:{unit:'$M',fmt:'dollar_m'},NETFI:{unit:'$M',fmt:'dollar_m'},
   DCOILWTICO:{unit:'$/bbl',fmt:'dollar_bbl'},DHHNGSP:{unit:'$/MCF',fmt:'dollar_bbl'},PPIACO:{unit:'idx',fmt:'idx'},
   VIXCLS:{unit:'idx',fmt:'idx'},UMCSENT:{unit:'idx',fmt:'idx'},USSLIND:{unit:'idx',fmt:'idx'},
@@ -2867,7 +2879,10 @@ const FRED_DEFAULT_TRANSFORM = {
 
 const FRED_DEFINITIONS = {
   FEDFUNDS:  { def:"The Fed's target overnight lending rate between banks.", why:"Controls the cost of all borrowing in the economy — the single most powerful monetary policy lever." },
-  SOFR:      { def:"Secured Overnight Financing Rate — the near risk-free rate anchored to Treasury repo markets.", why:"Has replaced LIBOR as the primary benchmark for floating-rate debt globally." },
+  SOFR:         { def:"Secured Overnight Financing Rate — the near risk-free rate anchored to Treasury repo markets.", why:"Has replaced LIBOR as the primary benchmark for floating-rate debt globally." },
+  SOFR30DAYAVG: { def:"30-day compound average of SOFR, published by the NY Fed.", why:"Smooths daily SOFR volatility — used as a benchmark for floating-rate notes and CLO pricing." },
+  SOFR90DAYAVG: { def:"90-day compound average of SOFR, published by the NY Fed.", why:"The most widely referenced SOFR average for loan pricing and derivatives — the LIBOR replacement benchmark." },
+  SOFR180DAYAVG:{ def:"180-day compound average of SOFR, published by the NY Fed.", why:"Used for longer-tenor floating-rate instruments; captures the 6-month borrowing cost signal." },
   DGS2:      { def:"Yield on a 2-year US Treasury note.", why:"The curve's most sensitive Fed policy tracker — moves before the FOMC does." },
   DGS5:      { def:"Yield on a 5-year US Treasury note.", why:"Benchmarks medium-term corporate bonds, auto loans, and 5Y fixed mortgages." },
   DGS10:     { def:"Yield on a 10-year US Treasury note — the world's most important interest rate.", why:"Directly prices 30Y mortgages, equity discount rates, and sovereign borrowing costs globally." },
@@ -2903,7 +2918,6 @@ const FRED_DEFINITIONS = {
   MORTGAGE30US: { def:"Average 30-year fixed mortgage rate from Freddie Mac's weekly survey.", why:"The most direct link between Fed policy/bond markets and household affordability." },
   BAMLH0A0HYM2: { def:"Option-adjusted spread on ICE BofA US High Yield index over Treasuries.", why:"The market's real-time risk barometer. Spikes above 800bps historically signal credit stress." },
   BAMLC0A0CM: { def:"Option-adjusted spread on ICE BofA US Corporate Bond index over Treasuries.", why:"Measures investment-grade credit stress. Widening signals tightening financial conditions." },
-  TEDRATE:   { def:"Spread between 3-month LIBOR and 3-month T-bill (discontinued Apr 2023).", why:"Was the classic interbank stress gauge. Spikes above 100bps signaled funding market seizure." },
   TOTCI:     { def:"Total commercial and industrial loans outstanding at US commercial banks.", why:"C&I loan growth tracks business investment demand. Declines often precede recessions." },
   TOTALSL:   { def:"Total outstanding consumer credit (revolving + non-revolving).", why:"Measures household leverage. Rapid growth can signal over-extension; contraction signals deleveraging." },
   DTWEXBGS:  { def:"Broad trade-weighted US Dollar index against a basket of major trading partners.", why:"A strong dollar tightens global financial conditions and reduces US export competitiveness." },

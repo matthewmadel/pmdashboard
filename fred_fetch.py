@@ -66,6 +66,9 @@ SERIES = {
     # Policy rates
     "FEDFUNDS":             "Fed Funds Rate",
     "SOFR":                 "SOFR",
+    "SOFR30DAYAVG":         "SOFR 30-Day Average",
+    "SOFR90DAYAVG":         "SOFR 90-Day Average",
+    "SOFR180DAYAVG":        "SOFR 180-Day Average",
     # Fed balance sheet & reserves
     "WALCL":                "Fed Total Assets",
     "WRESBAL":              "Bank Reserve Balances",
@@ -103,7 +106,6 @@ SERIES = {
     # Credit & financial conditions
     "BAMLH0A0HYM2":         "HY Credit Spread",
     "BAMLC0A0CM":           "IG Credit Spread",
-    "TEDRATE":              "TED Spread",
     "TOTCI":                "C&I Loans",
     "TOTALSL":              "Consumer Credit",
     # International
