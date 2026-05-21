@@ -848,6 +848,40 @@ a      { color: inherit; text-decoration: none; }
 }
 .corr-ticker-pill:hover { border-color:var(--border3); }
 .corr-ticker-pill.off { opacity:0.35; text-decoration:line-through; }
+/* ── Stress Tester ────────────────────────────────────────────────────── */
+.st-layout { display:grid; grid-template-columns:300px 1fr; flex:1; min-height:0; overflow:hidden; }
+.st-left { display:flex; flex-direction:column; border-right:1px solid var(--border); overflow-y:auto; min-height:0; }
+.st-left-inner { display:flex; flex-direction:column; gap:16px; padding:16px; }
+.st-right { display:flex; flex-direction:column; overflow:hidden; min-height:0; }
+.st-scenario-strip { padding:14px 20px; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg2); }
+.st-scenario-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:6px; margin-top:8px; }
+.st-card { padding:10px 12px; border:1px solid var(--border2); border-radius:var(--radius); cursor:pointer; transition:all 0.12s; background:var(--bg3); }
+.st-card:hover { border-color:var(--border3); background:var(--bg4); }
+.st-card.active { border-color:var(--amber); background:var(--amber-dim); }
+.st-card-name { font-size:11px; font-weight:500; }
+.st-card-period { font-family:var(--mono); font-size:9px; color:var(--text3); margin-top:2px; }
+.st-card-desc { font-size:9px; color:var(--text2); margin-top:5px; line-height:1.45; }
+.st-results-wrap { flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px; min-height:0; }
+.st-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.st-kpi { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:11px 13px; }
+.st-kpi-label { font-family:var(--mono); font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; }
+.st-kpi-val { font-family:var(--mono); font-size:22px; font-weight:500; margin-top:4px; line-height:1; }
+.st-kpi-sub { font-family:var(--mono); font-size:9px; color:var(--text3); margin-top:4px; }
+.st-charts { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.st-chart-box { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:13px 14px; }
+.st-chart-title { font-family:var(--mono); font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:10px; }
+.st-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:10px; }
+.st-table th { padding:6px 10px; text-align:left; color:var(--text3); font-size:9px; letter-spacing:0.05em; border-bottom:1px solid var(--border); font-weight:400; }
+.st-table td { padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.03); }
+.st-table tr:last-child td { border-bottom:none; }
+.st-table tr:hover td { background:rgba(255,255,255,0.02); }
+.st-pos-row { display:flex; align-items:center; gap:7px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.03); }
+.st-lbl { font-family:var(--mono); font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:6px; }
+.st-hint { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:10px; color:var(--text3); font-family:var(--mono); font-size:11px; }
+.st-date-input { background:var(--bg3); border:1px solid var(--border2); border-radius:3px; padding:4px 8px; font-family:var(--mono); font-size:10px; color:var(--text); width:120px; }
+.st-date-input:focus { outline:none; border-color:var(--amber); }
+.st-run-btn { width:100%; padding:10px; background:var(--amber); color:var(--bg); font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; border-radius:var(--radius); cursor:pointer; transition:background 0.15s; border:none; }
+.st-run-btn:hover { background:var(--amber2); }
 /* ── Factor Explorer ──────────────────────────────────────────────────── */
 .fe-layout { display:grid; grid-template-columns:340px 1fr; gap:16px; flex:1; min-height:0; padding:20px 24px; overflow:hidden; }
 .fe-left  { display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-right:4px; }
@@ -1344,7 +1378,7 @@ a      { color: inherit; text-decoration: none; }
             <div class="nav-item" onclick="showPage('correlation');corrBoot()" data-label="Correlation Matrix">
               <div class="nav-dot"></div>Correlation Matrix<span class="nav-item-badge">COR</span>
             </div>
-            <div class="nav-item" onclick="showPage('stress-test')" data-label="Stress Tester">
+            <div class="nav-item" onclick="showPage('stress-test');stBoot()" data-label="Stress Tester">
               <div class="nav-dot"></div>Stress Tester<span class="nav-item-badge">ST</span>
             </div>
           </div>
@@ -2147,21 +2181,90 @@ a      { color: inherit; text-decoration: none; }
       <!-- ════════════════════════════════════════
            PAGE: STRESS TEST
       ════════════════════════════════════════ -->
-      <div class="section-page" id="page-stress-test">
+      <div class="section-page" id="page-stress-test" style="flex-direction:column;overflow:hidden;">
         <div class="page-header">
           <div class="page-title-group">
             <div class="page-title">Stress Tester <span class="page-title-badge">Tool</span></div>
-            <div class="page-subtitle">Historical scenario analysis · portfolio P&amp;L</div>
+            <div class="page-subtitle">Historical scenario analysis · realized portfolio P&amp;L from actual price data</div>
           </div>
         </div>
-        <div class="page-body">
-          <div class="coming-soon">
-            <div class="coming-soon-icon"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-            <div class="coming-soon-title">Stress Tester</div>
-            <div class="coming-soon-sub">Historical scenario P&amp;L coming soon</div>
-          </div>
-        </div>
-      </div>
+
+        <div class="st-layout">
+
+          <!-- ── Left: Portfolio Builder ── -->
+          <div class="st-left">
+            <div class="st-left-inner">
+
+              <!-- Portfolio value -->
+              <div>
+                <div class="st-lbl">Portfolio Value</div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="font-family:var(--mono);font-size:12px;color:var(--text3)">$</span>
+                  <input class="mc-input" id="st-pv-input" type="number" value="1000000" min="1" style="width:130px;" oninput="stReRun()">
+                </div>
+              </div>
+
+              <!-- Positions -->
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <div class="st-lbl" style="margin-bottom:0">Positions</div>
+                  <span style="font-family:var(--mono);font-size:9px;" id="st-weight-total">0%</span>
+                </div>
+                <div id="st-positions-list" style="margin-bottom:8px;"></div>
+                <!-- Add row -->
+                <div style="display:flex;gap:5px;align-items:center;">
+                  <input class="mc-input" id="st-add-ticker" placeholder="Ticker" maxlength="12" style="width:72px;text-transform:uppercase;" onkeydown="if(event.key==='Enter')stAddPosition()">
+                  <input class="mc-input" id="st-add-weight" type="number" placeholder="Wt%" min="0" max="100" style="width:52px;" onkeydown="if(event.key==='Enter')stAddPosition()">
+                  <button class="mc-add-btn" onclick="stAddPosition()" style="width:auto;padding:5px 10px;border-style:solid;">+ Add</button>
+                </div>
+              </div>
+
+              <!-- Quick-add templates -->
+              <div>
+                <div class="st-lbl">Templates</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;">
+                  <button class="mc-add-btn" onclick="stLoadTemplate('6040')" style="width:auto;padding:4px 9px;">60 / 40</button>
+                  <button class="mc-add-btn" onclick="stLoadTemplate('rp')" style="width:auto;padding:4px 9px;">Risk Parity</button>
+                  <button class="mc-add-btn" onclick="stLoadTemplate('equity')" style="width:auto;padding:4px 9px;">All Equity</button>
+                  <button class="mc-add-btn" onclick="stLoadTemplate('ma')" style="width:auto;padding:4px 9px;">Multi-Asset</button>
+                </div>
+              </div>
+
+              <!-- Clear -->
+              <button class="mc-add-btn" onclick="stClearPositions()" style="color:var(--red);border-color:rgba(224,85,85,0.3);">✕ Clear Portfolio</button>
+
+            </div>
+          </div><!-- /st-left -->
+
+          <!-- ── Right: Scenarios + Results ── -->
+          <div class="st-right">
+
+            <!-- Scenario selector -->
+            <div class="st-scenario-strip">
+              <div class="st-lbl">Select Scenario</div>
+              <div class="st-scenario-grid" id="st-scenario-grid"></div>
+              <!-- Custom date inputs (shown only for custom scenario) -->
+              <div id="st-custom-row" style="display:none;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">From</span>
+                <input class="st-date-input" type="date" id="st-date-start">
+                <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">To</span>
+                <input class="st-date-input" type="date" id="st-date-end">
+                <button class="corr-pill active" style="padding:4px 12px;" onclick="stRunCustom()">Run</button>
+              </div>
+            </div>
+
+            <!-- Results area -->
+            <div class="st-results-wrap" id="st-results-wrap">
+              <div class="st-hint" id="st-hint">
+                <svg viewBox="0 0 24 24" width="30" height="30" stroke="currentColor" fill="none" stroke-width="1.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                <div>Select a scenario and add positions to run</div>
+              </div>
+            </div>
+
+          </div><!-- /st-right -->
+
+        </div><!-- /st-layout -->
+      </div><!-- /page-stress-test -->
 
 
       <!-- ════════════════════════════════════════
@@ -4269,11 +4372,12 @@ window.mkBoot = function() {
   });
 };
 
-// Expose utilities needed by crypto and correlation sections
+// Expose utilities needed by crypto, correlation, and stress tester
 window.mkCalcReturn = mkCalcReturn;
 window.mkPeriodStartDate = mkPeriodStartDate;
 window.mkState = mkState;
 window.mkLoadCache = mkLoadCache;
+window.TICKERS_ALL = TICKERS;
 
 })();
 
@@ -6701,6 +6805,406 @@ window.corrSetPeriod    = corrSetPeriod;
 window.corrSetWindow    = corrSetWindow;
 window.corrFilterClass  = corrFilterClass;
 window.corrToggleTicker = corrToggleTicker;
+
+/* ══════════════════════════════════════════════════════════════════════
+   STRESS TESTER — Historical Scenario Analysis
+   Uses actual realized returns from mkState.rawHistory price data.
+══════════════════════════════════════════════════════════════════════ */
+
+const ST_SCENARIOS = [
+  { id:'covid',   name:'COVID Crash',      start:'2020-02-19', end:'2020-03-23', color:'var(--red)',   desc:'33-day, −34% S&P crash on pandemic fears' },
+  { id:'rate22',  name:'2022 Rate Shock',  start:'2022-01-03', end:'2022-10-13', color:'var(--amber)', desc:'Fed hikes 425 bps — worst bond year since 1788' },
+  { id:'gfc',     name:'GFC Collapse',     start:'2008-09-15', end:'2008-11-20', color:'var(--red)',   desc:'Lehman + Fannie/Freddie — S&P −41%' },
+  { id:'q42018',  name:'Q4 2018 Selloff',  start:'2018-10-03', end:'2018-12-24', color:'var(--amber)', desc:'Fed tightening fears — S&P −20% in 12 weeks' },
+  { id:'svb',     name:'SVB Crisis',       start:'2023-03-06', end:'2023-03-13', color:'var(--red)',   desc:'Regional bank run — 7-day maximum stress' },
+  { id:'eu11',    name:'EU Debt Crisis',   start:'2011-07-22', end:'2011-10-03', color:'var(--amber)', desc:'Greek/Italian sovereign — S&P −21%' },
+  { id:'dotcom',  name:'Dot-com Crash',    start:'2000-03-24', end:'2002-10-09', color:'var(--red)',   desc:'Tech bubble burst — Nasdaq −78%, S&P −50%' },
+  { id:'custom',  name:'Custom Range',     start:null,         end:null,         color:'var(--blue)',  desc:'Define your own stress scenario date range' },
+];
+
+const ST_TEMPLATES = {
+  '6040':  [{ ticker:'SPY', weight:60, name:'S&P 500' }, { ticker:'AGG', weight:40, name:'US Aggregate' }],
+  'rp':    [{ ticker:'SPY', weight:25, name:'S&P 500' }, { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:25, name:'Gold' }, { ticker:'DJP', weight:25, name:'Bloomberg Cmdty' }],
+  'equity':[{ ticker:'SPY', weight:40, name:'S&P 500' }, { ticker:'EFA', weight:30, name:'MSCI EAFE' }, { ticker:'EEM', weight:20, name:'MSCI EM' }, { ticker:'IWM', weight:10, name:'Russell 2000' }],
+  'ma':    [{ ticker:'SPY', weight:35, name:'S&P 500' }, { ticker:'EFA', weight:15, name:'MSCI EAFE' }, { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:15, name:'Gold' }, { ticker:'HYG', weight:10, name:'US High Yield' }],
+};
+
+const stState = { positions:[], scenarioId:null, customStart:'', customEnd:'' };
+let stBooted = false;
+
+/* ── Boot ──────────────────────────────────────────────────────────── */
+async function stBoot() {
+  if (!stBooted) {
+    stBooted = true;
+    await Promise.all(['eq','credit','cmd','fx','vol'].map(p => window.mkLoadCache(p)));
+  }
+  stRenderScenarioGrid();
+  stRenderPositions();
+}
+
+/* ── Scenario grid ─────────────────────────────────────────────────── */
+function stRenderScenarioGrid() {
+  const grid = document.getElementById('st-scenario-grid');
+  if (!grid) return;
+  grid.innerHTML = ST_SCENARIOS.map(s => `
+    <div class="st-card${stState.scenarioId === s.id ? ' active' : ''}" onclick="stSelectScenario('${s.id}')">
+      <div class="st-card-name" style="color:${s.color}">${s.name}</div>
+      <div class="st-card-period">${s.start ? s.start.slice(0,7)+' – '+s.end.slice(0,7) : 'Custom dates'}</div>
+      <div class="st-card-desc">${s.desc}</div>
+    </div>`).join('');
+}
+
+function stSelectScenario(id) {
+  stState.scenarioId = id;
+  stRenderScenarioGrid();
+  const cr = document.getElementById('st-custom-row');
+  if (cr) cr.style.display = id === 'custom' ? 'flex' : 'none';
+  stReRun();
+}
+
+function stRunCustom() {
+  const s = document.getElementById('st-date-start')?.value;
+  const e = document.getElementById('st-date-end')?.value;
+  if (!s || !e || s >= e) return;
+  stState.customStart = s; stState.customEnd = e;
+  stReRun();
+}
+
+/* ── Portfolio management ──────────────────────────────────────────── */
+function stAddPosition() {
+  const tEl = document.getElementById('st-add-ticker');
+  const wEl = document.getElementById('st-add-weight');
+  if (!tEl || !wEl) return;
+  const ticker = tEl.value.trim().toUpperCase();
+  const weight = parseFloat(wEl.value);
+  if (!ticker || isNaN(weight) || weight <= 0) return;
+  const found = (window.TICKERS_ALL || []).find(t => t.t === ticker);
+  stState.positions.push({ ticker, weight, name: found ? found.n : ticker });
+  tEl.value = ''; wEl.value = ''; tEl.focus();
+  stRenderPositions(); stReRun();
+}
+
+function stRemovePosition(idx) {
+  stState.positions.splice(idx, 1);
+  stRenderPositions(); stReRun();
+}
+
+function stUpdateWeight(idx, val) {
+  const w = parseFloat(val);
+  if (!isNaN(w) && w > 0) { stState.positions[idx].weight = w; stReRun(); }
+  stUpdateWeightTotal();
+}
+
+function stUpdateWeightTotal() {
+  const total = stState.positions.reduce((s, p) => s + p.weight, 0);
+  const el = document.getElementById('st-weight-total');
+  if (el) {
+    el.textContent = total.toFixed(0) + '%';
+    el.style.color = Math.abs(total - 100) < 0.5 ? 'var(--green)' : 'var(--amber)';
+  }
+}
+
+function stRenderPositions() {
+  const list = document.getElementById('st-positions-list');
+  if (!list) return;
+  if (!stState.positions.length) {
+    list.innerHTML = '<div style="color:var(--text3);font-family:var(--mono);font-size:10px;padding:6px 0 2px;">No positions — add tickers or use a template</div>';
+    stUpdateWeightTotal(); return;
+  }
+  list.innerHTML = stState.positions.map((p, i) => `
+    <div class="st-pos-row">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--amber);min-width:54px">${p.ticker}</span>
+      <span style="font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
+      <input class="mc-input" type="number" value="${p.weight}" min="0" max="100" style="width:46px;padding:3px 6px;" oninput="stUpdateWeight(${i},this.value)">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">%</span>
+      <button onclick="stRemovePosition(${i})" style="font-size:14px;color:var(--text3);padding:0 2px;opacity:0.6;">×</button>
+    </div>`).join('');
+  stUpdateWeightTotal();
+}
+
+function stLoadTemplate(key) {
+  stState.positions = (ST_TEMPLATES[key] || []).map(p => ({...p}));
+  stRenderPositions(); stReRun();
+}
+
+function stClearPositions() {
+  stState.positions = []; stRenderPositions(); stReRun();
+}
+
+/* ── Calculation ───────────────────────────────────────────────────── */
+function stGetReturn(ticker, startDate, endDate) {
+  const rows = window.mkState.rawHistory[ticker] || [];
+  if (rows.length < 2) return null;
+  let s0 = null, e0 = null;
+  for (let i = rows.length - 1; i >= 0; i--) { if (rows[i].date <= startDate) { s0 = rows[i]; break; } }
+  for (let i = rows.length - 1; i >= 0; i--) { if (rows[i].date <= endDate)   { e0 = rows[i]; break; } }
+  if (!s0 || !e0 || s0.date === e0.date || !s0.close) return null;
+  return (e0.close - s0.close) / s0.close;
+}
+
+function stBuildPortfolioNav(validResults, startDate, endDate) {
+  const dateMap = new Map();
+  validResults.forEach(r => {
+    const rows = (window.mkState.rawHistory[r.ticker] || []).filter(row => row.date >= startDate && row.date <= endDate);
+    if (rows.length < 2) return;
+    const base = rows[0].close;
+    rows.forEach(row => {
+      if (!dateMap.has(row.date)) dateMap.set(row.date, { wsum: 0, wtot: 0 });
+      const e = dateMap.get(row.date);
+      e.wsum += (row.close / base) * r.nw; e.wtot += r.nw;
+    });
+  });
+  return [...dateMap.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([d,v])=>({ date:d, nav:100*v.wsum/v.wtot }));
+}
+
+function stReRun() {
+  if (!stState.scenarioId || !stState.positions.length) { stShowHint(); return; }
+  let startDate, endDate, scenLabel;
+  if (stState.scenarioId === 'custom') {
+    if (!stState.customStart || !stState.customEnd) { stShowHint(); return; }
+    startDate = stState.customStart; endDate = stState.customEnd;
+    scenLabel = 'Custom: ' + startDate + ' – ' + endDate;
+  } else {
+    const sc = ST_SCENARIOS.find(s => s.id === stState.scenarioId);
+    startDate = sc.start; endDate = sc.end; scenLabel = sc.name;
+  }
+
+  const pv = parseFloat(document.getElementById('st-pv-input')?.value || 1e6);
+  const totalW = stState.positions.reduce((s, p) => s + p.weight, 0);
+  if (!totalW) { stShowHint(); return; }
+
+  const results = stState.positions.map(p => {
+    const nw = p.weight / totalW;
+    const ret = stGetReturn(p.ticker, startDate, endDate);
+    return { ...p, nw, ret, contrib: ret !== null ? ret * nw : null, pnl: ret !== null ? ret * nw * pv : null };
+  });
+
+  const valid = results.filter(r => r.contrib !== null);
+  const portRet = valid.reduce((s, r) => s + r.contrib, 0);
+  const portPnL = portRet * pv;
+
+  // Max drawdown from NAV series
+  const navSeries = stBuildPortfolioNav(valid.map(r=>({ticker:r.ticker, nw:r.nw})), startDate, endDate);
+  let maxDD = 0;
+  if (navSeries.length > 1) {
+    let peak = navSeries[0].nav;
+    navSeries.forEach(d => { peak = Math.max(peak, d.nav); maxDD = Math.min(maxDD, d.nav - peak); });
+    maxDD /= 100;
+  }
+
+  stRenderResults(results, portRet, portPnL, pv, scenLabel, startDate, endDate, valid.length, results.length, maxDD, navSeries);
+}
+
+function stShowHint() {
+  const wrap = document.getElementById('st-results-wrap');
+  if (wrap) wrap.innerHTML = `<div class="st-hint"><svg viewBox="0 0 24 24" width="30" height="30" stroke="currentColor" fill="none" stroke-width="1.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><div>${!stState.scenarioId ? 'Select a scenario above' : 'Add positions to your portfolio'}</div></div>`;
+}
+
+/* ── Render results ─────────────────────────────────────────────────── */
+function stRenderResults(results, portRet, portPnL, pv, scenLabel, start, end, covered, total, maxDD, navSeries) {
+  const wrap = document.getElementById('st-results-wrap');
+  if (!wrap) return;
+  const rc = portRet >= 0 ? 'var(--green)' : 'var(--red)';
+  const retStr = (portRet >= 0 ? '+' : '') + (portRet * 100).toFixed(2) + '%';
+  const pnlStr = (portPnL >= 0 ? '+$' : '−$') + Math.abs(portPnL).toLocaleString('en-US', {maximumFractionDigits:0});
+  const worst  = results.filter(r => r.ret !== null).sort((a,b) => a.ret - b.ret)[0];
+  const best   = results.filter(r => r.ret !== null).sort((a,b) => b.ret - a.ret)[0];
+  const covMsg = covered < total ? `<div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:6px;">⚠ ${total - covered} position(s) excluded — no price data for this period</div>` : '';
+  const chartH = Math.max(160, results.length * 30 + 60);
+
+  wrap.innerHTML = `
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:10px;letter-spacing:0.04em">${scenLabel} &nbsp;·&nbsp; ${start} → ${end}</div>
+      <div class="st-kpi-row">
+        <div class="st-kpi">
+          <div class="st-kpi-label">Portfolio Return</div>
+          <div class="st-kpi-val" style="color:${rc}">${retStr}</div>
+          <div class="st-kpi-sub">${covered}/${total} positions</div>
+        </div>
+        <div class="st-kpi">
+          <div class="st-kpi-label">Dollar P&amp;L</div>
+          <div class="st-kpi-val" style="color:${rc};font-size:18px">${pnlStr}</div>
+          <div class="st-kpi-sub">\$${(pv/1e6).toFixed(1)}M portfolio</div>
+        </div>
+        <div class="st-kpi">
+          <div class="st-kpi-label">Max Drawdown</div>
+          <div class="st-kpi-val" style="color:var(--red)">${maxDD ? (maxDD*100).toFixed(2)+'%' : '—'}</div>
+          <div class="st-kpi-sub">peak-to-trough</div>
+        </div>
+        <div class="st-kpi">
+          <div class="st-kpi-label">Best / Worst</div>
+          <div class="st-kpi-val" style="font-size:14px;line-height:1.5">
+            <span style="color:var(--green)">${best ? (best.ret>=0?'+':''+(best.ret*100).toFixed(1)+'%') : '—'}</span>
+            <span style="color:var(--text3);font-size:10px"> / </span>
+            <span style="color:var(--red)">${worst ? (worst.ret*100).toFixed(1)+'%' : '—'}</span>
+          </div>
+          <div class="st-kpi-sub">${best?.ticker||''} / ${worst?.ticker||''}</div>
+        </div>
+      </div>
+      ${covMsg}
+    </div>
+
+    <div class="st-charts">
+      <div class="st-chart-box">
+        <div class="st-chart-title">Contribution to Return</div>
+        <div id="st-contrib-wrap" style="height:${chartH}px;position:relative;"></div>
+      </div>
+      <div class="st-chart-box">
+        <div class="st-chart-title">Portfolio NAV (Indexed 100)</div>
+        <div id="st-nav-wrap" style="height:${chartH}px;position:relative;"></div>
+      </div>
+    </div>
+
+    <div class="st-chart-box">
+      <div class="st-chart-title">Position Detail</div>
+      <table class="st-table">
+        <thead><tr>
+          <th>Ticker</th><th>Name</th><th style="text-align:right">Weight</th>
+          <th style="text-align:right">Return</th><th style="text-align:right">Contribution</th><th style="text-align:right">P&amp;L</th>
+        </tr></thead>
+        <tbody>
+          ${results.sort((a,b)=>(b.contrib??-9)-(a.contrib??-9)).map(r => {
+            const noData = r.ret === null;
+            const rC = noData ? 'var(--text3)' : r.ret >= 0 ? 'var(--green)' : 'var(--red)';
+            return `<tr>
+              <td style="color:var(--amber)">${r.ticker}</td>
+              <td style="color:var(--text2)">${r.name}</td>
+              <td style="text-align:right">${(r.nw*100).toFixed(1)}%</td>
+              <td style="text-align:right;color:${rC}">${noData ? '<span style="color:var(--text3)">N/A</span>' : (r.ret>=0?'+':'')+(r.ret*100).toFixed(2)+'%'}</td>
+              <td style="text-align:right;color:${rC}">${noData ? '—' : (r.contrib>=0?'+':'')+(r.contrib*100).toFixed(2)+'%'}</td>
+              <td style="text-align:right;color:${rC}">${noData ? '—' : (r.pnl>=0?'+$':'−$')+Math.abs(r.pnl).toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+            </tr>`;
+          }).join('')}
+          <tr style="border-top:1px solid var(--border2)">
+            <td colspan="3" style="color:var(--text3);font-style:italic">Portfolio</td>
+            <td style="text-align:right">—</td>
+            <td style="text-align:right;color:${rc};font-weight:500">${retStr}</td>
+            <td style="text-align:right;color:${rc};font-weight:500">${pnlStr}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+
+  requestAnimationFrame(() => {
+    stDrawContribChart(results.filter(r => r.contrib !== null));
+    stDrawNavChart(navSeries);
+  });
+}
+
+/* ── Contribution bar chart ─────────────────────────────────────────── */
+function stDrawContribChart(results) {
+  const wrap = document.getElementById('st-contrib-wrap');
+  if (!wrap || !results.length) return;
+  d3.select(wrap).selectAll('*').remove();
+  const sorted = [...results].sort((a, b) => a.contrib - b.contrib);
+  const margin = { top:6, right:58, bottom:22, left:58 };
+  const W = wrap.getBoundingClientRect().width || 320;
+  const H = wrap.getBoundingClientRect().height || 200;
+  const iw = W - margin.left - margin.right, ih = H - margin.top - margin.bottom;
+  const svg = d3.select(wrap).append('svg').attr('width', W).attr('height', H);
+  const g   = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+  const ext  = d3.extent(sorted.map(r => r.contrib));
+  const xMax = Math.max(Math.abs(ext[0] || 0), Math.abs(ext[1] || 0), 0.003);
+  const xScale = d3.scaleLinear().domain([-xMax, xMax]).range([0, iw]);
+  const yScale = d3.scaleBand().domain(sorted.map(r => r.ticker)).range([0, ih]).padding(0.22);
+
+  g.append('line').attr('x1', xScale(0)).attr('x2', xScale(0)).attr('y1', 0).attr('y2', ih)
+    .attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 1).attr('stroke-dasharray', '3 2');
+
+  sorted.forEach(r => {
+    const x0 = xScale(Math.min(0, r.contrib));
+    const bw = Math.max(Math.abs(xScale(r.contrib) - xScale(0)), 1);
+    const color = r.contrib >= 0 ? 'var(--green)' : 'var(--red)';
+    g.append('rect').attr('x', x0).attr('y', yScale(r.ticker)).attr('width', bw).attr('height', yScale.bandwidth())
+      .attr('fill', color).attr('opacity', 0.8).attr('rx', 2);
+    const lx = r.contrib >= 0 ? xScale(r.contrib) + 4 : xScale(r.contrib) - 4;
+    g.append('text').attr('x', lx).attr('y', yScale(r.ticker) + yScale.bandwidth()/2 + 3)
+      .attr('text-anchor', r.contrib >= 0 ? 'start' : 'end')
+      .attr('fill', color).attr('font-size', 9).attr('font-family', "'IBM Plex Mono'")
+      .text((r.contrib>=0?'+':'')+(r.contrib*100).toFixed(2)+'%');
+  });
+
+  g.append('g').call(d3.axisLeft(yScale).tickSize(0))
+    .call(ax => ax.select('.domain').remove())
+    .selectAll('text').attr('fill', 'var(--text3)').attr('font-size', 9).attr('font-family', "'IBM Plex Mono'");
+  g.append('g').attr('transform', `translate(0,${ih})`).call(
+    d3.axisBottom(xScale).ticks(5).tickFormat(d => (d*100).toFixed(1)+'%').tickSize(3)
+  ).call(ax => ax.select('.domain').remove())
+    .selectAll('text').attr('fill', 'var(--text3)').attr('font-size', 8).attr('font-family', "'IBM Plex Mono'");
+}
+
+/* ── Portfolio NAV time series ──────────────────────────────────────── */
+function stDrawNavChart(series) {
+  const wrap = document.getElementById('st-nav-wrap');
+  if (!wrap || series.length < 2) return;
+  d3.select(wrap).selectAll('*').remove();
+  const vals = series.map(d => d.nav);
+  const margin = { top:6, right:14, bottom:22, left:42 };
+  const W = wrap.getBoundingClientRect().width || 320;
+  const H = wrap.getBoundingClientRect().height || 200;
+  const iw = W - margin.left - margin.right, ih = H - margin.top - margin.bottom;
+  const svg = d3.select(wrap).append('svg').attr('width', W).attr('height', H);
+  const g   = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+  const dateObjs = series.map(d => new Date(d.date + 'T12:00:00'));
+  const xScale = d3.scaleTime().domain(d3.extent(dateObjs)).range([0, iw]);
+  const [vMin, vMax] = d3.extent(vals);
+  const pad = Math.max((vMax - vMin) * 0.05, 0.5);
+  const yScale = d3.scaleLinear().domain([vMin - pad, vMax + pad]).range([ih, 0]).nice();
+  const lineColor = vals[vals.length-1] >= 100 ? '#4caf82' : '#e05555';
+
+  yScale.ticks(5).forEach(t => {
+    g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t))
+      .attr('stroke','rgba(255,255,255,0.04)').attr('stroke-width',1);
+  });
+  if (yScale.domain()[0] <= 100 && yScale.domain()[1] >= 100) {
+    g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(100)).attr('y2',yScale(100))
+      .attr('stroke','rgba(255,255,255,0.15)').attr('stroke-width',1).attr('stroke-dasharray','4 3');
+  }
+  const defs = svg.append('defs');
+  const grad = defs.append('linearGradient').attr('id','st-nav-grad').attr('x1','0').attr('x2','0').attr('y1','0').attr('y2','1');
+  grad.append('stop').attr('offset','0%').attr('stop-color',lineColor).attr('stop-opacity',0.2);
+  grad.append('stop').attr('offset','100%').attr('stop-color',lineColor).attr('stop-opacity',0.01);
+  g.append('path').datum(vals)
+    .attr('d', d3.area().x((_,i)=>xScale(dateObjs[i])).y0(ih).y1((_,i)=>yScale(vals[i])).curve(d3.curveMonotoneX))
+    .attr('fill','url(#st-nav-grad)');
+  g.append('path').datum(vals)
+    .attr('d', d3.line().x((_,i)=>xScale(dateObjs[i])).y((_,i)=>yScale(vals[i])).curve(d3.curveMonotoneX))
+    .attr('fill','none').attr('stroke',lineColor).attr('stroke-width',1.5);
+  g.append('g').attr('transform',`translate(0,${ih})`).call(
+    d3.axisBottom(xScale).ticks(5).tickFormat(d3.timeFormat('%b %y')).tickSize(3)
+  ).call(ax=>ax.select('.domain').remove()).selectAll('text').attr('fill','var(--text3)').attr('font-size',8).attr('font-family',"'IBM Plex Mono'");
+  g.append('g').call(
+    d3.axisLeft(yScale).ticks(5).tickFormat(d=>d.toFixed(0)).tickSize(3)
+  ).call(ax=>ax.select('.domain').remove()).selectAll('text').attr('fill','var(--text3)').attr('font-size',8).attr('font-family',"'IBM Plex Mono'");
+
+  // Hover
+  wrap.style.position = 'relative';
+  const vline = g.append('line').attr('y1',0).attr('y2',ih).attr('stroke','rgba(255,255,255,0.15)').attr('stroke-width',1).style('display','none');
+  const dot   = g.append('circle').attr('r',3).attr('fill',lineColor).style('display','none');
+  const htip  = (() => { const el = document.createElement('div'); Object.assign(el.style,{position:'absolute',pointerEvents:'none',opacity:'0',background:'var(--bg4)',border:'1px solid var(--border2)',padding:'6px 10px',borderRadius:'4px',fontFamily:"'IBM Plex Mono'",fontSize:'10px',zIndex:'50',whiteSpace:'nowrap',transition:'opacity 0.1s',boxShadow:'0 4px 20px rgba(0,0,0,0.5)',lineHeight:'1.6'}); wrap.appendChild(el); return el; })();
+  svg.on('mousemove', function(event) {
+    const [mx] = d3.pointer(event, g.node());
+    const idx  = Math.max(0, Math.min(vals.length-1, d3.bisectLeft(dateObjs, xScale.invert(mx))));
+    const cx   = xScale(dateObjs[idx]), cy = yScale(vals[idx]);
+    vline.attr('x1',cx).attr('x2',cx).style('display',null);
+    dot.attr('cx',cx).attr('cy',cy).style('display',null);
+    const chg = (vals[idx]-100).toFixed(2);
+    htip.style.opacity='1';
+    htip.innerHTML=`<div style="color:var(--text3);margin-bottom:2px">${series[idx].date}</div><div style="color:${lineColor};font-weight:500">NAV ${vals[idx].toFixed(1)}</div><div style="color:var(--text3)">${chg>=0?'+':''}${chg}%</div>`;
+    const bx = wrap.getBoundingClientRect(), ex = event.clientX-bx.left;
+    htip.style.left=(ex>W/2?ex-htip.offsetWidth-10:ex+10)+'px'; htip.style.top='10px';
+  }).on('mouseleave',()=>{vline.style('display','none');dot.style('display','none');htip.style.opacity='0';});
+}
+
+window.stBoot            = stBoot;
+window.stSelectScenario  = stSelectScenario;
+window.stRunCustom       = stRunCustom;
+window.stAddPosition     = stAddPosition;
+window.stRemovePosition  = stRemovePosition;
+window.stUpdateWeight    = stUpdateWeight;
+window.stLoadTemplate    = stLoadTemplate;
+window.stClearPositions  = stClearPositions;
+window.stReRun           = stReRun;
 </script>
 </body>
 </html>
