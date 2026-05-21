@@ -2135,9 +2135,6 @@ a      { color: inherit; text-decoration: none; }
             <button class="corr-pill active" onclick="corrFilterClass('all',this)">All</button>
             <button class="corr-pill" onclick="corrFilterClass('eq',this)">Equity</button>
             <button class="corr-pill" onclick="corrFilterClass('fi',this)">Fixed Inc</button>
-            <button class="corr-pill" onclick="corrFilterClass('cmd',this)">Commodities</button>
-            <button class="corr-pill" onclick="corrFilterClass('fx',this)">FX</button>
-            <button class="corr-pill" onclick="corrFilterClass('other',this)">Vol / Crypto</button>
           </div>
           <div class="corr-legend" style="margin-left:auto;">
             <span>−1</span><div class="corr-legend-bar"></div><span>+1</span>
@@ -6278,26 +6275,16 @@ function feRenderLibrary() {
 ══════════════════════════════════════════════════════════════════════ */
 
 const CORR_TICKERS = [
-  {t:'SPY',      n:'S&P 500',         cls:'eq'},
-  {t:'QQQ',      n:'Nasdaq 100',       cls:'eq'},
-  {t:'IWM',      n:'Russell 2000',     cls:'eq'},
-  {t:'EFA',      n:'MSCI EAFE',        cls:'eq'},
-  {t:'EEM',      n:'MSCI EM',          cls:'eq'},
-  {t:'AGG',      n:'US Aggregate',     cls:'fi'},
-  {t:'GOVT',     n:'US Treasuries',    cls:'fi'},
-  {t:'LQD',      n:'US IG Corp',       cls:'fi'},
-  {t:'HYG',      n:'US High Yield',    cls:'fi'},
-  {t:'EMB',      n:'EM Sovereign',     cls:'fi'},
-  {t:'GC=F',     n:'Gold',             cls:'cmd'},
-  {t:'CL=F',     n:'WTI Crude',        cls:'cmd'},
-  {t:'HG=F',     n:'Copper',           cls:'cmd'},
-  {t:'DJP',      n:'Bloomberg Cmdty',  cls:'cmd'},
-  {t:'DX-Y.NYB', n:'DXY',             cls:'fx'},
-  {t:'EURUSD=X', n:'EUR/USD',          cls:'fx'},
-  {t:'JPY=X',    n:'USD/JPY',          cls:'fx'},
-  {t:'^VIX',     n:'VIX',             cls:'other'},
-  {t:'BTC-USD',  n:'Bitcoin',          cls:'other'},
-  {t:'ETH-USD',  n:'Ethereum',         cls:'other'},
+  {t:'SPY',  n:'S&P 500',       cls:'eq'},
+  {t:'QQQ',  n:'Nasdaq 100',    cls:'eq'},
+  {t:'IWM',  n:'Russell 2000',  cls:'eq'},
+  {t:'EFA',  n:'MSCI EAFE',     cls:'eq'},
+  {t:'EEM',  n:'MSCI EM',       cls:'eq'},
+  {t:'AGG',  n:'US Aggregate',  cls:'fi'},
+  {t:'GOVT', n:'US Treasuries', cls:'fi'},
+  {t:'LQD',  n:'US IG Corp',    cls:'fi'},
+  {t:'HYG',  n:'US High Yield', cls:'fi'},
+  {t:'EMB',  n:'EM Sovereign',  cls:'fi'},
 ];
 
 const corrState = {
