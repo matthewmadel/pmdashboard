@@ -2302,7 +2302,8 @@ function updateTimestamp() {
   const now = new Date();
   el.textContent = 'LIVE · ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
 }
-setInterval(updateTimestamp, 60000);
+updateTimestamp();                   // show correct time immediately on load
+setInterval(updateTimestamp, 60000); // then update every minute
 
 function toggleSubGroup(id) {
   const el = document.getElementById(id);
@@ -3467,8 +3468,7 @@ async function fredLoadHeaderTickers() {
     }
   }));
 
-  const ts = document.getElementById('header-ts');
-  if (ts) ts.textContent='FRED · '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  updateTimestamp(); // keep live clock accurate after FRED load
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -4283,13 +4283,8 @@ async function fredBoot() {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     fredLocalData = j.series || {};
-    const ts = j.updated_at ? new Date(j.updated_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'unknown';
-    const tsEl = document.getElementById('header-ts');
-    if (tsEl) tsEl.textContent='FRED · Updated '+ts;
   } catch(e) {
-    console.warn('FRED data not loaded (need economic_data.json running on :8000):', e.message);
-    const tsEl = document.getElementById('header-ts');
-    if (tsEl) tsEl.textContent='FRED · offline mode';
+    console.warn('FRED data not loaded:', e.message);
   }
 
   fredLoadHeaderTickers();
