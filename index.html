@@ -811,6 +811,43 @@ a      { color: inherit; text-decoration: none; }
 .cma-filter-btn:hover { color:var(--text2); border-color:var(--border3); }
 .cma-filter-btn.active { background:var(--amber); border-color:var(--amber); color:var(--bg); }
 .cma-sort-group { margin-left:auto; display:flex; gap:6px; align-items:center; }
+/* ── Correlation Matrix ───────────────────────────────────────────────── */
+.corr-page { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
+.corr-controls {
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:10px 24px; border-bottom:1px solid var(--border);
+  background:var(--bg2); flex-shrink:0;
+}
+.corr-ctrl-group { display:flex; align-items:center; gap:6px; }
+.corr-ctrl-label { font-family:var(--mono); font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:0.07em; }
+.corr-pill {
+  font-family:var(--mono); font-size:9px; padding:3px 8px;
+  border:1px solid var(--border2); border-radius:3px; cursor:pointer;
+  color:var(--text3); transition:all 0.12s; background:transparent;
+}
+.corr-pill:hover { color:var(--text2); border-color:var(--border3); }
+.corr-pill.active { background:var(--amber); border-color:var(--amber); color:var(--bg); }
+.corr-body { display:grid; grid-template-columns:1fr 380px; flex:1; min-height:0; overflow:hidden; }
+.corr-heatmap-panel { display:flex; flex-direction:column; overflow:hidden; border-right:1px solid var(--border); }
+.corr-heatmap-header { padding:10px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.corr-heatmap-wrap { flex:1; overflow:auto; padding:16px; display:flex; align-items:flex-start; justify-content:flex-start; }
+.corr-rolling-panel { display:flex; flex-direction:column; overflow:hidden; }
+.corr-rolling-header { padding:10px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.corr-rolling-title { font-size:11px; font-weight:500; color:var(--text2); letter-spacing:0.03em; }
+.corr-rolling-sub { font-family:var(--mono); font-size:9px; color:var(--text3); margin-top:2px; }
+.corr-rolling-wrap { flex:1; position:relative; min-height:0; }
+.corr-pair-stat { font-family:var(--mono); font-size:22px; font-weight:500; }
+.corr-empty-hint { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:8px; color:var(--text3); font-family:var(--mono); font-size:11px; }
+.corr-legend { display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:9px; color:var(--text3); }
+.corr-legend-bar { width:120px; height:6px; border-radius:3px; background:linear-gradient(to right,#3b72b0,#1a2030,#d4a44c); }
+.corr-ticker-strip { padding:8px 24px; border-bottom:1px solid var(--border); background:var(--bg2); display:flex; flex-wrap:wrap; gap:4px; flex-shrink:0; }
+.corr-ticker-pill {
+  font-family:var(--mono); font-size:9px; padding:2px 7px;
+  border:1px solid var(--border2); border-radius:3px; cursor:pointer;
+  color:var(--text2); transition:all 0.12s; background:var(--bg3);
+}
+.corr-ticker-pill:hover { border-color:var(--border3); }
+.corr-ticker-pill.off { opacity:0.35; text-decoration:line-through; }
 /* ── Factor Explorer ──────────────────────────────────────────────────── */
 .fe-layout { display:grid; grid-template-columns:340px 1fr; gap:16px; flex:1; min-height:0; padding:20px 24px; overflow:hidden; }
 .fe-left  { display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-right:4px; }
@@ -1304,7 +1341,7 @@ a      { color: inherit; text-decoration: none; }
             <div class="nav-item" onclick="showPage('return-assumptions');cmaRender()" data-label="Return Assumptions">
               <div class="nav-dot"></div>Return Assumptions<span class="nav-item-badge">CMA</span>
             </div>
-            <div class="nav-item" onclick="showPage('correlation')" data-label="Correlation Matrix">
+            <div class="nav-item" onclick="showPage('correlation');corrBoot()" data-label="Correlation Matrix">
               <div class="nav-dot"></div>Correlation Matrix<span class="nav-item-badge">COR</span>
             </div>
             <div class="nav-item" onclick="showPage('stress-test')" data-label="Stress Tester">
@@ -2030,21 +2067,81 @@ a      { color: inherit; text-decoration: none; }
       <!-- ════════════════════════════════════════
            PAGE: CORRELATION
       ════════════════════════════════════════ -->
-      <div class="section-page" id="page-correlation">
+      <div class="section-page" id="page-correlation" style="flex-direction:column;overflow:hidden;">
         <div class="page-header">
           <div class="page-title-group">
             <div class="page-title">Correlation Matrix <span class="page-title-badge">Tool</span></div>
-            <div class="page-subtitle">Cross-asset correlations · rolling window</div>
+            <div class="page-subtitle">Cross-asset Pearson correlations · click any cell to view rolling history</div>
           </div>
         </div>
-        <div class="page-body">
-          <div class="coming-soon">
-            <div class="coming-soon-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
-            <div class="coming-soon-title">Correlation Matrix</div>
-            <div class="coming-soon-sub">Cross-asset correlation engine coming soon</div>
+
+        <!-- Controls bar -->
+        <div class="corr-controls">
+          <div class="corr-ctrl-group">
+            <span class="corr-ctrl-label">Period</span>
+            <button class="corr-pill" onclick="corrSetPeriod('1M',this)">1M</button>
+            <button class="corr-pill" onclick="corrSetPeriod('3M',this)">3M</button>
+            <button class="corr-pill" onclick="corrSetPeriod('6M',this)">6M</button>
+            <button class="corr-pill active" onclick="corrSetPeriod('1Y',this)">1Y</button>
+            <button class="corr-pill" onclick="corrSetPeriod('3Y',this)">3Y</button>
+            <button class="corr-pill" onclick="corrSetPeriod('5Y',this)">5Y</button>
+            <button class="corr-pill" onclick="corrSetPeriod('Max',this)">Max</button>
+          </div>
+          <div style="width:1px;height:16px;background:var(--border2);"></div>
+          <div class="corr-ctrl-group">
+            <span class="corr-ctrl-label">Rolling</span>
+            <button class="corr-pill" onclick="corrSetWindow(21,this)">21D</button>
+            <button class="corr-pill active" onclick="corrSetWindow(63,this)">63D</button>
+            <button class="corr-pill" onclick="corrSetWindow(126,this)">126D</button>
+            <button class="corr-pill" onclick="corrSetWindow(252,this)">252D</button>
+          </div>
+          <div style="width:1px;height:16px;background:var(--border2);"></div>
+          <div class="corr-ctrl-group">
+            <span class="corr-ctrl-label">Classes</span>
+            <button class="corr-pill active" onclick="corrFilterClass('all',this)">All</button>
+            <button class="corr-pill" onclick="corrFilterClass('eq',this)">Equity</button>
+            <button class="corr-pill" onclick="corrFilterClass('fi',this)">Fixed Inc</button>
+            <button class="corr-pill" onclick="corrFilterClass('cmd',this)">Commodities</button>
+            <button class="corr-pill" onclick="corrFilterClass('fx',this)">FX</button>
+            <button class="corr-pill" onclick="corrFilterClass('other',this)">Vol / Crypto</button>
+          </div>
+          <div class="corr-legend" style="margin-left:auto;">
+            <span>−1</span><div class="corr-legend-bar"></div><span>+1</span>
+            <span style="margin-left:8px;color:var(--text3)">* p&lt;.10 &nbsp;** p&lt;.05 &nbsp;*** p&lt;.01</span>
           </div>
         </div>
-      </div>
+
+        <!-- Ticker toggle strip -->
+        <div class="corr-ticker-strip" id="corr-ticker-strip"></div>
+
+        <!-- Main body: heatmap + rolling chart -->
+        <div class="corr-body" id="corr-body">
+
+          <!-- Left: heatmap -->
+          <div class="corr-heatmap-panel">
+            <div class="corr-heatmap-header">
+              <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="corr-obs-label"></span>
+              <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">Click a cell to view rolling correlation</span>
+            </div>
+            <div class="corr-heatmap-wrap" id="corr-heatmap-wrap"></div>
+          </div>
+
+          <!-- Right: rolling chart -->
+          <div class="corr-rolling-panel">
+            <div class="corr-rolling-header">
+              <div class="corr-rolling-title" id="corr-pair-title">Select a pair</div>
+              <div class="corr-rolling-sub" id="corr-pair-sub">Click any cell in the heatmap</div>
+            </div>
+            <div class="corr-rolling-wrap" id="corr-rolling-wrap">
+              <div class="corr-empty-hint" id="corr-rolling-empty">
+                <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" fill="none" stroke-width="1.2"><path d="M3 12h4l3 8 6-16 3 8h5"/></svg>
+                <div>Click any cell in the heatmap</div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /corr-body -->
+      </div><!-- /page-correlation -->
 
 
       <!-- ════════════════════════════════════════
@@ -6073,6 +6170,536 @@ function feRenderLibrary() {
     tt2.style.left=(ex>W/2?ex-tt2.offsetWidth-10:ex+10)+'px';tt2.style.top='20px';
   }).on('mouseleave',()=>{vline.style('display','none');dot.style('display','none');tt2.style.opacity='0';});
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   CORRELATION MATRIX — Heatmap + Rolling Chart
+   Pearson correlations from daily returns · Fama-French style color scale
+══════════════════════════════════════════════════════════════════════ */
+
+const CORR_TICKERS = [
+  {t:'SPY',      n:'S&P 500',         cls:'eq'},
+  {t:'QQQ',      n:'Nasdaq 100',       cls:'eq'},
+  {t:'IWM',      n:'Russell 2000',     cls:'eq'},
+  {t:'EFA',      n:'MSCI EAFE',        cls:'eq'},
+  {t:'EEM',      n:'MSCI EM',          cls:'eq'},
+  {t:'AGG',      n:'US Aggregate',     cls:'fi'},
+  {t:'GOVT',     n:'US Treasuries',    cls:'fi'},
+  {t:'LQD',      n:'US IG Corp',       cls:'fi'},
+  {t:'HYG',      n:'US High Yield',    cls:'fi'},
+  {t:'EMB',      n:'EM Sovereign',     cls:'fi'},
+  {t:'GC=F',     n:'Gold',             cls:'cmd'},
+  {t:'CL=F',     n:'WTI Crude',        cls:'cmd'},
+  {t:'HG=F',     n:'Copper',           cls:'cmd'},
+  {t:'DJP',      n:'Bloomberg Cmdty',  cls:'cmd'},
+  {t:'DX-Y.NYB', n:'DXY',             cls:'fx'},
+  {t:'EURUSD=X', n:'EUR/USD',          cls:'fx'},
+  {t:'JPY=X',    n:'USD/JPY',          cls:'fx'},
+  {t:'^VIX',     n:'VIX',             cls:'other'},
+  {t:'BTC-USD',  n:'Bitcoin',          cls:'other'},
+  {t:'ETH-USD',  n:'Ethereum',         cls:'other'},
+];
+
+const corrState = {
+  period: '1Y',
+  window: 63,
+  classFilter: 'all',
+  activeTickers: new Set(CORR_TICKERS.map(td => td.t)),
+  selectedPair: null,   // {i, j} indices into corrState.tickers
+  corrMatrix: null,
+  tickers: [],
+  rawReturns: {},
+};
+let corrBooted = false;
+
+/* ── Data loading ──────────────────────────────────────────────────── */
+async function corrBoot() {
+  if (!corrBooted) {
+    corrBooted = true;
+    await Promise.all(['eq','credit','cmd','fx','vol'].map(p => mkLoadCache(p)));
+    if (!cryptoState.rawHistory['BTC-USD']) {
+      try {
+        const r = await fetch(CRYPTO_DATA_URL + '?_=' + Date.now());
+        if (r.ok) {
+          const j = await r.json();
+          if (j.history) Object.entries(j.history).forEach(([k,rows]) => { cryptoState.rawHistory[k] = rows; });
+        }
+      } catch(e) {}
+    }
+  }
+  corrRender();
+}
+
+function corrGetRows(ticker) {
+  return mkState.rawHistory[ticker] || cryptoState.rawHistory[ticker] || null;
+}
+
+function corrPeriodStart(period) {
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+  if (period === '1M') return new Date(y, m - 1, d).toISOString().slice(0, 10);
+  if (period === '3M') return new Date(y, m - 3, d).toISOString().slice(0, 10);
+  if (period === '6M') return new Date(y, m - 6, d).toISOString().slice(0, 10);
+  if (period === '1Y') return new Date(y - 1, m, d).toISOString().slice(0, 10);
+  if (period === '3Y') return new Date(y - 3, m, d).toISOString().slice(0, 10);
+  if (period === '5Y') return new Date(y - 5, m, d).toISOString().slice(0, 10);
+  return null; // Max
+}
+
+/* ── Computation ──────────────────────────────────────────────────── */
+function corrRender() {
+  corrBuildReturns();
+  corrBuildMatrix();
+  corrRenderTickers();
+  corrRenderHeatmap();
+  if (corrState.selectedPair) {
+    corrRenderRolling();
+  } else {
+    const e = document.getElementById('corr-rolling-empty');
+    if (e) e.style.display = 'flex';
+    const titleEl = document.getElementById('corr-pair-title');
+    if (titleEl) titleEl.textContent = 'Select a pair';
+    const subEl = document.getElementById('corr-pair-sub');
+    if (subEl) subEl.textContent = 'Click any cell in the heatmap';
+  }
+}
+
+function corrBuildReturns() {
+  const startDate = corrPeriodStart(corrState.period);
+  corrState.rawReturns = {};
+  CORR_TICKERS.forEach(td => {
+    if (!corrState.activeTickers.has(td.t)) return;
+    const rows = corrGetRows(td.t);
+    if (!rows || rows.length < 5) return;
+    const filtered = startDate ? rows.filter(r => r.date >= startDate) : rows;
+    if (filtered.length < 5) return;
+    const dates = [], rets = [];
+    for (let i = 1; i < filtered.length; i++) {
+      const p0 = filtered[i - 1].close, p1 = filtered[i].close;
+      if (p0 > 0 && p1 > 0) { dates.push(filtered[i].date); rets.push((p1 - p0) / p0); }
+    }
+    if (dates.length >= 5) corrState.rawReturns[td.t] = { dates, rets };
+  });
+}
+
+function corrBuildMatrix() {
+  const cls = corrState.classFilter;
+  corrState.tickers = CORR_TICKERS.filter(td =>
+    corrState.activeTickers.has(td.t) &&
+    corrState.rawReturns[td.t] &&
+    (cls === 'all' || td.cls === cls)
+  );
+  const N = corrState.tickers.length;
+  corrState.corrMatrix = Array.from({ length: N }, () => Array(N).fill(null));
+  for (let i = 0; i < N; i++) {
+    corrState.corrMatrix[i][i] = { r: 1, p: 0, n: corrState.rawReturns[corrState.tickers[i].t].rets.length };
+    for (let j = i + 1; j < N; j++) {
+      const res = corrAlignAndCompute(corrState.tickers[i].t, corrState.tickers[j].t);
+      corrState.corrMatrix[i][j] = res;
+      corrState.corrMatrix[j][i] = res;
+    }
+  }
+}
+
+function corrAlignAndCompute(t1, t2) {
+  const r1 = corrState.rawReturns[t1], r2 = corrState.rawReturns[t2];
+  if (!r1 || !r2) return { r: NaN, p: NaN, n: 0 };
+  const map2 = new Map();
+  r2.dates.forEach((d, i) => map2.set(d, r2.rets[i]));
+  const x = [], y = [];
+  r1.dates.forEach((d, i) => { if (map2.has(d)) { x.push(r1.rets[i]); y.push(map2.get(d)); } });
+  if (x.length < 5) return { r: NaN, p: NaN, n: x.length };
+  const r = corrPearson(x, y);
+  return { r, p: corrPVal(r, x.length), n: x.length };
+}
+
+function corrPearson(x, y) {
+  const n = x.length;
+  let mx = 0, my = 0;
+  for (let i = 0; i < n; i++) { mx += x[i]; my += y[i]; }
+  mx /= n; my /= n;
+  let cov = 0, vx = 0, vy = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = x[i] - mx, dy = y[i] - my;
+    cov += dx * dy; vx += dx * dx; vy += dy * dy;
+  }
+  return (vx * vy) === 0 ? NaN : cov / Math.sqrt(vx * vy);
+}
+
+/* ── p-value: two-tailed t-test via regularized incomplete beta ─── */
+function corrPVal(r, n) {
+  if (n <= 2 || isNaN(r) || Math.abs(r) >= 1) return isNaN(r) ? NaN : 0;
+  const t = r * Math.sqrt(n - 2) / Math.sqrt(1 - r * r);
+  const df = n - 2;
+  return corrBetaI(df / (df + t * t), df / 2, 0.5);
+}
+
+function corrBetaI(x, a, b) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const lbeta = corrLgamma(a) + corrLgamma(b) - corrLgamma(a + b);
+  return Math.min(1, Math.exp(a * Math.log(x) + b * Math.log(1 - x) - lbeta) / a * corrBetaCF(x, a, b));
+}
+
+function corrLgamma(x) {
+  const c = [76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,1.208650973866179e-3,-5.395239384953e-6];
+  let y = x, tmp = x + 5.5;
+  tmp -= (x + 0.5) * Math.log(tmp);
+  let ser = 1.000000000190015;
+  for (let j = 0; j < 6; j++) { y += 1; ser += c[j] / y; }
+  return -tmp + Math.log(2.5066282746310005 * ser / x);
+}
+
+function corrBetaCF(x, a, b) {
+  const EPS = 3e-7, FPMIN = 1e-30;
+  const qab = a + b, qap = a + 1, qam = a - 1;
+  let c = 1, d = 1 - qab * x / qap;
+  if (Math.abs(d) < FPMIN) d = FPMIN;
+  d = 1 / d; let h = d;
+  for (let m = 1; m <= 200; m++) {
+    const m2 = 2 * m;
+    let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; h *= d * c;
+    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; const del = d * c; h *= del;
+    if (Math.abs(del - 1) < EPS) break;
+  }
+  return h;
+}
+
+function corrSigStars(p) {
+  if (isNaN(p)) return '';
+  if (p < 0.01) return '***';
+  if (p < 0.05) return '**';
+  if (p < 0.10) return '*';
+  return '';
+}
+
+// Blue → neutral → amber  (-1 → 0 → +1)
+function corrColor(r) {
+  if (isNaN(r)) return 'var(--bg4)';
+  const t = (r + 1) / 2;
+  if (t <= 0.5) {
+    const f = t * 2;
+    return `rgb(${Math.round(59*(1-f)+26*f)},${Math.round(114*(1-f)+32*f)},${Math.round(176*(1-f)+48*f)})`;
+  }
+  const f = (t - 0.5) * 2;
+  return `rgb(${Math.round(26*(1-f)+212*f)},${Math.round(32*(1-f)+164*f)},${Math.round(48*(1-f)+76*f)})`;
+}
+
+function corrShort(t) { return t.replace('=X','').replace('^','').replace('-USD',''); }
+
+function corrActivePill(btn) {
+  btn.closest('.corr-ctrl-group').querySelectorAll('.corr-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ── Ticker strip ─────────────────────────────────────────────────── */
+function corrRenderTickers() {
+  const strip = document.getElementById('corr-ticker-strip');
+  if (!strip) return;
+  const cls = corrState.classFilter;
+  strip.innerHTML = CORR_TICKERS
+    .filter(td => cls === 'all' || td.cls === cls)
+    .map(td => {
+      const on = corrState.activeTickers.has(td.t);
+      const hasData = !!corrState.rawReturns[td.t];
+      return `<button class="corr-ticker-pill${on ? '' : ' off'}" onclick="corrToggleTicker('${td.t}',this)" title="${td.n}${!hasData ? ' (no data)' : ''}">${corrShort(td.t)}</button>`;
+    }).join('');
+}
+
+/* ── Heatmap ──────────────────────────────────────────────────────── */
+function corrRenderHeatmap() {
+  const wrap = document.getElementById('corr-heatmap-wrap');
+  if (!wrap) return;
+  d3.select(wrap).selectAll('*').remove();
+
+  const tickers = corrState.tickers;
+  const N = tickers.length;
+  const obsEl = document.getElementById('corr-obs-label');
+
+  if (N === 0) {
+    if (obsEl) obsEl.textContent = 'No data for selected period / filter';
+    wrap.innerHTML = '<div style="color:var(--text3);font-family:var(--mono);font-size:11px;padding:20px">No data available — try a different period or class filter</div>';
+    return;
+  }
+
+  const maxN = Math.max(...tickers.map((_, i) => corrState.corrMatrix[i][i]?.n || 0));
+  if (obsEl) obsEl.textContent = `${N} instruments · ~${maxN} obs · ${corrState.period}`;
+
+  const LABEL_W = 76;
+  const CELL = Math.max(28, Math.min(50, Math.floor((wrap.clientWidth - LABEL_W - 8) / N)));
+  const SVG_W = LABEL_W + N * CELL + 4;
+  const SVG_H = LABEL_W + N * CELL + 4;
+
+  const svg = d3.select(wrap).append('svg').attr('width', SVG_W).attr('height', SVG_H);
+  const g = svg.append('g').attr('transform', `translate(${LABEL_W},${LABEL_W})`);
+
+  // Column labels (rotated −45°)
+  tickers.forEach((td, j) => {
+    const cx = LABEL_W + j * CELL + CELL / 2;
+    svg.append('text')
+      .attr('x', cx).attr('y', LABEL_W - 6)
+      .attr('text-anchor', 'start')
+      .attr('transform', `rotate(-45,${cx},${LABEL_W - 6})`)
+      .attr('fill', 'var(--text3)').attr('font-size', 9).attr('font-family', "'IBM Plex Mono'")
+      .text(corrShort(td.t));
+  });
+
+  // Row labels
+  tickers.forEach((td, i) => {
+    svg.append('text')
+      .attr('x', LABEL_W - 6).attr('y', LABEL_W + i * CELL + CELL / 2 + 3)
+      .attr('text-anchor', 'end')
+      .attr('fill', 'var(--text3)').attr('font-size', 9).attr('font-family', "'IBM Plex Mono'")
+      .text(corrShort(td.t));
+  });
+
+  // Tooltip
+  wrap.style.position = 'relative';
+  const tt = document.createElement('div');
+  Object.assign(tt.style, { position:'absolute', pointerEvents:'none', opacity:'0', background:'var(--bg4)', border:'1px solid var(--border2)', padding:'8px 12px', borderRadius:'4px', fontFamily:"'IBM Plex Mono'", fontSize:'11px', zIndex:'60', whiteSpace:'nowrap', transition:'opacity 0.1s', boxShadow:'0 4px 20px rgba(0,0,0,0.5)', lineHeight:'1.7' });
+  wrap.appendChild(tt);
+
+  // Cells
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const cell = corrState.corrMatrix[i]?.[j];
+      if (!cell) continue;
+      const r = cell.r;
+      const isDiag = i === j;
+      const isSel = corrState.selectedPair &&
+        ((corrState.selectedPair.i === i && corrState.selectedPair.j === j) ||
+         (corrState.selectedPair.i === j && corrState.selectedPair.j === i));
+
+      const rect = g.append('rect')
+        .attr('x', j * CELL).attr('y', i * CELL)
+        .attr('width', CELL - 1).attr('height', CELL - 1)
+        .attr('rx', 2).attr('fill', corrColor(r))
+        .style('cursor', isDiag ? 'default' : 'pointer')
+        .style('stroke', isSel ? 'var(--amber)' : 'none')
+        .style('stroke-width', isSel ? 2 : 0);
+
+      // Value label
+      if (CELL >= 32 && !isNaN(r)) {
+        const stars = isDiag ? '' : corrSigStars(cell.p);
+        g.append('text')
+          .attr('x', j * CELL + CELL / 2).attr('y', i * CELL + CELL / 2 + (stars ? -1 : 4))
+          .attr('text-anchor', 'middle').attr('pointer-events', 'none')
+          .attr('fill', Math.abs(r) > 0.4 ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.55)')
+          .attr('font-size', CELL < 40 ? 8 : 9).attr('font-family', "'IBM Plex Mono'").attr('font-weight', '500')
+          .text(isDiag ? '—' : r.toFixed(2));
+        if (stars) {
+          g.append('text')
+            .attr('x', j * CELL + CELL / 2).attr('y', i * CELL + CELL / 2 + 9)
+            .attr('text-anchor', 'middle').attr('pointer-events', 'none')
+            .attr('fill', 'rgba(255,255,255,0.45)').attr('font-size', 7).attr('font-family', "'IBM Plex Mono'")
+            .text(stars);
+        }
+      }
+
+      if (!isDiag) {
+        rect.on('mouseover', function(event) {
+          const rStr = isNaN(r) ? 'n/a' : (r >= 0 ? '+' : '') + r.toFixed(3);
+          const pStr = isNaN(cell.p) ? 'n/a' : (cell.p < 0.001 ? '<0.001' : cell.p.toFixed(3));
+          tt.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${tickers[i].n} × ${tickers[j].n}</div><div style="font-size:15px;font-weight:500;color:${r >= 0 ? 'var(--amber)' : '#4a90d9'}">${rStr} ${corrSigStars(cell.p)}</div><div style="color:var(--text3);font-size:9px">p = ${pStr} · n = ${cell.n}</div>`;
+          tt.style.opacity = '1';
+          const bx = wrap.getBoundingClientRect();
+          const ex = event.clientX - bx.left, ey = event.clientY - bx.top;
+          tt.style.left = (ex > bx.width / 2 ? ex - tt.offsetWidth - 10 : ex + 10) + 'px';
+          tt.style.top = Math.min(ey + 12, bx.height - 80) + 'px';
+        }).on('mousemove', function(event) {
+          const bx = wrap.getBoundingClientRect();
+          const ex = event.clientX - bx.left, ey = event.clientY - bx.top;
+          tt.style.left = (ex > bx.width / 2 ? ex - tt.offsetWidth - 10 : ex + 10) + 'px';
+          tt.style.top = Math.min(ey + 12, bx.height - 80) + 'px';
+        }).on('mouseout', () => { tt.style.opacity = '0'; })
+          .on('click', function() {
+            corrState.selectedPair = { i, j };
+            corrRenderHeatmap();
+            corrRenderRolling();
+          });
+      }
+    }
+  }
+}
+
+/* ── Rolling correlation chart ────────────────────────────────────── */
+function corrRenderRolling() {
+  const wrap = document.getElementById('corr-rolling-wrap');
+  if (!wrap || !corrState.selectedPair) return;
+
+  const { i, j } = corrState.selectedPair;
+  const tickers = corrState.tickers;
+  if (!tickers[i] || !tickers[j]) return;
+
+  const t1 = tickers[i], t2 = tickers[j];
+  const r1 = corrState.rawReturns[t1.t], r2 = corrState.rawReturns[t2.t];
+  if (!r1 || !r2) return;
+
+  // Header
+  const cell = corrState.corrMatrix[i][j];
+  const stars = corrSigStars(cell?.p);
+  const titleEl = document.getElementById('corr-pair-title');
+  const subEl   = document.getElementById('corr-pair-sub');
+  if (titleEl) titleEl.innerHTML = `${t1.n} <span style="color:var(--text3)">×</span> ${t2.n}`;
+  if (subEl)   subEl.textContent = `${corrState.window}D rolling · Overall r = ${isNaN(cell?.r) ? 'n/a' : (cell.r >= 0 ? '+' : '') + cell.r.toFixed(3)} ${stars} · n=${cell?.n}`;
+
+  const emptyEl = document.getElementById('corr-rolling-empty');
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  // Align returns on shared dates
+  const map2 = new Map();
+  r2.dates.forEach((d, k) => map2.set(d, r2.rets[k]));
+  const alignDates = [], xa = [], ya = [];
+  r1.dates.forEach((d, k) => { if (map2.has(d)) { alignDates.push(d); xa.push(r1.rets[k]); ya.push(map2.get(d)); } });
+
+  // Sliding window Pearson
+  const W = corrState.window;
+  const rDates = [], rCorr = [];
+  for (let k = W; k <= alignDates.length; k++) {
+    rCorr.push(corrPearson(xa.slice(k - W, k), ya.slice(k - W, k)));
+    rDates.push(alignDates[k - 1]);
+  }
+
+  if (rCorr.length < 3) {
+    d3.select(wrap).selectAll('*').remove();
+    if (emptyEl) { emptyEl.style.display = 'flex'; }
+    const subE = document.getElementById('corr-pair-sub');
+    if (subE) subE.textContent = 'Insufficient overlapping data for rolling window';
+    return;
+  }
+
+  // Draw
+  d3.select(wrap).selectAll('*').remove();
+  const margin = { top: 16, right: 16, bottom: 32, left: 40 };
+  const TW = wrap.clientWidth  || 360;
+  const TH = wrap.clientHeight || 300;
+  const iw = TW - margin.left - margin.right;
+  const ih = TH - margin.top  - margin.bottom;
+
+  const svg = d3.select(wrap).append('svg').attr('width', TW).attr('height', TH);
+  const g   = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const dateObjs = rDates.map(d => new Date(d + 'T12:00:00'));
+  const xScale   = d3.scaleTime().domain(d3.extent(dateObjs)).range([0, iw]);
+  const validCorr = rCorr.filter(v => !isNaN(v));
+  const [rMin, rMax] = d3.extent(validCorr);
+  const pad  = Math.max(0.05, (rMax - rMin) * 0.08);
+  const yMin = Math.max(-1, Math.min(rMin - pad, 0));
+  const yMax = Math.min(1,  Math.max(rMax + pad, 0));
+  const yScale = d3.scaleLinear().domain([yMin, yMax]).range([ih, 0]).nice();
+
+  // Grid lines
+  yScale.ticks(6).forEach(t => {
+    g.append('line').attr('x1', 0).attr('x2', iw).attr('y1', yScale(t)).attr('y2', yScale(t))
+      .attr('stroke', 'rgba(255,255,255,0.04)').attr('stroke-width', 1);
+  });
+
+  // Zero line
+  const yd = yScale.domain();
+  if (yd[0] <= 0 && yd[1] >= 0) {
+    g.append('line').attr('x1', 0).attr('x2', iw).attr('y1', yScale(0)).attr('y2', yScale(0))
+      .attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 1).attr('stroke-dasharray', '4 3');
+  }
+
+  // Shaded areas above/below zero
+  const zeroY = yScale(Math.max(yd[0], Math.min(0, yd[1])));
+  const defFn = d => !isNaN(d);
+  g.append('path').datum(rCorr)
+    .attr('d', d3.area().x((_, k) => xScale(dateObjs[k])).y0(zeroY).y1(d => yScale(Math.max(0, isNaN(d) ? 0 : d))).curve(d3.curveMonotoneX).defined(defFn))
+    .attr('fill', 'rgba(212,164,76,0.12)');
+  g.append('path').datum(rCorr)
+    .attr('d', d3.area().x((_, k) => xScale(dateObjs[k])).y0(zeroY).y1(d => yScale(Math.min(0, isNaN(d) ? 0 : d))).curve(d3.curveMonotoneX).defined(defFn))
+    .attr('fill', 'rgba(74,144,217,0.12)');
+
+  // Correlation line
+  g.append('path').datum(rCorr)
+    .attr('d', d3.line().x((_, k) => xScale(dateObjs[k])).y(d => yScale(d)).curve(d3.curveMonotoneX).defined(defFn))
+    .attr('fill', 'none').attr('stroke', 'var(--amber)').attr('stroke-width', 1.5);
+
+  // Axes
+  g.append('g').attr('transform', `translate(0,${ih})`).call(
+    d3.axisBottom(xScale).ticks(5).tickFormat(d3.timeFormat('%b %y')).tickSize(3)
+  ).select('.domain').remove();
+  g.append('g').call(
+    d3.axisLeft(yScale).ticks(6).tickFormat(d => d.toFixed(2)).tickSize(3)
+  ).select('.domain').remove();
+  g.selectAll('.tick text').attr('fill', 'var(--text3)').attr('font-size', 9).attr('font-family', "'IBM Plex Mono'");
+
+  // Hover
+  wrap.style.position = 'relative';
+  const vline = g.append('line').attr('y1', 0).attr('y2', ih)
+    .attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 1).style('display', 'none');
+  const dot = g.append('circle').attr('r', 3).attr('fill', 'var(--amber)').style('display', 'none');
+  const htip = (() => {
+    const el = document.createElement('div');
+    Object.assign(el.style, { position:'absolute', pointerEvents:'none', opacity:'0', background:'var(--bg4)', border:'1px solid var(--border2)', padding:'8px 12px', borderRadius:'4px', fontFamily:"'IBM Plex Mono'", fontSize:'11px', zIndex:'60', whiteSpace:'nowrap', transition:'opacity 0.1s', boxShadow:'0 4px 20px rgba(0,0,0,0.5)', lineHeight:'1.7' });
+    wrap.appendChild(el);
+    return el;
+  })();
+
+  svg.on('mousemove', function(event) {
+    const [mx] = d3.pointer(event, g.node());
+    const date  = xScale.invert(mx);
+    const idx   = Math.max(0, Math.min(rCorr.length - 1, d3.bisectLeft(dateObjs, date)));
+    const rv    = rCorr[idx];
+    const cx    = xScale(dateObjs[idx]);
+    vline.attr('x1', cx).attr('x2', cx).style('display', null);
+    if (!isNaN(rv)) { dot.attr('cx', cx).attr('cy', yScale(rv)).style('display', null); }
+    htip.style.opacity = '1';
+    htip.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${rDates[idx]}</div><div style="font-size:14px;font-weight:500;color:${!isNaN(rv) && rv >= 0 ? 'var(--amber)' : '#4a90d9'}">${isNaN(rv) ? 'n/a' : (rv >= 0 ? '+' : '') + rv.toFixed(3)}</div>`;
+    const bx = wrap.getBoundingClientRect();
+    const ex = event.clientX - bx.left;
+    htip.style.left = (ex > TW / 2 ? ex - htip.offsetWidth - 10 : ex + 10) + 'px';
+    htip.style.top = '20px';
+  }).on('mouseleave', () => { vline.style('display', 'none'); dot.style('display', 'none'); htip.style.opacity = '0'; });
+}
+
+/* ── Controls ─────────────────────────────────────────────────────── */
+function corrSetPeriod(p, btn) {
+  corrState.period = p;
+  corrActivePill(btn);
+  corrState.selectedPair = null;
+  corrRender();
+}
+
+function corrSetWindow(w, btn) {
+  corrState.window = w;
+  corrActivePill(btn);
+  if (corrState.selectedPair) corrRenderRolling();
+}
+
+function corrFilterClass(cls, btn) {
+  corrState.classFilter = cls;
+  corrActivePill(btn);
+  corrState.selectedPair = null;
+  corrBuildMatrix();
+  corrRenderTickers();
+  corrRenderHeatmap();
+}
+
+function corrToggleTicker(ticker, btn) {
+  if (corrState.activeTickers.has(ticker)) {
+    if (corrState.activeTickers.size <= 2) return;
+    corrState.activeTickers.delete(ticker);
+    btn.classList.add('off');
+  } else {
+    corrState.activeTickers.add(ticker);
+    btn.classList.remove('off');
+  }
+  corrState.selectedPair = null;
+  corrBuildMatrix();
+  corrRenderHeatmap();
+}
+
+window.corrBoot         = corrBoot;
+window.corrSetPeriod    = corrSetPeriod;
+window.corrSetWindow    = corrSetWindow;
+window.corrFilterClass  = corrFilterClass;
+window.corrToggleTicker = corrToggleTicker;
 </script>
 </body>
 </html>
