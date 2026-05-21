@@ -5337,20 +5337,13 @@ window.mcQuickAdd = function(idx) {
 };
 
 function mcInitQuickAdd() {
-  // Filter CMA_DATA by category/label — no fragile name matching
   const groups = [
-    { id: 'mc-qa-us-eq',
-      fn: d => d.cat === 'eq' && d.label === 'U.S. Equities' },
-    { id: 'mc-qa-intl-eq',
-      fn: d => d.cat === 'eq' && (d.label === 'Intl Developed' || d.label === 'Emerging Markets' || d.label === 'Other Equity') },
-    { id: 'mc-qa-us-fi',
-      fn: d => d.cat === 'fi' && (d.label === 'U.S. Government' || d.label === 'U.S. Credit' || d.label === 'U.S. Municipal') },
-    { id: 'mc-qa-gl-fi',
-      fn: d => d.cat === 'fi' && (d.label === 'Global Fixed Income' || d.label === 'Emerging Fixed Income') },
-    { id: 'mc-qa-real',
-      fn: d => d.cat === 'ra' || (d.cat === 'pm' && (d.label === 'U.S. Real Estate' || d.label === 'Intl Real Estate' || d.label === 'REITs' || d.label === 'Infrastructure' || d.label === 'Transport')) },
-    { id: 'mc-qa-alts',
-      fn: d => d.cat === 'hf' || (d.cat === 'pm' && (d.label === 'Private Equity' || d.label === 'Private Credit')) },
+    { id: 'mc-qa-us-eq',   fn: d => d.label === 'US Equity' },
+    { id: 'mc-qa-intl-eq', fn: d => d.label === 'International' },
+    { id: 'mc-qa-us-fi',   fn: d => d.label === 'US Fixed Income' },
+    { id: 'mc-qa-gl-fi',   fn: d => d.label === 'Global & EM Fixed' },
+    { id: 'mc-qa-real',    fn: d => d.label === 'Real Assets & Cmdty' },
+    { id: 'mc-qa-alts',    fn: d => d.cat === 'hf' || d.cat === 'pm' },
   ];
 
   groups.forEach(({ id, fn }) => {
@@ -5408,105 +5401,59 @@ window.mcShowTab = function(tab, btn) {
 ══════════════════════════════════════════════════════════════════════ */
 const CMA_RF = 3.1;
 const CMA_DATA = [
-  // ── U.S. Equities
-  { cat:'eq', label:'U.S. Equities',         name:'U.S. Large Cap',               ret:6.7,  yoy:0,    vol:16.5, verified:true },
-  { cat:'eq', label:'U.S. Equities',         name:'U.S. Mid Cap',                 ret:7.0,  yoy:10,   vol:18.5 },
-  { cat:'eq', label:'U.S. Equities',         name:'U.S. Small Cap',               ret:6.9,  yoy:-10,  vol:20.2 },
-  { cat:'eq', label:'U.S. Equities',         name:'U.S. Value',                   ret:7.7,  yoy:20,   vol:17.8 },
-  { cat:'eq', label:'U.S. Equities',         name:'U.S. Momentum',                ret:7.6,  yoy:30,   vol:19.5 },
-  { cat:'eq', label:'U.S. Equities',         name:'U.S. Quality',                 ret:6.6,  yoy:10,   vol:15.4 },
-  { cat:'eq', label:'U.S. Equities',         name:'U.S. Min. Volatility',         ret:7.0,  yoy:20,   vol:12.8 },
-  { cat:'eq', label:'U.S. Equities',         name:'U.S. Dividend Yield',          ret:7.5,  yoy:15,   vol:14.9 },
-  // ── Intl Developed
-  { cat:'eq', label:'Intl Developed',        name:'EAFE Equity',                  ret:7.5,  yoy:10,   vol:17.6, verified:true },
-  { cat:'eq', label:'Intl Developed',        name:'Euro Area Large Cap',          ret:7.8,  yoy:5,    vol:18.3 },
-  { cat:'eq', label:'Intl Developed',        name:'UK Large Cap',                 ret:6.6,  yoy:-20,  vol:15.9 },
-  { cat:'eq', label:'Intl Developed',        name:'Japan Equity',                 ret:8.8,  yoy:40,   vol:20.1 },
-  { cat:'eq', label:'Intl Developed',        name:'Hong Kong Equity',             ret:7.4,  yoy:0,    vol:21.6 },
-  // ── Emerging Markets
-  { cat:'eq', label:'Emerging Markets',      name:'EM Equity (Broad)',            ret:7.8,  yoy:0,    vol:20.9, verified:true },
-  { cat:'eq', label:'Emerging Markets',      name:'AC Asia ex-Japan',             ret:7.9,  yoy:10,   vol:21.0 },
-  { cat:'eq', label:'Emerging Markets',      name:'Chinese Domestic Equity',      ret:8.8,  yoy:30,   vol:28.7 },
-  { cat:'eq', label:'Other Equity',          name:'Global Convertibles (Hdgd)',   ret:6.7,  yoy:10,   vol:13.0 },
-  // ── U.S. Government
-  { cat:'fi', label:'U.S. Government',       name:'U.S. Cash / T-Bills',          ret:3.1,  yoy:-20,  vol:0.5 },
-  { cat:'fi', label:'U.S. Government',       name:'U.S. Interm. Treasuries',      ret:4.0,  yoy:-10,  vol:3.5, verified:true },
-  { cat:'fi', label:'U.S. Government',       name:'U.S. Long Treasuries',         ret:4.9,  yoy:40,   vol:13.0, verified:true },
-  { cat:'fi', label:'U.S. Government',       name:'10-Year Treasury',             ret:4.6,  yoy:40,   vol:7.0 },
-  { cat:'fi', label:'U.S. Government',       name:'TIPS',                         ret:4.3,  yoy:20,   vol:6.2 },
-  // ── U.S. Credit
-  { cat:'fi', label:'U.S. Credit',           name:'U.S. Aggregate Bonds',         ret:4.8,  yoy:10,   vol:4.8, verified:true },
-  { cat:'fi', label:'U.S. Credit',           name:'U.S. Inv. Grade Corporate',    ret:5.2,  yoy:0,    vol:7.4, verified:true },
-  { cat:'fi', label:'U.S. Credit',           name:'U.S. High Yield',              ret:6.1,  yoy:0,    vol:8.7, verified:true },
-  { cat:'fi', label:'U.S. Credit',           name:'U.S. Short Duration Govt/Cr',  ret:4.0,  yoy:0,    vol:1.7 },
-  { cat:'fi', label:'U.S. Credit',           name:'U.S. Long Duration Govt/Cr',   ret:5.2,  yoy:20,   vol:14.3 },
-  { cat:'fi', label:'U.S. Credit',           name:'U.S. Long Corporate',          ret:5.4,  yoy:10,   vol:15.1 },
-  { cat:'fi', label:'U.S. Credit',           name:'U.S. Securitized',             ret:5.2,  yoy:0,    vol:4.2 },
-  { cat:'fi', label:'U.S. Credit',           name:'Leveraged Loans',              ret:6.2,  yoy:-10,  vol:7.2 },
-  { cat:'fi', label:'U.S. Credit',           name:'Direct Lending',               ret:7.7,  yoy:-50,  vol:9.0 },
-  // ── U.S. Municipal
-  { cat:'fi', label:'U.S. Municipal',        name:'U.S. Muni 1–15yr Blend',       ret:3.8,  yoy:0,    vol:3.6 },
-  { cat:'fi', label:'U.S. Municipal',        name:'U.S. Muni High Yield',         ret:5.3,  yoy:10,   vol:8.1 },
-  // ── Global Fixed Income
-  { cat:'fi', label:'Global Fixed Income',   name:'World Govt Bonds (Hdgd)',      ret:4.3,  yoy:10,   vol:4.1 },
-  { cat:'fi', label:'Global Fixed Income',   name:'World Govt Bonds (Unhdgd)',    ret:4.3,  yoy:10,   vol:9.2 },
-  { cat:'fi', label:'Global Fixed Income',   name:'World ex-U.S. Govt (Hdgd)',    ret:4.2,  yoy:5,    vol:4.6 },
-  // ── Emerging Fixed Income
-  { cat:'fi', label:'Emerging Fixed Income', name:'EM Sovereign Debt',            ret:6.3,  yoy:10,   vol:8.8, verified:true },
-  { cat:'fi', label:'Emerging Fixed Income', name:'EM Local Currency Debt',       ret:6.7,  yoy:15,   vol:10.5 },
-  { cat:'fi', label:'Emerging Fixed Income', name:'EM Corporate Bonds',           ret:6.1,  yoy:5,    vol:9.0 },
+  // ── US Equity
+  { cat:'eq', label:'US Equity',             name:'US Large Cap',                 ret:6.7,  vol:16.5 },
+  { cat:'eq', label:'US Equity',             name:'US Mid Cap',                   ret:7.0,  vol:18.5 },
+  { cat:'eq', label:'US Equity',             name:'US Small Cap',                 ret:6.9,  vol:20.2 },
+  // ── International Equity
+  { cat:'eq', label:'International',         name:'EAFE Equity',                  ret:7.5,  vol:17.6 },
+  { cat:'eq', label:'International',         name:'EM Equity (Broad)',            ret:7.8,  vol:20.9 },
+  // ── US Fixed Income (order specified by user)
+  { cat:'fi', label:'US Fixed Income',       name:'US Aggregate Bonds',           ret:4.8,  vol:4.8  },
+  { cat:'fi', label:'US Fixed Income',       name:'US Interm. Treasuries',        ret:4.0,  vol:3.5  },
+  { cat:'fi', label:'US Fixed Income',       name:'US Inv. Grade Corporate',      ret:5.2,  vol:7.4  },
+  { cat:'fi', label:'US Fixed Income',       name:'US Securitized',               ret:5.2,  vol:4.2  },
+  { cat:'fi', label:'US Fixed Income',       name:'US High Yield',                ret:6.1,  vol:8.7  },
+  // ── Global & EM Fixed Income
+  { cat:'fi', label:'Global & EM Fixed',     name:'World Govt Bonds (Hdgd)',      ret:4.3,  vol:4.1  },
+  { cat:'fi', label:'Global & EM Fixed',     name:'World Govt Bonds (Unhdgd)',    ret:4.3,  vol:9.2  },
+  { cat:'fi', label:'Global & EM Fixed',     name:'EM Sovereign Debt',            ret:6.3,  vol:8.8  },
+  { cat:'fi', label:'Global & EM Fixed',     name:'EM Corporate Bonds',           ret:6.1,  vol:9.0  },
+  // ── Real Assets & Commodities
+  { cat:'ra', label:'Real Assets & Cmdty',   name:'US Core Real Estate',          ret:8.2,  vol:11.4 },
+  { cat:'ra', label:'Real Assets & Cmdty',   name:'US REITs',                     ret:7.5,  vol:18.5 },
+  { cat:'ra', label:'Real Assets & Cmdty',   name:'Global REITs Composite',       ret:8.7,  vol:18.3 },
+  { cat:'ra', label:'Real Assets & Cmdty',   name:'Core Infrastructure',          ret:7.0,  vol:9.5  },
+  { cat:'ra', label:'Real Assets & Cmdty',   name:'Commodities (Broad)',          ret:3.1,  vol:14.5 },
+  { cat:'ra', label:'Real Assets & Cmdty',   name:'Gold',                         ret:4.1,  vol:15.5 },
   // ── Private Equity
-  { cat:'pm', label:'Private Equity',        name:'PE — Small Cap',               ret:10.1, yoy:20,   vol:19.8, verified:true },
-  { cat:'pm', label:'Private Equity',        name:'PE — Mid Cap',                 ret:9.9,  yoy:10,   vol:19.8 },
-  { cat:'pm', label:'Private Equity',        name:'PE — Large/Mega Cap',          ret:10.2, yoy:10,   vol:19.8, verified:true },
-  { cat:'pm', label:'Private Equity',        name:'Venture Capital',              ret:12.3, yoy:0,    vol:28.0, approxVol:true, derived:true },
-  { cat:'pm', label:'Private Equity',        name:'PE Secondaries',               ret:10.8, yoy:0,    vol:16.5, approxVol:true, derived:true },
-  { cat:'pm', label:'Private Equity',        name:'PE Co-Investments',            ret:11.0, yoy:0,    vol:20.5, approxVol:true, derived:true },
+  { cat:'pm', label:'Private Equity',        name:'PE – Small Cap',               ret:10.1, vol:19.8 },
+  { cat:'pm', label:'Private Equity',        name:'PE – Mid Cap',                 ret:9.9,  vol:19.8 },
+  { cat:'pm', label:'Private Equity',        name:'PE – Large Cap',               ret:10.2, vol:19.8 },
   // ── Private Credit
-  { cat:'pm', label:'Private Credit',        name:'Private Credit (Broad)',       ret:8.2,  yoy:-10,  vol:9.0 },
-  { cat:'pm', label:'Private Credit',        name:'Commercial Mortgage Loans',    ret:6.2,  yoy:10,   vol:8.0 },
-  // ── Real Estate
-  { cat:'pm', label:'U.S. Real Estate',      name:'U.S. Core Real Estate',        ret:8.2,  yoy:30,   vol:11.4, verified:true },
-  { cat:'pm', label:'U.S. Real Estate',      name:'U.S. Value-Added RE',          ret:10.5, yoy:20,   vol:14.5 },
-  { cat:'pm', label:'Intl Real Estate',      name:'Euro Core Real Estate',        ret:6.9,  yoy:0,    vol:11.0 },
-  { cat:'pm', label:'Intl Real Estate',      name:'Euro Value-Added RE',          ret:10.1, yoy:0,    vol:14.0 },
-  { cat:'pm', label:'Intl Real Estate',      name:'Asia-Pacific Core RE',         ret:8.4,  yoy:10,   vol:13.0 },
-  { cat:'pm', label:'REITs',                 name:'U.S. REITs',                   ret:7.5,  yoy:80,   vol:18.5 },
-  { cat:'pm', label:'REITs',                 name:'European REITs',               ret:6.7,  yoy:-200, vol:19.0 },
-  { cat:'pm', label:'REITs',                 name:'Asia-Pacific REITs',           ret:8.1,  yoy:10,   vol:18.2 },
-  { cat:'pm', label:'REITs',                 name:'Global REITs Composite',       ret:8.7,  yoy:20,   vol:18.3 },
-  // ── Infrastructure
-  { cat:'pm', label:'Infrastructure',        name:'Core Infrastructure',          ret:7.0,  yoy:10,   vol:9.5 },
-  { cat:'pm', label:'Infrastructure',        name:'Opportunistic Infrastructure', ret:9.0,  yoy:20,   vol:13.5 },
-  { cat:'pm', label:'Transport',             name:'Global Transport',             ret:7.4,  yoy:10,   vol:14.0, approxVol:true },
+  { cat:'pm', label:'Private Credit',        name:'Private Credit',               ret:8.2,  vol:9.0  },
   // ── Hedge Funds
-  { cat:'hf', label:'Hedge Funds',           name:'Diversified / Multi-Strategy', ret:5.3,  yoy:10,   vol:4.9 },
-  { cat:'hf', label:'Hedge Funds',           name:'Equity Long Bias',             ret:5.5,  yoy:20,   vol:7.9 },
-  { cat:'hf', label:'Hedge Funds',           name:'Event-Driven',                 ret:5.2,  yoy:10,   vol:6.0 },
-  { cat:'hf', label:'Hedge Funds',           name:'Relative Value',               ret:5.7,  yoy:10,   vol:5.4 },
-  { cat:'hf', label:'Hedge Funds',           name:'Macro',                        ret:4.1,  yoy:10,   vol:5.0 },
-  { cat:'hf', label:'Hedge Funds',           name:'Conservative',                 ret:4.0,  yoy:10,   vol:3.4 },
-  // ── Real Assets
-  { cat:'ra', label:'Real Assets',           name:'Commodities (Broad)',          ret:3.1,  yoy:0,    vol:14.5 },
-  { cat:'ra', label:'Real Assets',           name:'Gold',                         ret:4.1,  yoy:100,  vol:15.5, approxVol:true },
-  { cat:'ra', label:'Real Assets',           name:'Global Timberland',            ret:6.3,  yoy:100,  vol:9.0,  approxVol:true },
-  { cat:'ra', label:'Real Assets',           name:'Global Farmland',              ret:6.8,  yoy:20,   vol:8.5,  approxVol:true },
+  { cat:'hf', label:'Hedge Funds',           name:'HF Diversified/Multi-Strategy',ret:5.3,  vol:4.9  },
+  { cat:'hf', label:'Hedge Funds',           name:'HF Equity Long Bias',          ret:5.5,  vol:7.9  },
+  { cat:'hf', label:'Hedge Funds',           name:'HF Event-Driven',              ret:5.2,  vol:6.0  },
+  { cat:'hf', label:'Hedge Funds',           name:'HF Relative Value',            ret:5.7,  vol:5.4  },
+  { cat:'hf', label:'Hedge Funds',           name:'HF Macro',                     ret:4.1,  vol:5.0  },
+  { cat:'hf', label:'Hedge Funds',           name:'HF Conservative',              ret:4.0,  vol:3.4  },
 ];
 CMA_DATA.forEach((d, i) => { d._idx = i; d.sharpe = (d.ret - CMA_RF) / d.vol; });
 
 // Now safe to initialise MC quick-add buttons (CMA_DATA is fully populated)
 try { mcInitQuickAdd(); } catch(e) { console.error('mcInitQuickAdd:', e); }
 
-// Map JPM label → Monte Carlo asset class
+// Map CMA label → Monte Carlo asset class dropdown
 function cmaToMcClass(d) {
-  const l = d.label.toLowerCase();
-  if (l.includes('u.s. equit') || l.includes('other equity')) return 'US Equity';
-  if (l.includes('intl dev') || l.includes('emerging market') && d.cat === 'eq') return 'Intl Equity';
-  if (d.cat === 'fi') return 'Bonds';
-  if (l.includes('real estate') || l.includes('reit') || l.includes('infra') || l.includes('transport') || l.includes('timberland') || l.includes('farmland')) return 'Real Estate';
-  if (l.includes('real asset') || l.includes('commodit')) return 'Commodities';
-  if (l.includes('hedge')) return 'Other';
-  if (l.includes('private equity') || l.includes('venture') || l.includes('private credit')) return 'Other';
+  if (d.label === 'US Equity')           return 'US Equity';
+  if (d.label === 'International')       return 'Intl Equity';
+  if (d.cat   === 'fi')                  return 'Bonds';
+  if (d.label === 'Real Assets & Cmdty') {
+    if (d.name.includes('REIT') || d.name.includes('Real Estate') || d.name.includes('Infrastructure')) return 'Real Estate';
+    return 'Commodities';
+  }
   return 'Other';
 }
 
