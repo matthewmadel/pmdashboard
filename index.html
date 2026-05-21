@@ -153,6 +153,7 @@ a      { color: inherit; text-decoration: none; }
 }
 #nav-search::placeholder { color: var(--text3); }
 #nav-list { overflow-y: auto; flex: 1; padding: 6px 0 20px; }
+#nav-footer { border-top: 1px solid var(--border); padding: 6px 0 4px; flex-shrink: 0; background: var(--bg2); }
 .nav-section { margin-bottom: 4px; }
 .nav-section-header {
   display: flex; align-items: center; gap: 6px;
@@ -848,6 +849,37 @@ a      { color: inherit; text-decoration: none; }
 }
 .corr-ticker-pill:hover { border-color:var(--border3); }
 .corr-ticker-pill.off { opacity:0.35; text-decoration:line-through; }
+/* ── Data Sources ─────────────────────────────────────────────────────── */
+.ds-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; padding:24px; }
+.ds-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.ds-card-header { padding:14px 16px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+.ds-icon { width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:15px; }
+.ds-card-title { font-size:13px; font-weight:500; color:var(--text); }
+.ds-card-url { font-family:var(--mono); font-size:9px; color:var(--text3); margin-top:2px; }
+.ds-card-body { padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+.ds-row { display:flex; gap:8px; }
+.ds-row-label { font-family:var(--mono); font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; min-width:90px; flex-shrink:0; padding-top:1px; }
+.ds-row-val { font-size:11px; color:var(--text2); line-height:1.5; }
+.ds-badge { display:inline-block; font-family:var(--mono); font-size:8px; padding:2px 6px; border-radius:2px; margin-right:4px; margin-bottom:3px; }
+.ds-note { font-family:var(--mono); font-size:9px; color:var(--text3); padding:10px 16px; border-top:1px solid var(--border); line-height:1.6; }
+/* ── Feedback ─────────────────────────────────────────────────────────── */
+.fb-wrap { display:flex; align-items:flex-start; justify-content:center; padding:32px 24px; flex:1; overflow-y:auto; }
+.fb-form { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:28px 32px; width:100%; max-width:560px; display:flex; flex-direction:column; gap:18px; }
+.fb-title { font-size:16px; font-weight:500; color:var(--text); margin-bottom:2px; }
+.fb-sub { font-size:11px; color:var(--text3); line-height:1.6; }
+.fb-field { display:flex; flex-direction:column; gap:5px; }
+.fb-label { font-family:var(--mono); font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:0.07em; }
+.fb-input { background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius); padding:8px 11px; font-family:var(--sans); font-size:12px; color:var(--text); transition:border-color 0.12s; }
+.fb-input:focus { outline:none; border-color:var(--amber); }
+.fb-select { background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius); padding:8px 11px; font-family:var(--mono); font-size:11px; color:var(--text); cursor:pointer; }
+.fb-select:focus { outline:none; border-color:var(--amber); }
+.fb-textarea { background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius); padding:10px 11px; font-family:var(--sans); font-size:12px; color:var(--text); resize:vertical; min-height:120px; transition:border-color 0.12s; }
+.fb-textarea:focus { outline:none; border-color:var(--amber); }
+.fb-submit { background:var(--amber); color:var(--bg); border:none; border-radius:var(--radius); padding:11px 20px; font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; cursor:pointer; transition:background 0.15s; }
+.fb-submit:hover { background:var(--amber2); }
+.fb-direct { font-family:var(--mono); font-size:10px; color:var(--text3); text-align:center; }
+.fb-direct a { color:var(--amber); text-decoration:none; }
+.fb-success { display:none; background:var(--green-dim); border:1px solid var(--green); border-radius:var(--radius); padding:12px 16px; font-family:var(--mono); font-size:11px; color:var(--green); }
 /* ── Stress Tester ────────────────────────────────────────────────────── */
 .st-layout { display:grid; grid-template-columns:300px 1fr; flex:1; min-height:0; overflow:hidden; }
 .st-left { display:flex; flex-direction:column; border-right:1px solid var(--border); overflow-y:auto; min-height:0; }
@@ -1402,6 +1434,19 @@ a      { color: inherit; text-decoration: none; }
         </div>
 
       </div><!-- /nav-list -->
+
+      <!-- Pinned footer: Data Sources + Feedback -->
+      <div id="nav-footer">
+        <div class="nav-item" onclick="showPage('data-sources')" data-label="Data Sources">
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="1.8" style="flex-shrink:0;opacity:0.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6a9 3 0 0 0 18 0V5"/><path d="M3 11v6a9 3 0 0 0 18 0v-6"/></svg>
+          Data Sources<span class="nav-item-badge">SRC</span>
+        </div>
+        <div class="nav-item" onclick="showPage('feedback')" data-label="Feedback">
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="1.8" style="flex-shrink:0;opacity:0.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Feedback<span class="nav-item-badge">FB</span>
+        </div>
+      </div>
+
     </nav><!-- /nav -->
 
     <!-- ── MAIN CONTENT ── -->
@@ -2262,6 +2307,251 @@ a      { color: inherit; text-decoration: none; }
 
         </div><!-- /st-layout -->
       </div><!-- /page-stress-test -->
+
+
+      <!-- ════════════════════════════════════════
+           PAGE: DATA SOURCES
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-data-sources" style="flex-direction:column;overflow:hidden;">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Data Sources <span class="page-title-badge">SRC</span></div>
+            <div class="page-subtitle">All data pipelines powering this dashboard — sources, cadence, and coverage</div>
+          </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;">
+          <div class="ds-grid">
+
+            <!-- Yahoo Finance -->
+            <div class="ds-card">
+              <div class="ds-card-header">
+                <div class="ds-icon" style="background:rgba(74,144,217,0.12);color:var(--blue)">📈</div>
+                <div>
+                  <div class="ds-card-title">Yahoo Finance</div>
+                  <div class="ds-card-url">finance.yahoo.com · via allorigins.win CORS proxy</div>
+                </div>
+              </div>
+              <div class="ds-card-body">
+                <div class="ds-row">
+                  <span class="ds-row-label">Provides</span>
+                  <span class="ds-row-val">Daily closing prices, intraday bars, and real-time quotes for equities, ETFs, FX pairs, commodities, and crypto</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Coverage</span>
+                  <span class="ds-row-val">
+                    <span class="ds-badge" style="background:var(--blue-dim);color:var(--blue)">Equities</span>
+                    <span class="ds-badge" style="background:var(--blue-dim);color:var(--blue)">Fixed Income ETFs</span>
+                    <span class="ds-badge" style="background:var(--blue-dim);color:var(--blue)">FX</span>
+                    <span class="ds-badge" style="background:var(--blue-dim);color:var(--blue)">Commodities</span>
+                    <span class="ds-badge" style="background:var(--blue-dim);color:var(--blue)">Crypto</span>
+                    <span class="ds-badge" style="background:var(--blue-dim);color:var(--blue)">Volatility</span>
+                  </span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Cadence</span>
+                  <span class="ds-row-val">Daily JSON files committed after market close (10:30 PM UTC / 6:30 PM ET). Live quotes fetched via proxy on every page load.</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Used in</span>
+                  <span class="ds-row-val">Markets Overview, Correlation Matrix, Stress Tester, Factor Explorer (price history)</span>
+                </div>
+              </div>
+              <div class="ds-note">Price history adjusted for splits and dividends (total return). Historical depth varies by instrument — most ETFs available from inception (2004–2010 for most).</div>
+            </div>
+
+            <!-- FRED -->
+            <div class="ds-card">
+              <div class="ds-card-header">
+                <div class="ds-icon" style="background:rgba(76,175,130,0.12);color:var(--green)">🏛</div>
+                <div>
+                  <div class="ds-card-title">FRED — Federal Reserve Economic Data</div>
+                  <div class="ds-card-url">fred.stlouisfed.org · Federal Reserve Bank of St. Louis</div>
+                </div>
+              </div>
+              <div class="ds-card-body">
+                <div class="ds-row">
+                  <span class="ds-row-label">Provides</span>
+                  <span class="ds-row-val">Treasury yields (H.15), Fed policy rates, inflation (CPI/PCE/PPI), employment, GDP, housing, credit, and the full yield curve</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Coverage</span>
+                  <span class="ds-row-val">
+                    <span class="ds-badge" style="background:var(--green-dim);color:var(--green)">~50 series</span>
+                    <span class="ds-badge" style="background:var(--green-dim);color:var(--green)">1990 – present</span>
+                    <span class="ds-badge" style="background:var(--green-dim);color:var(--green)">Daily / Monthly / Quarterly</span>
+                  </span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Cadence</span>
+                  <span class="ds-row-val">Fetched weekdays at 5:30 PM ET (after Fed H.15 release at ~4:15 PM). Morning backup run at 9 AM ET. FRED publishes DGS yields ~T+1 business day.</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Used in</span>
+                  <span class="ds-row-val">Macro Overview — Yield Curve, Inflation, Labor, Growth, Credit, Central Banks, and header ticker bar</span>
+                </div>
+              </div>
+              <div class="ds-note">Treasury constant maturity yields (DGS series) reflect the H.15 Selected Interest Rates release. FRED API key required — stored as GitHub secret.</div>
+            </div>
+
+            <!-- Ken French -->
+            <div class="ds-card">
+              <div class="ds-card-header">
+                <div class="ds-icon" style="background:rgba(124,111,205,0.12);color:var(--purple)">📐</div>
+                <div>
+                  <div class="ds-card-title">Ken French Data Library</div>
+                  <div class="ds-card-url">mba.tuck.dartmouth.edu · Tuck School of Business</div>
+                </div>
+              </div>
+              <div class="ds-card-body">
+                <div class="ds-row">
+                  <span class="ds-row-label">Provides</span>
+                  <span class="ds-row-val">Fama-French 5 Factors (MKT-RF, SMB, HML, RMW, CMA) and Momentum (MOM) daily return series, plus the risk-free rate (RF)</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Coverage</span>
+                  <span class="ds-row-val">
+                    <span class="ds-badge" style="background:rgba(124,111,205,0.12);color:var(--purple)">6 factors</span>
+                    <span class="ds-badge" style="background:rgba(124,111,205,0.12);color:var(--purple)">July 1963 – present</span>
+                    <span class="ds-badge" style="background:rgba(124,111,205,0.12);color:var(--purple)">Daily frequency</span>
+                  </span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Cadence</span>
+                  <span class="ds-row-val">Downloaded weekly (Monday 6 AM UTC) directly from Ken French's Dartmouth website. French updates monthly with a short lag.</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Used in</span>
+                  <span class="ds-row-val">Factor Explorer — OLS decomposition, rolling beta analysis, and Factor Library performance statistics</span>
+                </div>
+              </div>
+              <div class="ds-note">Data sourced from two ZIP files: F-F_Research_Data_5_Factors_2x3_daily and F-F_Momentum_Factor_daily. All factor returns expressed as daily decimals (not percent).</div>
+            </div>
+
+            <!-- JPM LTCMA -->
+            <div class="ds-card">
+              <div class="ds-card-header">
+                <div class="ds-icon" style="background:var(--amber-dim);color:var(--amber)">📊</div>
+                <div>
+                  <div class="ds-card-title">JPMorgan 2026 LTCMA</div>
+                  <div class="ds-card-url">Long-Term Capital Market Assumptions · Annual Publication</div>
+                </div>
+              </div>
+              <div class="ds-card-body">
+                <div class="ds-row">
+                  <span class="ds-row-label">Provides</span>
+                  <span class="ds-row-val">10–15 year annualized return and volatility assumptions for 31 asset classes across equities, fixed income, real assets, private markets, and alternatives</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Coverage</span>
+                  <span class="ds-row-val">
+                    <span class="ds-badge" style="background:var(--amber-dim);color:var(--amber)">31 asset classes</span>
+                    <span class="ds-badge" style="background:var(--amber-dim);color:var(--amber)">USD base currency</span>
+                    <span class="ds-badge" style="background:var(--amber-dim);color:var(--amber)">2026 vintage</span>
+                  </span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Cadence</span>
+                  <span class="ds-row-val">Static data — updated annually when JPMorgan publishes the next year's LTCMA. Current dataset reflects JPM's 2026 publication.</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Used in</span>
+                  <span class="ds-row-val">Return Assumptions table and Monte Carlo Quick-Add panel (pre-seeding expected returns and volatility for each asset class)</span>
+                </div>
+              </div>
+              <div class="ds-note">Return assumptions are forward-looking estimates, not guarantees. Source: J.P. Morgan Asset Management, 2026 Long-Term Capital Market Assumptions.</div>
+            </div>
+
+            <!-- GitHub Actions -->
+            <div class="ds-card">
+              <div class="ds-card-header">
+                <div class="ds-icon" style="background:rgba(255,255,255,0.05);color:var(--text2)">⚙️</div>
+                <div>
+                  <div class="ds-card-title">GitHub Actions — Data Pipeline</div>
+                  <div class="ds-card-url">github.com/matthewmadel/pmdashboard · Automated workflows</div>
+                </div>
+              </div>
+              <div class="ds-card-body">
+                <div class="ds-row">
+                  <span class="ds-row-label">Architecture</span>
+                  <span class="ds-row-val">Python scripts run on GitHub-hosted runners, fetch data from APIs, commit updated JSON files, and push to the main branch. GitHub Pages serves the static files.</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Workflows</span>
+                  <span class="ds-row-val">
+                    <span class="ds-badge" style="background:rgba(255,255,255,0.05);color:var(--text2)">fetch_market_data.py · 10:30 PM UTC daily</span>
+                    <span class="ds-badge" style="background:rgba(255,255,255,0.05);color:var(--text2)">fred_fetch.py · 5:30 PM + 9 AM ET daily</span>
+                    <span class="ds-badge" style="background:rgba(255,255,255,0.05);color:var(--text2)">fetch_factors.py · Monday 6 AM UTC</span>
+                  </span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Latency</span>
+                  <span class="ds-row-val">Market prices settled by 6:30 PM ET. FRED yields available T+1 at ~4:15 PM ET. Factor data updated weekly with a ~1-month lag from French's publication schedule.</span>
+                </div>
+              </div>
+              <div class="ds-note">All data is committed as JSON files in the repository root and served directly via GitHub Pages CDN. No server-side computation — the browser handles all charting and analytics.</div>
+            </div>
+
+          </div><!-- /ds-grid -->
+        </div>
+      </div><!-- /page-data-sources -->
+
+
+      <!-- ════════════════════════════════════════
+           PAGE: FEEDBACK
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-feedback" style="flex-direction:column;overflow:hidden;">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Feedback <span class="page-title-badge">FB</span></div>
+            <div class="page-subtitle">Report bugs, request features, or share thoughts on the dashboard</div>
+          </div>
+        </div>
+        <div class="fb-wrap">
+          <div class="fb-form">
+            <div>
+              <div class="fb-title">Send Feedback</div>
+              <div class="fb-sub" style="margin-top:6px;">All messages go directly to the dashboard maintainer. Include as much detail as possible for bug reports — browser, page, and steps to reproduce are most helpful.</div>
+            </div>
+
+            <div id="fb-success" class="fb-success">
+              ✓ Your email client has opened with the message pre-filled. Hit send to submit your feedback.
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="fb-field">
+                <label class="fb-label" for="fb-name">Name</label>
+                <input class="fb-input" id="fb-name" type="text" placeholder="Your name">
+              </div>
+              <div class="fb-field">
+                <label class="fb-label" for="fb-email">Email (for reply)</label>
+                <input class="fb-input" id="fb-email" type="email" placeholder="you@example.com">
+              </div>
+            </div>
+
+            <div class="fb-field">
+              <label class="fb-label" for="fb-category">Category</label>
+              <select class="fb-select" id="fb-category">
+                <option value="Bug Report">Bug Report</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Data Issue">Data Issue</option>
+                <option value="General Feedback">General Feedback</option>
+              </select>
+            </div>
+
+            <div class="fb-field">
+              <label class="fb-label" for="fb-message">Message</label>
+              <textarea class="fb-textarea" id="fb-message" placeholder="Describe the issue or suggestion in detail…"></textarea>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <button class="fb-submit" onclick="fbSubmit()">Send Feedback</button>
+              <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">Opens your default email client</span>
+            </div>
+
+            <div class="fb-direct">Or email directly at <a href="mailto:matt@pmdashboard.info">matt@pmdashboard.info</a></div>
+          </div>
+        </div>
+      </div><!-- /page-feedback -->
 
 
       <!-- ════════════════════════════════════════
@@ -7144,6 +7434,26 @@ function stDrawNavChart(series) {
     htip.style.left=(ex>W/2?ex-htip.offsetWidth-10:ex+10)+'px'; htip.style.top='10px';
   }).on('mouseleave',()=>{vline.style('display','none');dot.style('display','none');htip.style.opacity='0';});
 }
+
+/* ── Feedback form ────────────────────────────────────────────────── */
+function fbSubmit() {
+  const name     = document.getElementById('fb-name')?.value.trim()     || '(not provided)';
+  const email    = document.getElementById('fb-email')?.value.trim()    || '(not provided)';
+  const category = document.getElementById('fb-category')?.value        || 'General Feedback';
+  const message  = document.getElementById('fb-message')?.value.trim()  || '';
+  if (!message) {
+    document.getElementById('fb-message')?.focus();
+    return;
+  }
+  const subject = encodeURIComponent(`[PM Dashboard] ${category}`);
+  const body    = encodeURIComponent(
+    `Name: ${name}\nReply-to: ${email}\nCategory: ${category}\n\n${message}\n\n---\nSent from PM Dashboard`
+  );
+  window.location.href = `mailto:matt@pmdashboard.info?subject=${subject}&body=${body}`;
+  const s = document.getElementById('fb-success');
+  if (s) s.style.display = 'block';
+}
+window.fbSubmit = fbSubmit;
 
 window.stBoot            = stBoot;
 window.stSelectScenario  = stSelectScenario;
