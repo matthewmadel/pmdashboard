@@ -828,10 +828,10 @@ a      { color: inherit; text-decoration: none; }
 .corr-pill:hover { color:var(--text2); border-color:var(--border3); }
 .corr-pill.active { background:var(--amber); border-color:var(--amber); color:var(--bg); }
 .corr-body { display:grid; grid-template-columns:1fr 380px; flex:1; min-height:0; overflow:hidden; }
-.corr-heatmap-panel { display:flex; flex-direction:column; overflow:hidden; border-right:1px solid var(--border); }
+.corr-heatmap-panel { display:flex; flex-direction:column; overflow:hidden; border-right:1px solid var(--border); min-height:0; }
 .corr-heatmap-header { padding:10px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-.corr-heatmap-wrap { flex:1; overflow:auto; padding:16px; display:flex; align-items:flex-start; justify-content:flex-start; }
-.corr-rolling-panel { display:flex; flex-direction:column; overflow:hidden; }
+.corr-heatmap-wrap { flex:1; overflow:auto; padding:16px; min-height:0; }
+.corr-rolling-panel { display:flex; flex-direction:column; overflow:hidden; min-height:0; }
 .corr-rolling-header { padding:10px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .corr-rolling-title { font-size:11px; font-weight:500; color:var(--text2); letter-spacing:0.03em; }
 .corr-rolling-sub { font-family:var(--mono); font-size:9px; color:var(--text3); margin-top:2px; }
@@ -4269,9 +4269,11 @@ window.mkBoot = function() {
   });
 };
 
-// Expose utilities needed by crypto section
+// Expose utilities needed by crypto and correlation sections
 window.mkCalcReturn = mkCalcReturn;
 window.mkPeriodStartDate = mkPeriodStartDate;
+window.mkState = mkState;
+window.mkLoadCache = mkLoadCache;
 
 })();
 
@@ -6213,9 +6215,11 @@ let corrBooted = false;
 
 /* ── Data loading ──────────────────────────────────────────────────── */
 async function corrBoot() {
+  // Render ticker strip immediately so buttons appear before data loads
+  corrRenderTickers();
   if (!corrBooted) {
     corrBooted = true;
-    await Promise.all(['eq','credit','cmd','fx','vol'].map(p => mkLoadCache(p)));
+    await Promise.all(['eq','credit','cmd','fx','vol'].map(p => window.mkLoadCache(p)));
     if (!cryptoState.rawHistory['BTC-USD']) {
       try {
         const r = await fetch(CRYPTO_DATA_URL + '?_=' + Date.now());
@@ -6226,11 +6230,12 @@ async function corrBoot() {
       } catch(e) {}
     }
   }
-  corrRender();
+  // rAF ensures layout is painted so wrap.clientWidth is accurate
+  requestAnimationFrame(() => corrRender());
 }
 
 function corrGetRows(ticker) {
-  return mkState.rawHistory[ticker] || cryptoState.rawHistory[ticker] || null;
+  return window.mkState.rawHistory[ticker] || cryptoState.rawHistory[ticker] || null;
 }
 
 function corrPeriodStart(period) {
@@ -6430,7 +6435,8 @@ function corrRenderHeatmap() {
   if (obsEl) obsEl.textContent = `${N} instruments · ~${maxN} obs · ${corrState.period}`;
 
   const LABEL_W = 76;
-  const CELL = Math.max(28, Math.min(50, Math.floor((wrap.clientWidth - LABEL_W - 8) / N)));
+  const availW = wrap.getBoundingClientRect().width || wrap.clientWidth || 600;
+  const CELL = Math.max(30, Math.min(52, Math.floor((availW - LABEL_W - 24) / N)));
   const SVG_W = LABEL_W + N * CELL + 4;
   const SVG_H = LABEL_W + N * CELL + 4;
 
@@ -6574,9 +6580,9 @@ function corrRenderRolling() {
 
   // Draw
   d3.select(wrap).selectAll('*').remove();
-  const margin = { top: 16, right: 16, bottom: 32, left: 40 };
-  const TW = wrap.clientWidth  || 360;
-  const TH = wrap.clientHeight || 300;
+  const margin = { top: 16, right: 16, bottom: 32, left: 44 };
+  const TW = wrap.getBoundingClientRect().width  || wrap.clientWidth  || 360;
+  const TH = wrap.getBoundingClientRect().height || wrap.clientHeight || 300;
   const iw = TW - margin.left - margin.right;
   const ih = TH - margin.top  - margin.bottom;
 
