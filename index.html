@@ -4777,6 +4777,18 @@ async function fredBoot() {
     console.warn('FRED data not loaded:', e.message);
   }
 
+  // Merge Alpha Vantage data (alpha_data.json) into fredLocalData so all
+  // existing chart/table rendering works transparently for AV series.
+  try {
+    const r = await fetch('./alpha_data.json?_='+Date.now());
+    if (r.ok) {
+      const j = await r.json();
+      Object.assign(fredLocalData, j.series || {});
+    }
+  } catch(e) {
+    console.warn('Alpha Vantage data not loaded:', e.message);
+  }
+
   fredLoadHeaderTickers();
 }
 
