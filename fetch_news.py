@@ -35,8 +35,10 @@ TOPICS = [
     "energy_transportation",
 ]
 
-# Rolling window: drop articles older than this
-WINDOW_HOURS = 24
+# Rolling window: drop articles older than this from the stored set.
+# AV free tier has a ~24-48h publication delay, so use 72h to ensure
+# fresh fetches always survive the window and appear in the dashboard.
+WINDOW_HOURS = 72
 
 # Max articles to store / display
 MAX_ARTICLES = 50
@@ -142,9 +144,11 @@ def merge(existing: list[dict], fresh: list[dict], now: datetime) -> list[dict]:
     # Index existing by URL
     by_url = {a["url"]: a for a in existing if a.get("published", "") >= cutoff}
 
-    # Add fresh (overwrites same URL if already stored)
+    # Add all fresh articles regardless of age — recency score handles ranking.
+    # This is necessary because AV free tier delays publication by 24-48h,
+    # meaning fresh fetches would otherwise all fail the cutoff filter.
     for a in fresh:
-        if a.get("published", "") >= cutoff and a.get("url"):
+        if a.get("url"):
             by_url[a["url"]] = a
 
     # Score and sort
