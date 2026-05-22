@@ -60,9 +60,16 @@ SERIES = {
     "DGS30":                "Treasury 30Y",
     # T-bill secondary market
     "DTB3":                 "3M T-Bill Secondary Market",
-    # Spreads
+    # TIPS Real Yields
+    "DFII2":                "2Y TIPS Real Yield",
+    "DFII5":                "5Y TIPS Real Yield",
+    "DFII10":               "10Y TIPS Real Yield",
+    "DFII30":               "30Y TIPS Real Yield",
+    # Nominal spreads
     "T10Y2Y":               "10Y-2Y Spread",
     "T10Y3M":               "10Y-3M Spread",
+    # Forward inflation
+    "T5YIFR":               "5Y5Y Forward Inflation",
     # Policy rates
     "FEDFUNDS":             "Fed Funds Rate",
     "SOFR":                 "SOFR",
@@ -73,8 +80,9 @@ SERIES = {
     "WALCL":                "Fed Total Assets",
     "WRESBAL":              "Bank Reserve Balances",
     "RRPONTSYD":            "Overnight Reverse Repo",
-    # Money supply
+    # Money supply & velocity
     "M2SL":                 "M2 Money Supply",
+    "M2V":                  "M2 Money Velocity",
     # Inflation
     "CPIAUCSL":             "CPI All Items",
     "CPILFESL":             "Core CPI",
@@ -86,28 +94,37 @@ SERIES = {
     "T10YIE":               "10Y Breakeven Inflation",
     # Labor
     "UNRATE":               "Unemployment Rate",
+    "U6RATE":               "U-6 Unemployment Rate",
     "PAYEMS":               "Nonfarm Payrolls",
     "CIVPART":              "Labor Force Participation",
     "ICSA":                 "Initial Jobless Claims",
+    "CCSA":                 "Continuing Jobless Claims",
     "JTSJOL":               "JOLTS Job Openings",
+    "JTSQUR":               "JOLTS Quit Rate",
     "CES0500000003":        "Avg Hourly Earnings",
+    "SAHMREALTIME":         "Sahm Rule Indicator",
     # Growth & activity
     "GDPC1":                "Real GDP (Chained 2017$)",
     "A191RL1Q225SBEA":      "Real GDP Growth QoQ Ann.",
     "INDPRO":               "Industrial Production",
     "TCU":                  "Capacity Utilization",
     "RSXFS":                "Retail Sales ex Food Services",
+    "NAPM":                 "ISM Manufacturing PMI",
+    "NMFCI":                "ISM Non-Manufacturing PMI",
     # Housing
     "HOUST":                "Housing Starts",
     "PERMIT":               "Building Permits",
+    "HSN1F":                "New Home Sales",
     "EXHOSLUSM495S":        "Existing Home Sales",
     "CSUSHPISA":            "Case-Shiller HPI",
     "MORTGAGE30US":         "30Y Mortgage Rate",
     # Credit & financial conditions
+    "NFCI":                 "Chicago Fed NFCI",
     "BAMLH0A0HYM2":         "HY Credit Spread",
     "BAMLC0A0CM":           "IG Credit Spread",
     "TOTCI":                "C&I Loans",
     "TOTALSL":              "Consumer Credit",
+    "DRTSCILM":             "Senior Loan Officer Survey",
     # International
     "DTWEXBGS":             "USD Broad Index",
     "BOPGSTB":              "Trade Balance",

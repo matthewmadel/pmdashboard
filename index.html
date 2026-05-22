@@ -1266,6 +1266,12 @@ a      { color: inherit; text-decoration: none; }
                 <div class="nav-item" onclick="showFredPage('series','SOFR180DAYAVG')" data-label="SOFR 180-Day Avg" data-series="SOFR180DAYAVG">
                   <div class="nav-dot"></div>SOFR 180-Day Avg<span class="nav-item-badge">S180D</span>
                 </div>
+                <div class="nav-cb-label">Real Yields (TIPS)</div>
+                <div class="nav-item" onclick="showFredPage('series','DFII2')" data-label="2Y Real Yield" data-series="DFII2"><div class="nav-dot"></div>2Y Real Yield<span class="nav-item-badge">DFII2</span></div>
+                <div class="nav-item" onclick="showFredPage('series','DFII5')" data-label="5Y Real Yield" data-series="DFII5"><div class="nav-dot"></div>5Y Real Yield<span class="nav-item-badge">DFII5</span></div>
+                <div class="nav-item" onclick="showFredPage('series','DFII10')" data-label="10Y Real Yield" data-series="DFII10"><div class="nav-dot"></div>10Y Real Yield<span class="nav-item-badge">DFII10</span></div>
+                <div class="nav-item" onclick="showFredPage('series','DFII30')" data-label="30Y Real Yield" data-series="DFII30"><div class="nav-dot"></div>30Y Real Yield<span class="nav-item-badge">DFII30</span></div>
+                <div class="nav-item" onclick="showFredPage('series','T5YIFR')" data-label="5Y5Y Forward Inflation" data-series="T5YIFR"><div class="nav-dot"></div>5Y5Y Forward Inflation<span class="nav-item-badge">T5YIFR</span></div>
               </div>
             </div>
 
@@ -1281,6 +1287,9 @@ a      { color: inherit; text-decoration: none; }
                 </div>
                 <div class="nav-item" onclick="showFredPage('series','M2SL')" data-label="M2 Money Supply" data-series="M2SL">
                   <div class="nav-dot"></div>M2 Money Supply<span class="nav-item-badge">M2SL</span>
+                </div>
+                <div class="nav-item" onclick="showFredPage('series','M2V')" data-label="M2 Velocity" data-series="M2V">
+                  <div class="nav-dot"></div>M2 Velocity<span class="nav-item-badge">M2V</span>
                 </div>
                 <div class="nav-item" onclick="showFredPage('series','WRESBAL')" data-label="Bank Reserves" data-series="WRESBAL">
                   <div class="nav-dot"></div>Bank Reserves<span class="nav-item-badge">WRESBAL</span>
@@ -1306,6 +1315,8 @@ a      { color: inherit; text-decoration: none; }
                   <div class="nav-sub-items" style="">
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','GDPC1')" data-label="Real GDP" data-series="GDPC1"><div class="nav-dot"></div>Real GDP<span class="nav-item-badge">GDPC1</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','A191RL1Q225SBEA')" data-label="GDP Growth QoQ" data-series="A191RL1Q225SBEA"><div class="nav-dot"></div>GDP Growth QoQ<span class="nav-item-badge">GDPGR</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','NAPM')" data-label="ISM Manufacturing PMI" data-series="NAPM"><div class="nav-dot"></div>ISM Manufacturing PMI<span class="nav-item-badge">ISM MFG</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','NMFCI')" data-label="ISM Services PMI" data-series="NMFCI"><div class="nav-dot"></div>ISM Services PMI<span class="nav-item-badge">ISM SVC</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','INDPRO')" data-label="Industrial Production" data-series="INDPRO"><div class="nav-dot"></div>Industrial Production<span class="nav-item-badge">INDPRO</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','TCU')" data-label="Capacity Utilization" data-series="TCU"><div class="nav-dot"></div>Capacity Utilization<span class="nav-item-badge">TCU</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','RSXFS')" data-label="Retail Sales" data-series="RSXFS"><div class="nav-dot"></div>Retail Sales<span class="nav-item-badge">RSXFS</span></div>
@@ -1334,12 +1345,31 @@ a      { color: inherit; text-decoration: none; }
                     Labor Market<span class="nav-sub-arrow">▼</span>
                   </div>
                   <div class="nav-sub-items">
-                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','UNRATE')" data-label="Unemployment Rate" data-series="UNRATE"><div class="nav-dot"></div>Unemployment Rate<span class="nav-item-badge">UNRATE</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','UNRATE')" data-label="Unemployment Rate" data-series="UNRATE"><div class="nav-dot"></div>Unemployment Rate (U-3)<span class="nav-item-badge">UNRATE</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','U6RATE')" data-label="U-6 Unemployment Rate" data-series="U6RATE"><div class="nav-dot"></div>U-6 Unemployment Rate<span class="nav-item-badge">U6RATE</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','SAHMREALTIME')" data-label="Sahm Rule Indicator" data-series="SAHMREALTIME"><div class="nav-dot"></div>Sahm Rule Indicator<span class="nav-item-badge">SAHM</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','PAYEMS')" data-label="Nonfarm Payrolls" data-series="PAYEMS"><div class="nav-dot"></div>Nonfarm Payrolls<span class="nav-item-badge">PAYEMS</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','CIVPART')" data-label="Labor Force Participation" data-series="CIVPART"><div class="nav-dot"></div>Labor Force Part.<span class="nav-item-badge">CIVPART</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','ICSA')" data-label="Initial Jobless Claims" data-series="ICSA"><div class="nav-dot"></div>Initial Claims<span class="nav-item-badge">ICSA</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','CCSA')" data-label="Continuing Claims" data-series="CCSA"><div class="nav-dot"></div>Continuing Claims<span class="nav-item-badge">CCSA</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','JTSJOL')" data-label="JOLTS Job Openings" data-series="JTSJOL"><div class="nav-dot"></div>JOLTS Openings<span class="nav-item-badge">JOLTS</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','JTSQUR')" data-label="JOLTS Quit Rate" data-series="JTSQUR"><div class="nav-dot"></div>JOLTS Quit Rate<span class="nav-item-badge">QUITS</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','CES0500000003')" data-label="Avg Hourly Earnings" data-series="CES0500000003"><div class="nav-dot"></div>Avg Hourly Earnings<span class="nav-item-badge">AHEYOY</span></div>
+                  </div>
+                </div>
+
+                <!-- Housing -->
+                <div class="nav-sub-group collapsed" id="nsg-housing">
+                  <div class="nav-sub-header" style="padding-left:34px;font-size:8.5px;" onclick="toggleSubGroup('nsg-housing')">
+                    Housing<span class="nav-sub-arrow">▼</span>
+                  </div>
+                  <div class="nav-sub-items">
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','HOUST')" data-label="Housing Starts" data-series="HOUST"><div class="nav-dot"></div>Housing Starts<span class="nav-item-badge">HOUST</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','PERMIT')" data-label="Building Permits" data-series="PERMIT"><div class="nav-dot"></div>Building Permits<span class="nav-item-badge">PERMIT</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','HSN1F')" data-label="New Home Sales" data-series="HSN1F"><div class="nav-dot"></div>New Home Sales<span class="nav-item-badge">HSN1F</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','EXHOSLUSM495S')" data-label="Existing Home Sales" data-series="EXHOSLUSM495S"><div class="nav-dot"></div>Existing Home Sales<span class="nav-item-badge">EXHSLS</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','CSUSHPISA')" data-label="Case-Shiller HPI" data-series="CSUSHPISA"><div class="nav-dot"></div>Case-Shiller HPI<span class="nav-item-badge">CSHPI</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','MORTGAGE30US')" data-label="30Y Mortgage Rate" data-series="MORTGAGE30US"><div class="nav-dot"></div>30Y Mortgage Rate<span class="nav-item-badge">MTG30</span></div>
                   </div>
                 </div>
 
@@ -1349,8 +1379,10 @@ a      { color: inherit; text-decoration: none; }
                     Credit &amp; Financial Conditions<span class="nav-sub-arrow">▼</span>
                   </div>
                   <div class="nav-sub-items">
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','NFCI')" data-label="Chicago Fed NFCI" data-series="NFCI"><div class="nav-dot"></div>Chicago Fed NFCI<span class="nav-item-badge">NFCI</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','BAMLH0A0HYM2')" data-label="HY Credit Spread" data-series="BAMLH0A0HYM2"><div class="nav-dot"></div>HY Credit Spread<span class="nav-item-badge">HYSPR</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','BAMLC0A0CM')" data-label="IG Credit Spread" data-series="BAMLC0A0CM"><div class="nav-dot"></div>IG Credit Spread<span class="nav-item-badge">IGSPR</span></div>
+                    <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','DRTSCILM')" data-label="Sr. Loan Officer Survey" data-series="DRTSCILM"><div class="nav-dot"></div>Sr. Loan Officer Survey<span class="nav-item-badge">SLOOS</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','TOTCI')" data-label="C&I Loans" data-series="TOTCI"><div class="nav-dot"></div>C&amp;I Loans<span class="nav-item-badge">TOTCI</span></div>
                     <div class="nav-item" style="padding-left:40px" onclick="showFredPage('series','TOTALSL')" data-label="Consumer Credit" data-series="TOTALSL"><div class="nav-dot"></div>Consumer Credit<span class="nav-item-badge">CONSC</span></div>
                   </div>
@@ -2798,16 +2830,22 @@ const FRED_NAV = [
     { label:'10Y Breakeven', id:'T10YIE', ticker:'T10YIE' },
   ]},
   { emoji:'💼', label:'Labor Market', id:'labor', items:[
-    { label:'Unemployment Rate', id:'UNRATE', ticker:'UNRATE' },
+    { label:'Unemployment Rate (U-3)', id:'UNRATE', ticker:'UNRATE' },
+    { label:'U-6 Unemployment Rate', id:'U6RATE', ticker:'U6RATE' },
+    { label:'Sahm Rule Indicator', id:'SAHMREALTIME', ticker:'SAHM' },
     { label:'Nonfarm Payrolls', id:'PAYEMS', ticker:'PAYEMS' },
     { label:'Labor Force Participation', id:'CIVPART', ticker:'CIVPART' },
     { label:'Initial Jobless Claims', id:'ICSA', ticker:'ICSA' },
+    { label:'Continuing Claims', id:'CCSA', ticker:'CCSA' },
     { label:'JOLTS Job Openings', id:'JTSJOL', ticker:'JTSJOL' },
+    { label:'JOLTS Quit Rate', id:'JTSQUR', ticker:'JTSQUR' },
     { label:'Avg Hourly Earnings YoY', id:'CES0500000003', ticker:'AHEYOY' },
   ]},
   { emoji:'🏗️', label:'Economic Activity & Growth', id:'growth', items:[
     { label:'Real GDP', id:'GDPC1', ticker:'GDPC1' },
     { label:'GDP Growth QoQ', id:'A191RL1Q225SBEA', ticker:'GDPGR' },
+    { label:'ISM Manufacturing PMI', id:'NAPM', ticker:'NAPM' },
+    { label:'ISM Services PMI', id:'NMFCI', ticker:'NMFCI' },
     { label:'Industrial Production', id:'INDPRO', ticker:'INDPRO' },
     { label:'Capacity Utilization', id:'TCU', ticker:'TCU' },
     { label:'Retail Sales', id:'RSXFS', ticker:'RSXFS' },
@@ -2815,13 +2853,16 @@ const FRED_NAV = [
   { emoji:'🏠', label:'Housing', id:'housing', items:[
     { label:'Housing Starts', id:'HOUST', ticker:'HOUST' },
     { label:'Building Permits', id:'PERMIT', ticker:'PERMIT' },
+    { label:'New Home Sales', id:'HSN1F', ticker:'HSN1F' },
     { label:'Existing Home Sales', id:'EXHOSLUSM495S', ticker:'EXHSALES' },
     { label:'Case-Shiller HPI', id:'CSUSHPISA', ticker:'CSHPI' },
     { label:'30Y Mortgage Rate', id:'MORTGAGE30US', ticker:'MTG30' },
   ]},
   { emoji:'💳', label:'Credit & Financial Conditions', id:'credit', items:[
+    { label:'Chicago Fed NFCI', id:'NFCI', ticker:'NFCI' },
     { label:'HY Credit Spread', id:'BAMLH0A0HYM2', ticker:'HYSPR' },
     { label:'IG Credit Spread', id:'BAMLC0A0CM', ticker:'IGSPR' },
+    { label:'Sr. Loan Officer Survey', id:'DRTSCILM', ticker:'SLOOS' },
     { label:'C&I Loans', id:'TOTCI', ticker:'TOTCI' },
     { label:'Consumer Credit', id:'TOTALSL', ticker:'CONSC' },
   ]},
@@ -2869,6 +2910,23 @@ const FRED_SERIES_META = {
   VIXCLS:{unit:'idx',fmt:'idx'},UMCSENT:{unit:'idx',fmt:'idx'},USSLIND:{unit:'idx',fmt:'idx'},
   DGS1MO:{unit:'%',fmt:'rate'},DGS6MO:{unit:'%',fmt:'rate'},DGS1:{unit:'%',fmt:'rate'},
   DGS3:{unit:'%',fmt:'rate'},DGS7:{unit:'%',fmt:'rate'},DGS20:{unit:'%',fmt:'rate'},
+  // TIPS Real Yields
+  DFII2:{unit:'%',fmt:'rate'},DFII5:{unit:'%',fmt:'rate'},
+  DFII10:{unit:'%',fmt:'rate'},DFII30:{unit:'%',fmt:'rate'},
+  T5YIFR:{unit:'%',fmt:'rate'},
+  // Financial conditions
+  NFCI:{unit:'idx',fmt:'idx2'},
+  // Business surveys
+  NAPM:{unit:'idx',fmt:'idx'},NMFCI:{unit:'idx',fmt:'idx'},
+  // Labor additions
+  U6RATE:{unit:'%',fmt:'pct'},CCSA:{unit:'K',fmt:'num_k'},
+  JTSQUR:{unit:'%',fmt:'pct'},SAHMREALTIME:{unit:'pp',fmt:'pct'},
+  // Money velocity
+  M2V:{unit:'ratio',fmt:'idx2'},
+  // Lending standards
+  DRTSCILM:{unit:'%',fmt:'pct'},
+  // Housing addition
+  HSN1F:{unit:'K',fmt:'num_k'},
 };
 
 const FRED_DEFAULT_TRANSFORM = {
@@ -2927,6 +2985,28 @@ const FRED_DEFINITIONS = {
   VIXCLS:    { def:"CBOE Volatility Index — 30-day implied volatility of S&P 500 options.", why:"The market fear gauge. Below 15 = calm; 15–25 = caution; above 35 = stress; above 50 = crisis." },
   UMCSENT:   { def:"University of Michigan Consumer Sentiment Index (1966=100).", why:"Consumer spending = 70% of GDP. Prolonged readings below 60 precede spending contractions." },
   USSLIND:   { def:"Conference Board Leading Economic Index — composite of 10 forward-looking indicators.", why:"Consecutive monthly declines are a historically reliable early recession warning." },
+  // TIPS Real Yields
+  DFII2:     { def:"Market yield on 2-year US Treasury Inflation-Protected Securities.", why:"The real short-term borrowing cost — removes inflation from the nominal 2Y yield to show true monetary tightness." },
+  DFII5:     { def:"Market yield on 5-year TIPS — the real medium-term rate.", why:"Gold's primary driver: when 5Y real yields rise, gold falls. Also prices equity risk premium adjustments." },
+  DFII10:    { def:"Market yield on 10-year TIPS — the most-watched real rate.", why:"The real discount rate for equities and EM assets. A rising DFII10 is typically negative for risk assets." },
+  DFII30:    { def:"Market yield on 30-year TIPS.", why:"Long-run real rate expectations — useful for pension liability discounting and very long-duration asset pricing." },
+  T5YIFR:   { def:"Market-implied inflation rate for the 5-year period beginning 5 years from now.", why:"The Fed's preferred long-run inflation anchor. Unlike T10YIE, it strips out near-term inflation distortions." },
+  // Financial conditions
+  NFCI:      { def:"Chicago Fed National Financial Conditions Index — weighted average of 105 financial variables.", why:"Zero = historical average; negative = looser than average; positive = tighter. The single broadest measure of financial conditions." },
+  // Business surveys
+  NAPM:      { def:"ISM Manufacturing Purchasing Managers' Index — diffusion index of US manufacturing activity.", why:"Above 50 = expansion; below 50 = contraction. One of the most market-moving monthly data releases." },
+  NMFCI:     { def:"ISM Non-Manufacturing (Services) Composite Index — diffusion index of US services activity.", why:"Services are 80% of US GDP. This is the more important PMI for the current US economy." },
+  // Labor additions
+  U6RATE:    { def:"Broader unemployment: includes marginally attached workers and part-time-for-economic-reasons.", why:"The true slack gauge — U6 minus U3 spread measures hidden labor market weakness the Fed also watches." },
+  CCSA:      { def:"Number of workers receiving unemployment insurance after their initial week.", why:"Continuing claims show whether job-seekers are finding work quickly. Rising claims signal a softening labor market." },
+  JTSQUR:    { def:"Percentage of the workforce that voluntarily quit their jobs (JOLTS survey).", why:"The Fed's favorite real-time wage inflation signal. High quits = worker confidence and wage bargaining power." },
+  SAHMREALTIME: { def:"Real-time Sahm Rule: 3-month average unemployment rate minus its 12-month low.", why:"Triggers at +0.50pp — has preceded every US recession since 1970 with no false positives through 2023." },
+  // Money velocity
+  M2V:       { def:"Velocity of M2 money supply — GDP divided by M2. Measures how fast money circulates.", why:"Low velocity offsets money supply growth on inflation. A reversal higher is a key inflation re-acceleration risk." },
+  // Lending standards
+  DRTSCILM:  { def:"Net percentage of senior loan officers tightening C&I lending standards (quarterly, Fed survey).", why:"Tightening standards precede credit crunches by 2–4 quarters. One of the most reliable leading recession indicators." },
+  // Housing addition
+  HSN1F:     { def:"New single-family homes sold, seasonally adjusted annual rate.", why:"More forward-looking than existing home sales — buyers sign contracts months before closing, making this a leading indicator." },
 };
 
 /* ── STATE ───────────────────────────────────────────────────────────── */
@@ -2954,6 +3034,7 @@ function fredFmtVal(v, seriesId, transform) {
     case 'rate4':    return v.toFixed(3) + '%';
     case 'pct':      return v.toFixed(1) + '%';
     case 'idx':      return v.toFixed(1);
+    case 'idx2':     return v.toFixed(2);
     case 'dollar_b': return '$' + (v >= 1000 ? (v/1000).toFixed(2)+'T' : v.toFixed(0)+'B');
     case 'dollar_m': return '$' + (v>=1e6?(v/1e6).toFixed(2)+'T':v>=1000?(v/1000).toFixed(1)+'B':v.toFixed(0)+'M');
     case 'payrolls': return v >= 1000 ? (v/1000).toFixed(1)+'M' : v.toFixed(0)+'K';
