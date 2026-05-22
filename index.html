@@ -2699,12 +2699,13 @@ a      { color: inherit; text-decoration: none; }
           <!-- Trailing Returns Panel -->
           <div id="br-panel-trailing" class="br-panel">
             <div class="data-table-wrap" style="overflow-x:auto;flex:1;">
-              <table class="data-table" style="min-width:760px;">
+              <table class="data-table" style="min-width:1020px;">
                 <thead>
                   <tr>
                     <th style="text-align:left;min-width:170px">Benchmark</th>
                     <th>1M</th><th>QTD</th><th>YTD</th><th>1Y</th>
-                    <th>3Y (ann.)</th><th>5Y (ann.)</th><th>10Y (ann.)</th><th>Incep. (ann.)</th>
+                    <th>3Y (ann.)</th><th>5Y (ann.)</th><th>10Y (ann.)</th><th>20Y (ann.)</th><th>30Y (ann.)</th><th>ITD (ann.)</th>
+                    <th style="color:var(--text3)">Inception</th>
                   </tr>
                 </thead>
                 <tbody id="br-trailing-tbody"></tbody>
@@ -7769,8 +7770,15 @@ function brCalcTrailing(bm) {
   const y3   = data.length >= 36  ? brAnn(brCompound(data.slice(0, 36)),  3)               : null;
   const y5   = data.length >= 60  ? brAnn(brCompound(data.slice(0, 60)),  5)               : null;
   const y10  = data.length >= 120 ? brAnn(brCompound(data.slice(0, 120)), 10)              : null;
+  const y20  = data.length >= 240 ? brAnn(brCompound(data.slice(0, 240)), 20)              : null;
+  const y30  = data.length >= 360 ? brAnn(brCompound(data.slice(0, 360)), 30)              : null;
   const inc  = data.length ? (data.length > 12 ? brAnn(brCompound(data), data.length / 12) : brCompound(data)) : null;
-  return { m1, qtd, ytd, y1, y3, y5, y10, inc };
+  // Inception date: oldest data point (last element, data is newest-first)
+  const inceptionDate = data.length ? (() => {
+    const d = new Date(data[data.length - 1].d + 'T00:00:00Z');
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  })() : '—';
+  return { m1, qtd, ytd, y1, y3, y5, y10, y20, y30, inc, inceptionDate };
 }
 
 function brCalcCalYear(bm, year) {
@@ -7816,7 +7824,7 @@ function brRenderTrailing() {
   let html = '', lastGroup = null;
   for (const bm of brData.benchmarks) {
     if (bm.group !== lastGroup) {
-      html += `<tr class="mk-group-hdr"><td colspan="9">${bm.group}</td></tr>`;
+      html += `<tr class="mk-group-hdr"><td colspan="12">${bm.group}</td></tr>`;
       lastGroup = bm.group;
     }
     const t = brCalcTrailing(bm);
@@ -7824,7 +7832,9 @@ function brRenderTrailing() {
       <td style="text-align:left;padding-left:10px">${bm.name}</td>
       <td>${brFmt(t.m1)}</td><td>${brFmt(t.qtd)}</td><td>${brFmt(t.ytd)}</td>
       <td>${brFmt(t.y1)}</td><td>${brFmt(t.y3)}</td><td>${brFmt(t.y5)}</td>
-      <td>${brFmt(t.y10)}</td><td>${brFmt(t.inc)}</td>
+      <td>${brFmt(t.y10)}</td><td>${brFmt(t.y20)}</td><td>${brFmt(t.y30)}</td>
+      <td>${brFmt(t.inc)}</td>
+      <td style="font-family:var(--mono);font-size:10px;color:var(--text3);text-align:right">${t.inceptionDate}</td>
     </tr>`;
   }
   tbody.innerHTML = html;
