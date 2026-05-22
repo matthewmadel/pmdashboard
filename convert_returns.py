@@ -143,7 +143,7 @@ def main():
 
     # Row 0 = header: ["Name", bm1, bm2, ...]
     headers = rows[0]
-    full_names = headers[1:]   # skip "Name" column
+    full_names = [h.strip() for h in headers[1:]]  # strip trailing spaces from CSV headers
 
     # Build {full_name: [{"d": date, "r": return}, ...]} newest → oldest
     raw: dict[str, list] = {n: [] for n in full_names}
