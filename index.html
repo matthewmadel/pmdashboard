@@ -498,6 +498,10 @@ a      { color: inherit; text-decoration: none; }
 .tool-card-meta::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--text3); }
 
 /* News cards */
+/* ── Benchmark Returns ──────────────────────────────────────────────── */
+.br-panel { flex:1; overflow-y:auto; display:flex; flex-direction:column; }
+.br-footnote { font-family:var(--mono); font-size:9px; color:var(--text3); padding:6px 0 10px; flex-shrink:0; }
+
 /* ── Changelog ─────────────────────────────────────────────────────── */
 .cl-entry { padding: 20px 0; border-bottom: 1px solid var(--border); }
 .cl-entry:last-child { border-bottom: none; }
@@ -1474,6 +1478,9 @@ a      { color: inherit; text-decoration: none; }
             </div>
             <div class="nav-item" onclick="showPage('stress-test');stBoot()" data-label="Stress Tester">
               <div class="nav-dot"></div>Stress Tester<span class="nav-item-badge">ST</span>
+            </div>
+            <div class="nav-item" onclick="showPage('benchmark-returns');brBoot()" data-label="Benchmark Returns">
+              <div class="nav-dot"></div>Benchmark Returns<span class="nav-item-badge">BM</span>
             </div>
           </div>
         </div>
@@ -2668,6 +2675,51 @@ a      { color: inherit; text-decoration: none; }
           </div>
         </div>
       </div><!-- /page-feedback -->
+
+
+      <!-- ════════════════════════════════════════
+           PAGE: BENCHMARK RETURNS
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-benchmark-returns">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Benchmark Returns <span class="page-title-badge">Monthly</span></div>
+            <div class="page-subtitle" id="br-subtitle">26 benchmarks · loading…</div>
+          </div>
+          <div class="page-controls">
+            <div class="pill-group" id="br-tab-pills">
+              <div class="pill active" onclick="brTab('trailing',this)">Trailing Returns</div>
+              <div class="pill" onclick="brTab('calendar',this)">Calendar Year</div>
+            </div>
+          </div>
+        </div>
+        <div class="page-body" style="flex-direction:column;overflow:hidden;">
+
+          <!-- Trailing Returns Panel -->
+          <div id="br-panel-trailing" class="br-panel">
+            <div class="data-table-wrap" style="overflow-x:auto;flex:1;">
+              <table class="data-table" style="min-width:760px;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;min-width:170px">Benchmark</th>
+                    <th>1M</th><th>QTD</th><th>YTD</th><th>1Y</th>
+                    <th>3Y (ann.)</th><th>5Y (ann.)</th><th>10Y (ann.)</th><th>Incep. (ann.)</th>
+                  </tr>
+                </thead>
+                <tbody id="br-trailing-tbody"></tbody>
+              </table>
+            </div>
+            <div class="br-footnote">Periods &gt;1Y annualized. NA = insufficient history. Returns sourced from index providers.</div>
+          </div>
+
+          <!-- Calendar Year Panel -->
+          <div id="br-panel-calendar" class="br-panel" style="display:none;">
+            <div class="data-table-wrap" style="overflow-x:auto;flex:1;" id="br-calendar-wrap"></div>
+            <div class="br-footnote">Current year is partial (YTD through as-of date). Color intensity reflects return magnitude. * = partial year.</div>
+          </div>
+
+        </div>
+      </div><!-- /page-benchmark-returns -->
 
 
       <!-- ════════════════════════════════════════
@@ -7646,6 +7698,176 @@ window.stUpdateWeight    = stUpdateWeight;
 window.stLoadTemplate    = stLoadTemplate;
 window.stClearPositions  = stClearPositions;
 window.stReRun           = stReRun;
+
+/* ══════════════════════════════════════════════════════════════════════
+   BENCHMARK RETURNS
+══════════════════════════════════════════════════════════════════════ */
+
+const BR_DATA_URL = './returns_data.json';
+let brData = null;
+let brBooted = false;
+let brActivePanel = 'trailing';
+
+async function brBoot() {
+  if (!brBooted) {
+    brBooted = true;
+    try {
+      const r = await fetch(BR_DATA_URL + '?_=' + Date.now());
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      brData = await r.json();
+    } catch(e) {
+      console.error('Benchmark returns load failed:', e);
+      const el = document.getElementById('br-subtitle');
+      if (el) el.textContent = 'Failed to load data';
+      return;
+    }
+  }
+  // Update subtitle
+  const sub = document.getElementById('br-subtitle');
+  if (sub && brData) sub.textContent = `${brData.benchmarks.length} benchmarks · as of ${brData.as_of}`;
+  // Render active panel
+  if (brActivePanel === 'trailing') brRenderTrailing();
+  else brRenderCalendar();
+}
+
+function brTab(panel, btn) {
+  brActivePanel = panel;
+  document.querySelectorAll('#br-tab-pills .pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('br-panel-trailing').style.display = panel === 'trailing' ? 'flex' : 'none';
+  document.getElementById('br-panel-calendar').style.display  = panel === 'calendar'  ? 'flex' : 'none';
+  if (!brData) return;
+  if (panel === 'trailing') brRenderTrailing();
+  else brRenderCalendar();
+}
+
+// ── Maths ──────────────────────────────────────────────────────────────────
+
+function brCompound(pts) {
+  // pts: [{d, r}] where r is a percentage like -7.18
+  // returns a decimal like -0.0718
+  return pts.reduce((acc, p) => acc * (1 + p.r / 100), 1) - 1;
+}
+
+function brAnn(dec, years) {
+  return Math.pow(1 + dec, 1 / years) - 1;
+}
+
+function brCalcTrailing(bm) {
+  const data = bm.data; // newest first
+  if (!data.length || !brData.as_of) return {};
+  const asOf   = brData.as_of;
+  const year   = asOf.substring(0, 4);
+  const mo     = parseInt(asOf.substring(5, 7)) - 1; // 0-indexed
+  const qStart = `${year}-${String(Math.floor(mo / 3) * 3 + 1).padStart(2, '0')}-01`;
+
+  const m1   = data.length >= 1  ? data[0].r / 100 : null;
+  const qtd  = (() => { const p = data.filter(x => x.d >= qStart && x.d <= asOf); return p.length ? brCompound(p) : null; })();
+  const ytd  = (() => { const p = data.filter(x => x.d.startsWith(year));         return p.length ? brCompound(p) : null; })();
+  const y1   = data.length >= 12  ? brCompound(data.slice(0, 12))                          : null;
+  const y3   = data.length >= 36  ? brAnn(brCompound(data.slice(0, 36)),  3)               : null;
+  const y5   = data.length >= 60  ? brAnn(brCompound(data.slice(0, 60)),  5)               : null;
+  const y10  = data.length >= 120 ? brAnn(brCompound(data.slice(0, 120)), 10)              : null;
+  const inc  = data.length ? (data.length > 12 ? brAnn(brCompound(data), data.length / 12) : brCompound(data)) : null;
+  return { m1, qtd, ytd, y1, y3, y5, y10, inc };
+}
+
+function brCalcCalYear(bm, year) {
+  const pts = bm.data.filter(p => p.d.startsWith(String(year)));
+  return pts.length ? brCompound(pts) : null;
+}
+
+// ── Formatting ─────────────────────────────────────────────────────────────
+
+function brFmt(v) {
+  if (v == null) return `<span style="color:var(--text3);font-size:9px">NA</span>`;
+  const pct = v * 100;
+  const cls  = pct > 0.05 ? 'td-up' : pct < -0.05 ? 'td-dn' : 'td-flat';
+  return `<span class="${cls}">${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%</span>`;
+}
+
+function brFmtHeat(v) {
+  if (v == null) return `<span style="color:var(--text3)">—</span>`;
+  const pct = v * 100;
+  const cls  = pct > 0.05 ? 'td-up' : pct < -0.05 ? 'td-dn' : 'td-flat';
+  return `<span class="${cls}">${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%</span>`;
+}
+
+function brHeatStyle(v) {
+  if (v == null) return '';
+  const p = v * 100;
+  if (p >  20) return 'background:rgba(76,175,130,0.30)';
+  if (p >  10) return 'background:rgba(76,175,130,0.18)';
+  if (p >   5) return 'background:rgba(76,175,130,0.10)';
+  if (p >   0) return 'background:rgba(76,175,130,0.04)';
+  if (p >  -5) return 'background:rgba(224,85,85,0.04)';
+  if (p > -10) return 'background:rgba(224,85,85,0.10)';
+  if (p > -20) return 'background:rgba(224,85,85,0.18)';
+  return 'background:rgba(224,85,85,0.30)';
+}
+
+// ── Renderers ──────────────────────────────────────────────────────────────
+
+function brRenderTrailing() {
+  if (!brData) return;
+  const tbody = document.getElementById('br-trailing-tbody');
+  if (!tbody) return;
+  let html = '', lastGroup = null;
+  for (const bm of brData.benchmarks) {
+    if (bm.group !== lastGroup) {
+      html += `<tr class="mk-group-hdr"><td colspan="9">${bm.group}</td></tr>`;
+      lastGroup = bm.group;
+    }
+    const t = brCalcTrailing(bm);
+    html += `<tr class="mk-row">
+      <td style="text-align:left;padding-left:10px">${bm.name}</td>
+      <td>${brFmt(t.m1)}</td><td>${brFmt(t.qtd)}</td><td>${brFmt(t.ytd)}</td>
+      <td>${brFmt(t.y1)}</td><td>${brFmt(t.y3)}</td><td>${brFmt(t.y5)}</td>
+      <td>${brFmt(t.y10)}</td><td>${brFmt(t.inc)}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+function brRenderCalendar() {
+  if (!brData) return;
+  const wrap = document.getElementById('br-calendar-wrap');
+  if (!wrap) return;
+
+  // Year range: current year down to earliest year in dataset
+  const curYear = new Date().getFullYear();
+  let minYear = curYear;
+  for (const bm of brData.benchmarks) {
+    if (bm.data.length) minYear = Math.min(minYear, parseInt(bm.data[bm.data.length - 1].d));
+  }
+  const years = [];
+  for (let y = curYear; y >= minYear; y--) years.push(y);
+
+  const stickyTh = 'style="text-align:left;min-width:170px;position:sticky;left:0;background:var(--bg2);z-index:2"';
+  const stickyTd = 'style="text-align:left;padding-left:10px;position:sticky;left:0;background:var(--bg2)"';
+
+  let thead = `<tr><th ${stickyTh}>Benchmark</th>`;
+  for (const y of years) thead += `<th style="min-width:58px">${y === curYear ? y + '*' : y}</th>`;
+  thead += `</tr>`;
+
+  let tbody = '';
+  let lastGroup = null;
+  for (const bm of brData.benchmarks) {
+    if (bm.group !== lastGroup) {
+      tbody += `<tr class="mk-group-hdr"><td colspan="${years.length + 1}" style="position:sticky;left:0">${bm.group}</td></tr>`;
+      lastGroup = bm.group;
+    }
+    tbody += `<tr class="mk-row"><td ${stickyTd}>${bm.name}</td>`;
+    for (const y of years) {
+      const v = brCalcCalYear(bm, y);
+      tbody += `<td style="${brHeatStyle(v)}">${brFmtHeat(v)}</td>`;
+    }
+    tbody += `</tr>`;
+  }
+
+  wrap.innerHTML = `<table class="data-table" style="min-width:${170 + years.length * 58}px;">
+    <thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
+}
 
 /* ══════════════════════════════════════════════════════════════════════
    MARKET INTELLIGENCE — News & Sentiment
