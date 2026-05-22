@@ -498,6 +498,14 @@ a      { color: inherit; text-decoration: none; }
 .tool-card-meta::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--text3); }
 
 /* News cards */
+/* ── Changelog ─────────────────────────────────────────────────────── */
+.cl-entry { padding: 20px 0; border-bottom: 1px solid var(--border); }
+.cl-entry:last-child { border-bottom: none; }
+.cl-version { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--amber); letter-spacing: 0.05em; margin-bottom: 10px; }
+.cl-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.cl-list li { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.cl-list li strong { color: var(--text); font-weight: 500; }
+
 .news-list { display: flex; flex-direction: column; gap: 1px; }
 .news-meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .news-sentiment { font-family:var(--mono); font-size:9px; font-weight:600; padding:1px 5px; border-radius:3px; }
@@ -1491,6 +1499,10 @@ a      { color: inherit; text-decoration: none; }
 
       <!-- Pinned footer: Data Sources + Feedback -->
       <div id="nav-footer">
+        <div class="nav-item" onclick="showPage('changelog')" data-label="Changelog">
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="1.8" style="flex-shrink:0;opacity:0.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Changelog<span class="nav-item-badge">LOG</span>
+        </div>
         <div class="nav-item" onclick="showPage('data-sources')" data-label="Data Sources">
           <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="1.8" style="flex-shrink:0;opacity:0.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6a9 3 0 0 0 18 0V5"/><path d="M3 11v6a9 3 0 0 0 18 0v-6"/></svg>
           Data Sources<span class="nav-item-badge">SRC</span>
@@ -2361,6 +2373,56 @@ a      { color: inherit; text-decoration: none; }
 
         </div><!-- /st-layout -->
       </div><!-- /page-stress-test -->
+
+
+      <!-- ════════════════════════════════════════
+           PAGE: CHANGELOG
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-changelog" style="flex-direction:column;overflow:hidden;">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Changelog</div>
+            <div class="page-subtitle">Live updates to the PM Dashboard</div>
+          </div>
+        </div>
+        <div class="page-body" style="overflow-y:auto;flex-direction:column;gap:0;">
+          <div style="max-width:720px;padding:4px 0 40px;">
+
+            <!-- v entry template:
+              <div class="cl-entry">
+                <div class="cl-version">v0.X — Month DD, YYYY</div>
+                <ul class="cl-list"> <li>...</li> </ul>
+              </div>
+            -->
+
+            <div class="cl-entry">
+              <div class="cl-version">May 22, 2026</div>
+              <ul class="cl-list">
+                <li>Added 15 new FRED macro series across Tier 1 &amp; 2: TIPS real yields (2Y/5Y/10Y/30Y), 5Y5Y Forward Breakeven, Chicago Fed NFCI, ISM Manufacturing &amp; Services PMI, U-6 Unemployment, Continuing Jobless Claims, JOLTS Quit Rate, Sahm Rule Indicator, M2 Velocity, Senior Loan Officer Survey, New Home Sales</li>
+                <li>Surfaced Housing section in Macro nav — all housing data (Starts, Permits, Existing/New Sales, Case-Shiller, Mortgage Rate) now accessible</li>
+                <li>Added 10Y annualized return column to all Markets Overview panels; periods with insufficient history show <strong>NA</strong> instead of a partial return</li>
+                <li>Added ACWI (MSCI ACWI) to Equities panel under new Global category, with full historical data</li>
+                <li>Added ACWI as first asset in Correlation Matrix; set Stress Tester default portfolio to 70/30 ACWI / AGG</li>
+              </ul>
+            </div>
+
+            <div class="cl-entry">
+              <div class="cl-version">May 21, 2026</div>
+              <ul class="cl-list">
+                <li>Removed TED Spread (discontinued April 2023); added SOFR 30-day, 90-day, and 180-day averages to Macro section, displayed to 3 decimal places</li>
+                <li>Fixed Factor Explorer date range: analysis now ends on the previous close of business, not today, preventing incomplete periods</li>
+                <li>Fixed header clock showing stale time on page load</li>
+                <li>Added Data Sources and Feedback pages (pinned to bottom of nav)</li>
+                <li>Monte Carlo simulation trimmed to 31 user-specified asset classes with exact category ordering</li>
+                <li>Stress Tester built: historical scenario analysis with actual price data across 10 market crisis scenarios</li>
+                <li>Correlation Matrix built: heatmap + rolling correlation chart across 10 equity and fixed income ETFs</li>
+                <li>Fixed FRED yield staleness — explained T+1 publication lag; updated data refresh schedule to 5:30 PM ET (after FRED 4:15 PM H.15 release) with 9 AM ET morning backup</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </div><!-- /page-changelog -->
 
 
       <!-- ════════════════════════════════════════
@@ -4788,18 +4850,6 @@ async function fredBoot() {
     fredLocalData = j.series || {};
   } catch(e) {
     console.warn('FRED data not loaded:', e.message);
-  }
-
-  // Merge Alpha Vantage data (alpha_data.json) into fredLocalData so all
-  // existing chart/table rendering works transparently for AV series.
-  try {
-    const r = await fetch('./alpha_data.json?_='+Date.now());
-    if (r.ok) {
-      const j = await r.json();
-      Object.assign(fredLocalData, j.series || {});
-    }
-  } catch(e) {
-    console.warn('Alpha Vantage data not loaded:', e.message);
   }
 
   fredLoadHeaderTickers();
