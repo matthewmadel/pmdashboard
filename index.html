@@ -2304,7 +2304,7 @@ a      { color: inherit; text-decoration: none; }
         <div class="page-header">
           <div class="page-title-group">
             <div class="page-title">Stress Tester <span class="page-title-badge">Tool</span></div>
-            <div class="page-subtitle">Historical scenario analysis · realized portfolio P&amp;L from actual price data</div>
+            <div class="page-subtitle">Historical scenario analysis · monthly index returns from Index Returns data</div>
           </div>
         </div>
 
@@ -2332,28 +2332,12 @@ a      { color: inherit; text-decoration: none; }
                 <div id="st-positions-list" style="margin-bottom:8px;"></div>
                 <!-- Add row -->
                 <div style="display:flex;gap:5px;align-items:center;">
-                  <input class="mc-input" id="st-add-ticker" placeholder="Ticker" maxlength="12" style="width:72px;text-transform:uppercase;" onkeydown="if(event.key==='Enter')stAddPosition()">
+                  <select id="st-add-index"
+                    style="flex:1;min-width:0;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:10px;padding:4px 6px;border-radius:4px;outline:none;">
+                    <option value="">— Select index —</option>
+                  </select>
                   <input class="mc-input" id="st-add-weight" type="number" placeholder="Wt%" min="0" max="100" style="width:52px;" onkeydown="if(event.key==='Enter')stAddPosition()">
                   <button class="mc-add-btn" onclick="stAddPosition()" style="width:auto;padding:5px 10px;border-style:solid;">+ Add</button>
-                </div>
-              </div>
-
-              <!-- Quick-add templates -->
-              <div>
-                <div class="st-lbl">Templates</div>
-                <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;">
-                  <button class="mc-add-btn" onclick="stLoadTemplate('6040')" style="width:auto;padding:4px 9px;">60/40 SPY</button>
-                  <button class="mc-add-btn" onclick="stLoadTemplate('rp')" style="width:auto;padding:4px 9px;">Risk Parity</button>
-                  <button class="mc-add-btn" onclick="stLoadTemplate('equity')" style="width:auto;padding:4px 9px;">All Equity</button>
-                  <button class="mc-add-btn" onclick="stLoadTemplate('ma')" style="width:auto;padding:4px 9px;">Multi-Asset</button>
-                </div>
-                <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:4px;">ACWI / AGG Benchmarks</div>
-                <div style="display:flex;flex-wrap:wrap;gap:5px;">
-                  <button class="mc-add-btn" onclick="stLoadTemplate('acwi_6040')" style="width:auto;padding:4px 9px;">60/40</button>
-                  <button class="mc-add-btn" onclick="stLoadTemplate('acwi_6535')" style="width:auto;padding:4px 9px;">65/35</button>
-                  <button class="mc-add-btn" onclick="stLoadTemplate('acwi_7030')" style="width:auto;padding:4px 9px;">70/30</button>
-                  <button class="mc-add-btn" onclick="stLoadTemplate('acwi_7525')" style="width:auto;padding:4px 9px;">75/25</button>
-                  <button class="mc-add-btn" onclick="stLoadTemplate('acwi_8020')" style="width:auto;padding:4px 9px;">80/20</button>
                 </div>
               </div>
 
@@ -7453,16 +7437,27 @@ let stBooted = false;
 async function stBoot() {
   if (!stBooted) {
     stBooted = true;
-    await Promise.all(['eq','credit','cmd','fx','vol'].map(p => window.mkLoadCache(p)));
+    // Load index returns data (shared with Index Returns / Benchmark Builder)
+    await brBoot();
   }
+  stPopulateIndexDropdown();
   if (stState.positions.length === 0) {
     stState.positions = [
-      { ticker:'ACWI', weight:70, name:'MSCI ACWI' },
-      { ticker:'AGG',  weight:30, name:'US Aggregate' },
+      { ticker:'MSCI ACWI',        weight:70, name:'MSCI ACWI' },
+      { ticker:'Bloomberg US Agg', weight:30, name:'Bloomberg US Agg' },
     ];
   }
   stRenderScenarioGrid();
   stRenderPositions();
+}
+
+function stPopulateIndexDropdown() {
+  const el = document.getElementById('st-add-index');
+  if (!el || !brData?.benchmarks) return;
+  el.innerHTML = '<option value="">— Select index —</option>' +
+    brData.benchmarks.map(bm =>
+      `<option value="${bm.name}">${bm.name} (${bm.group})</option>`
+    ).join('');
 }
 
 /* ── Scenario grid ─────────────────────────────────────────────────── */
@@ -7495,15 +7490,13 @@ function stRunCustom() {
 
 /* ── Portfolio management ──────────────────────────────────────────── */
 function stAddPosition() {
-  const tEl = document.getElementById('st-add-ticker');
+  const iEl = document.getElementById('st-add-index');
   const wEl = document.getElementById('st-add-weight');
-  if (!tEl || !wEl) return;
-  const ticker = tEl.value.trim().toUpperCase();
-  const weight = parseFloat(wEl.value);
-  if (!ticker || isNaN(weight) || weight <= 0) return;
-  const found = (window.TICKERS_ALL || []).find(t => t.t === ticker);
-  stState.positions.push({ ticker, weight, name: found ? found.n : ticker });
-  tEl.value = ''; wEl.value = ''; tEl.focus();
+  const indexName = iEl?.value;
+  const weight    = parseFloat(wEl?.value);
+  if (!indexName || isNaN(weight) || weight <= 0) return;
+  stState.positions.push({ ticker: indexName, weight, name: indexName });
+  if (wEl) wEl.value = '';
   stRenderPositions(); stReRun();
 }
 
@@ -7536,8 +7529,7 @@ function stRenderPositions() {
   }
   list.innerHTML = stState.positions.map((p, i) => `
     <div class="st-pos-row">
-      <span style="font-family:var(--mono);font-size:10px;color:var(--amber);min-width:54px">${p.ticker}</span>
-      <span style="font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
+      <span style="font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.ticker}</span>
       <input class="mc-input" type="number" value="${p.weight}" min="0" max="100" style="width:46px;padding:3px 6px;" oninput="stUpdateWeight(${i},this.value)">
       <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">%</span>
       <button onclick="stRemovePosition(${i})" style="font-size:14px;color:var(--text3);padding:0 2px;opacity:0.6;">×</button>
@@ -7554,93 +7546,103 @@ function stClearPositions() {
   stState.positions = []; stRenderPositions(); stReRun();
 }
 
-/* ── Calculation ───────────────────────────────────────────────────── */
-function stGetReturn(ticker, startDate, endDate) {
-  const rows = window.mkState.rawHistory[ticker] || [];
-  if (rows.length < 2) return null;
-  let s0 = null, e0 = null;
-  for (let i = rows.length - 1; i >= 0; i--) { if (rows[i].date <= startDate) { s0 = rows[i]; break; } }
-  for (let i = rows.length - 1; i >= 0; i--) { if (rows[i].date <= endDate)   { e0 = rows[i]; break; } }
-  if (!s0 || !e0 || s0.date === e0.date || !s0.close) return null;
-  return (e0.close - s0.close) / s0.close;
+/* ── Calculation (index returns data) ──────────────────────────────── */
+
+// Look up a benchmark by name in brData
+function stFindIndex(name) {
+  return brData?.benchmarks?.find(b => b.name === name) ?? null;
+}
+
+// Include months whose YYYY-MM falls within [startMonth, endMonth] inclusive.
+// This means partial-month scenarios still capture the full month's return,
+// which gives a more complete picture of stress events (e.g. COVID: Feb+Mar 2020).
+function stGetReturn(indexName, startDate, endDate) {
+  const bm = stFindIndex(indexName);
+  if (!bm?.data?.length) return null;
+  const sm = startDate.slice(0, 7);
+  const em = endDate.slice(0, 7);
+  const pts = bm.data.filter(p => p.d.slice(0,7) >= sm && p.d.slice(0,7) <= em);
+  if (!pts.length) return null;
+  return pts.reduce((acc, p) => acc * (1 + p.r / 100), 1) - 1;
 }
 
 function stBuildPortfolioNav(validResults, startDate, endDate) {
-  const dateMap = new Map();
-  validResults.forEach(r => {
-    const rows = (window.mkState.rawHistory[r.ticker] || []).filter(row => row.date >= startDate && row.date <= endDate);
-    if (rows.length < 2) return;
-    const base = rows[0].close;
-    rows.forEach(row => {
-      if (!dateMap.has(row.date)) dateMap.set(row.date, { wsum: 0, wtot: 0 });
-      const e = dateMap.get(row.date);
-      e.wsum += (row.close / base) * r.nw; e.wtot += r.nw;
-    });
-  });
-  return [...dateMap.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([d,v])=>({ date:d, nav:100*v.wsum/v.wtot }));
+  const sm = startDate.slice(0, 7);
+  const em = endDate.slice(0, 7);
+  // Collect all relevant month-end dates
+  const dateSet = new Set();
+  for (const r of validResults) {
+    const bm = stFindIndex(r.ticker);
+    if (!bm) continue;
+    bm.data.filter(p => p.d.slice(0,7) >= sm && p.d.slice(0,7) <= em).forEach(p => dateSet.add(p.d));
+  }
+  const dates = [...dateSet].sort();
+  if (!dates.length) return [];
+  const navSeries = [{ date: startDate, nav: 100 }];
+  let val = 100;
+  for (const d of dates) {
+    let monthRet = 0;
+    for (const r of validResults) {
+      const bm = stFindIndex(r.ticker);
+      if (!bm) continue;
+      const pt = bm.data.find(p => p.d === d);
+      if (pt) monthRet += r.nw * (pt.r / 100);
+    }
+    val *= (1 + monthRet);
+    navSeries.push({ date: d, nav: val * 100 });
+  }
+  return navSeries;
 }
 
-/* ── Recovery to high watermark ────────────────────────────────────── */
+/* ── Recovery to high watermark (monthly index returns) ────────────── */
 function stCalcRecovery(positions, scenarioStart, scenarioEnd, totalW) {
-  if (!positions.length || !totalW) return null;
-  // Build month list from scenarioStart to most recent data across all tickers
-  const allRows = positions.map(p => window.mkState.rawHistory[p.ticker] || []);
-  if (allRows.some(r => !r.length)) return null;
-  const latestDate = allRows.map(r => r[r.length-1].date).sort().at(-1);
-
-  // Start prices at scenarioStart for each ticker
-  const startPrices = {};
+  if (!positions.length || !totalW || !brData) return null;
+  // Find the latest available month across all positions
+  let latestDate = null;
   for (const p of positions) {
-    const rows = window.mkState.rawHistory[p.ticker] || [];
-    for (let i = rows.length - 1; i >= 0; i--) {
-      if (rows[i].date <= scenarioStart) { startPrices[p.ticker] = rows[i].close; break; }
-    }
-    if (!startPrices[p.ticker]) return null;
+    const bm = stFindIndex(p.ticker);
+    if (!bm?.data?.length) continue;
+    const d = bm.data[0].d; // data is newest-first
+    if (!latestDate || d > latestDate) latestDate = d;
   }
+  if (!latestDate) return null;
 
-  // Walk month-end prices from scenarioStart through latestDate
-  let curD = new Date(scenarioStart + 'T00:00:00Z');
-  curD.setDate(1);
-  const endD  = new Date(latestDate + 'T00:00:00Z');
-  let portVal = 100;
-  let prevPrices = {...startPrices};
-  let droppedBelow = false;
-  let recoveryResult = null;
+  // Collect all month-end dates from scenario start month onwards
+  const sm = scenarioStart.slice(0, 7);
+  const dateSet = new Set();
+  for (const p of positions) {
+    const bm = stFindIndex(p.ticker);
+    if (!bm) continue;
+    bm.data.filter(pt => pt.d.slice(0,7) >= sm).forEach(pt => dateSet.add(pt.d));
+  }
+  const dates = [...dateSet].sort();
 
-  while (curD <= endD) {
-    const ym = curD.toISOString().slice(0, 7);
-    let monthRet = 0, hasAll = true;
+  let portVal = 100, droppedBelow = false, recoveryResult = null;
+  for (const date of dates) {
+    let monthRet = 0;
     for (const p of positions) {
-      const rows = window.mkState.rawHistory[p.ticker] || [];
-      const monthRows = rows.filter(r => r.date.startsWith(ym));
-      if (!monthRows.length || !prevPrices[p.ticker]) { hasAll = false; break; }
-      const curr = monthRows.at(-1).close;
-      monthRet += (p.weight / totalW) * ((curr - prevPrices[p.ticker]) / prevPrices[p.ticker]);
-      prevPrices[p.ticker] = curr;
+      const bm = stFindIndex(p.ticker);
+      if (!bm) continue;
+      const pt = bm.data.find(d => d.d === date);
+      if (pt) monthRet += (p.weight / totalW) * (pt.r / 100);
     }
-    if (hasAll) {
-      portVal *= (1 + monthRet);
-      if (portVal < 100) droppedBelow = true;
-      if (droppedBelow && portVal >= 100 && !recoveryResult) {
-        const recDate = new Date(ym + '-01T00:00:00Z');
-        const startMs = new Date(scenarioStart + 'T00:00:00Z');
-        const months  = (recDate.getFullYear() - startMs.getFullYear()) * 12 + (recDate.getMonth() - startMs.getMonth());
-        recoveryResult = {
-          date:   recDate.toLocaleDateString('en-US', { month:'short', year:'numeric', timeZone:'UTC' }),
-          months,
-          recovered: true,
-        };
-        break;
-      }
+    portVal *= (1 + monthRet);
+    if (portVal < 100) droppedBelow = true;
+    if (droppedBelow && portVal >= 100 && !recoveryResult) {
+      const recD   = new Date(date + 'T00:00:00Z');
+      const startMs = new Date(scenarioStart + 'T00:00:00Z');
+      const months  = Math.round((recD - startMs) / (365.25/12 * 86400000));
+      recoveryResult = {
+        date: recD.toLocaleDateString('en-US', { month:'short', year:'numeric', timeZone:'UTC' }),
+        months, recovered: true,
+      };
+      break;
     }
-    curD.setMonth(curD.getMonth() + 1);
   }
-
   if (!recoveryResult) {
-    // Still underwater — report where we stand
     const pct = ((portVal - 100) / 100 * 100).toFixed(1);
-    return { recovered: false, currentPct: pct,
-             latestDate: new Date(latestDate + 'T00:00:00Z').toLocaleDateString('en-US', {month:'short', year:'numeric', timeZone:'UTC'}) };
+    const ld  = new Date(latestDate + 'T00:00:00Z').toLocaleDateString('en-US', { month:'short', year:'numeric', timeZone:'UTC' });
+    return { recovered: false, currentPct: pct, latestDate: ld };
   }
   return recoveryResult;
 }
@@ -8677,30 +8679,11 @@ const BB_TO_TICKER = {
 function bbPushToStressTester() {
   const bm = bbState.benchmarks.find(b => b.id === bbState.activeId);
   if (!bm) return;
-  // Use the most recent period's components
-  const comps = bm.periods ? bm.periods.at(-1).components : (bm.components || []);
+  const comps  = bm.periods ? bm.periods.at(-1).components : (bm.components || []);
   const totalW = comps.reduce((s, c) => s + (+c.weight || 0), 0);
   if (!totalW) { alert('Benchmark has no components.'); return; }
-
-  const positions = [];
-  const unmapped = [];
-  for (const c of comps) {
-    const ticker = BB_TO_TICKER[c.name];
-    if (ticker) {
-      positions.push({ ticker, weight: c.weight, name: c.name });
-    } else {
-      unmapped.push(c.name);
-    }
-  }
-  if (!positions.length) {
-    alert('No components could be mapped to market tickers. The stress tester uses ETF price data.\n\nUnmapped: ' + unmapped.join(', '));
-    return;
-  }
-  if (unmapped.length) {
-    const proceed = confirm(`${unmapped.length} component(s) have no ETF equivalent and will be excluded:\n${unmapped.join(', ')}\n\nProceed with the remaining ${positions.length} component(s)?`);
-    if (!proceed) return;
-  }
-  // Navigate to stress tester and populate positions
+  // Index names from brData are used directly — no ETF ticker mapping needed
+  const positions = comps.map(c => ({ ticker: c.name, weight: c.weight, name: c.name }));
   showPage('stress-test');
   stBoot().then(() => {
     stState.positions = positions;
