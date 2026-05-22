@@ -6546,6 +6546,7 @@ function feRenderLibrary() {
 ══════════════════════════════════════════════════════════════════════ */
 
 const CORR_TICKERS = [
+  {t:'ACWI', n:'MSCI ACWI',     cls:'eq'},
   {t:'SPY',  n:'S&P 500',       cls:'eq'},
   {t:'QQQ',  n:'Nasdaq 100',    cls:'eq'},
   {t:'IWM',  n:'Russell 2000',  cls:'eq'},
@@ -7095,6 +7096,12 @@ async function stBoot() {
   if (!stBooted) {
     stBooted = true;
     await Promise.all(['eq','credit','cmd','fx','vol'].map(p => window.mkLoadCache(p)));
+  }
+  if (stState.positions.length === 0) {
+    stState.positions = [
+      { ticker:'ACWI', weight:70, name:'MSCI ACWI' },
+      { ticker:'AGG',  weight:30, name:'US Aggregate' },
+    ];
   }
   stRenderScenarioGrid();
   stRenderPositions();
