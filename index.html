@@ -2691,6 +2691,7 @@ a      { color: inherit; text-decoration: none; }
             <div class="pill-group" id="br-tab-pills">
               <div class="pill active" onclick="brTab('trailing',this)">Trailing Returns</div>
               <div class="pill" onclick="brTab('calendar',this)">Calendar Year</div>
+              <div class="pill" onclick="brTab('custom',this)">Custom Period</div>
             </div>
           </div>
         </div>
@@ -2718,6 +2719,32 @@ a      { color: inherit; text-decoration: none; }
           <div id="br-panel-calendar" class="br-panel" style="display:none;">
             <div class="data-table-wrap" style="overflow-x:auto;flex:1;" id="br-calendar-wrap"></div>
             <div class="br-footnote">Current year is partial (YTD through as-of date). Color intensity reflects return magnitude. * = partial year.</div>
+          </div>
+
+          <!-- Custom Period Panel -->
+          <div id="br-panel-custom" class="br-panel" style="display:none;">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0 14px;flex-shrink:0;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <label style="font-family:var(--mono);font-size:10px;color:var(--text3)">From</label>
+                <input type="date" id="br-custom-start" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <label style="font-family:var(--mono);font-size:10px;color:var(--text3)">To</label>
+                <input type="date" id="br-custom-end" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
+              </div>
+              <button onclick="brRenderCustom()" style="background:var(--amber);color:#000;border:none;padding:4px 14px;border-radius:4px;font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;">Apply</button>
+              <span id="br-custom-meta" style="font-family:var(--mono);font-size:10px;color:var(--text3)"></span>
+            </div>
+            <div class="data-table-wrap" style="overflow-x:auto;flex:1;">
+              <table class="data-table" style="min-width:320px;">
+                <thead><tr id="br-custom-thead">
+                  <th style="text-align:left;min-width:170px">Benchmark</th>
+                  <th>Period Return</th>
+                </tr></thead>
+                <tbody id="br-custom-tbody"></tbody>
+              </table>
+            </div>
+            <div class="br-footnote">Returns &gt;1Y annualized based on actual months. NA = benchmark has no data covering the full selected period.</div>
           </div>
 
         </div>
@@ -7727,9 +7754,12 @@ async function brBoot() {
   // Update subtitle
   const sub = document.getElementById('br-subtitle');
   if (sub && brData) sub.textContent = `${brData.benchmarks.length} benchmarks · as of ${brData.as_of}`;
+  // Seed custom date inputs on first load
+  brInitCustomDates();
   // Render active panel
   if (brActivePanel === 'trailing') brRenderTrailing();
-  else brRenderCalendar();
+  else if (brActivePanel === 'calendar') brRenderCalendar();
+  else brRenderCustom();
 }
 
 function brTab(panel, btn) {
@@ -7737,10 +7767,80 @@ function brTab(panel, btn) {
   document.querySelectorAll('#br-tab-pills .pill').forEach(p => p.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.getElementById('br-panel-trailing').style.display = panel === 'trailing' ? 'flex' : 'none';
-  document.getElementById('br-panel-calendar').style.display  = panel === 'calendar'  ? 'flex' : 'none';
+  document.getElementById('br-panel-calendar').style.display = panel === 'calendar'  ? 'flex' : 'none';
+  document.getElementById('br-panel-custom').style.display   = panel === 'custom'    ? 'flex' : 'none';
   if (!brData) return;
   if (panel === 'trailing') brRenderTrailing();
-  else brRenderCalendar();
+  else if (panel === 'calendar') brRenderCalendar();
+  else brRenderCustom();
+}
+
+function brInitCustomDates() {
+  if (!brData) return;
+  const endStr   = brData.as_of || new Date().toISOString().slice(0, 10);
+  const startD   = new Date(endStr + 'T00:00:00Z');
+  startD.setFullYear(startD.getFullYear() - 5);
+  const startStr = startD.toISOString().slice(0, 10);
+  const sEl = document.getElementById('br-custom-start');
+  const eEl = document.getElementById('br-custom-end');
+  if (sEl && !sEl.value) sEl.value = startStr;
+  if (eEl && !eEl.value) eEl.value = endStr;
+}
+
+function brCalcCustom(bm, startDate, endDate) {
+  const data = bm.data;
+  if (!data.length) return null;
+  // NA if benchmark inception is after the requested start (doesn't cover full period)
+  if (data[data.length - 1].d > startDate) return null;
+  const pts = data.filter(p => p.d >= startDate && p.d <= endDate);
+  if (!pts.length) return null;
+  const compound   = brCompound(pts);
+  const months     = pts.length;
+  const annualized = months > 12;
+  return { value: annualized ? brAnn(compound, months / 12) : compound, annualized, months };
+}
+
+function brRenderCustom() {
+  if (!brData) return;
+  const startDate = document.getElementById('br-custom-start')?.value;
+  const endDate   = document.getElementById('br-custom-end')?.value;
+
+  if (!startDate || !endDate || startDate >= endDate) {
+    document.getElementById('br-custom-tbody').innerHTML =
+      `<tr><td colspan="2" style="text-align:center;color:var(--text3);font-family:var(--mono);font-size:11px;padding:20px">Select a valid date range and click Apply.</td></tr>`;
+    return;
+  }
+
+  // Build header label
+  const fmtD  = s => new Date(s + 'T00:00:00Z').toLocaleDateString('en-US', { month:'short', year:'numeric', timeZone:'UTC' });
+  const start = new Date(startDate + 'T00:00:00Z');
+  const end   = new Date(endDate   + 'T00:00:00Z');
+  const months = Math.round((end - start) / (365.25 / 12 * 24 * 60 * 60 * 1000));
+  const isAnn  = months > 12;
+  const colHdr = `${fmtD(startDate)} – ${fmtD(endDate)}${isAnn ? ' (ann.)' : ''}`;
+
+  const thead = document.getElementById('br-custom-thead');
+  if (thead) thead.innerHTML =
+    `<th style="text-align:left;min-width:170px">Benchmark</th><th>${colHdr}</th>`;
+
+  const meta = document.getElementById('br-custom-meta');
+  if (meta) meta.textContent = `${months} month${months !== 1 ? 's' : ''}${isAnn ? ' · annualized' : ''}`;
+
+  const tbody = document.getElementById('br-custom-tbody');
+  if (!tbody) return;
+  let html = '', lastGroup = null;
+  for (const bm of brData.benchmarks) {
+    if (bm.group !== lastGroup) {
+      html += `<tr class="mk-group-hdr"><td colspan="2">${bm.group}</td></tr>`;
+      lastGroup = bm.group;
+    }
+    const r = brCalcCustom(bm, startDate, endDate);
+    html += `<tr class="mk-row">
+      <td style="text-align:left;padding-left:10px">${bm.name}</td>
+      <td>${r === null ? '<span style="color:var(--text3);font-size:9px">NA</span>' : brFmt(r.value)}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
 }
 
 // ── Maths ──────────────────────────────────────────────────────────────────
