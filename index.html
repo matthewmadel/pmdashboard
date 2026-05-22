@@ -7640,6 +7640,7 @@ function stCalcRecovery(positions, scenarioStart, scenarioEnd, totalW) {
     }
   }
   if (!recoveryResult) {
+    if (!droppedBelow) return null; // portfolio never had a drawdown — no recovery metric applies
     const pct = ((portVal - 100) / 100 * 100).toFixed(1);
     const ld  = new Date(latestDate + 'T00:00:00Z').toLocaleDateString('en-US', { month:'short', year:'numeric', timeZone:'UTC' });
     return { recovered: false, currentPct: pct, latestDate: ld };
@@ -7678,8 +7679,11 @@ function stReRun() {
   let maxDD = 0;
   if (navSeries.length > 1) {
     let peak = navSeries[0].nav;
-    navSeries.forEach(d => { peak = Math.max(peak, d.nav); maxDD = Math.min(maxDD, d.nav - peak); });
-    maxDD /= 100;
+    navSeries.forEach(d => {
+      peak = Math.max(peak, d.nav);
+      const dd = peak > 0 ? (d.nav - peak) / peak : 0;
+      if (dd < maxDD) maxDD = dd;
+    });
   }
 
   const recovery = stCalcRecovery(valid.map(r=>({ticker:r.ticker, weight:r.nw*100})), startDate, endDate, 100);
@@ -7719,7 +7723,7 @@ function stRenderResults(results, portRet, portPnL, pv, scenLabel, start, end, c
         </div>
         <div class="st-kpi">
           <div class="st-kpi-label">Max Drawdown</div>
-          <div class="st-kpi-val" style="color:var(--red)">${maxDD ? (maxDD*100).toFixed(2)+'%' : '—'}</div>
+          <div class="st-kpi-val" style="color:var(--red)">${maxDD < 0 ? (maxDD*100).toFixed(2)+'%' : '—'}</div>
           <div class="st-kpi-sub">peak-to-trough</div>
         </div>
         <div class="st-kpi">
