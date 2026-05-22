@@ -499,6 +499,20 @@ a      { color: inherit; text-decoration: none; }
 
 /* News cards */
 .news-list { display: flex; flex-direction: column; gap: 1px; }
+.news-meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.news-sentiment { font-family:var(--mono); font-size:9px; font-weight:600; padding:1px 5px; border-radius:3px; }
+.news-sentiment-bull  { background:rgba(76,175,130,0.12); color:var(--green); }
+.news-sentiment-sbull { background:rgba(76,175,130,0.07); color:var(--green); opacity:0.8; }
+.news-sentiment-bear  { background:rgba(224,85,85,0.12);  color:var(--red); }
+.news-sentiment-sbear { background:rgba(224,85,85,0.07);  color:var(--red); opacity:0.8; }
+.news-sentiment-neut  { background:rgba(255,255,255,0.05);color:var(--text3); }
+.news-score { font-family:var(--mono); font-size:9px; color:var(--text3); }
+.news-summary { font-size:10px; color:var(--text3); line-height:1.5; margin-top:3px; }
+.news-tag-monetary { background:rgba(212,164,76,0.1); color:var(--amber); }
+.news-tag-energy   { background:rgba(255,160,50,0.1); color:#ff9f43; }
+.news-refresh-bar  { display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:9px; color:var(--text3); padding:6px 0 10px; }
+.news-refresh-dot  { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .news-item {
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 11px 14px;
@@ -1464,8 +1478,8 @@ a      { color: inherit; text-decoration: none; }
             <span>News &amp; Flows</span><span class="nav-section-arrow">▼</span>
           </div>
           <div class="nav-items">
-            <div class="nav-item" onclick="showPage('news')" data-label="News Flow">
-              <div class="nav-dot"></div>News Flow<span class="nav-item-badge">NWS</span>
+            <div class="nav-item" onclick="showPage('news');newsBoot()" data-label="Market Intelligence">
+              <div class="nav-dot"></div>Market Intelligence<span class="nav-item-badge">NWS</span>
             </div>
             <div class="nav-item" onclick="showPage('cot')" data-label="COT Positioning">
               <div class="nav-dot"></div>COT Positioning<span class="nav-item-badge">COT</span>
@@ -2595,32 +2609,31 @@ a      { color: inherit; text-decoration: none; }
 
 
       <!-- ════════════════════════════════════════
-           PAGE: NEWS FLOW
+           PAGE: MARKET INTELLIGENCE (NEWS)
       ════════════════════════════════════════ -->
       <div class="section-page" id="page-news">
         <div class="page-header">
           <div class="page-title-group">
-            <div class="page-title">News Flow <span class="page-title-badge">NewsAPI</span></div>
-            <div class="page-subtitle">Macro · markets · central banks · geopolitical</div>
+            <div class="page-title">Market Intelligence <span class="page-title-badge">Alpha Vantage</span></div>
+            <div class="page-subtitle">Macro · monetary policy · financial markets · energy — refreshed hourly 8 AM–6 PM ET</div>
           </div>
           <div class="page-controls">
-            <div class="pill-group">
-              <div class="pill active">All</div>
-              <div class="pill">Macro</div>
-              <div class="pill">Rates</div>
-              <div class="pill">Equity</div>
-              <div class="pill">Credit</div>
+            <div class="pill-group" id="news-topic-pills">
+              <div class="pill active" onclick="newsFilter('all',this)">All</div>
+              <div class="pill" onclick="newsFilter('Monetary Policy',this)">Monetary Policy</div>
+              <div class="pill" onclick="newsFilter('Financial Markets',this)">Markets</div>
+              <div class="pill" onclick="newsFilter('Economy - Macro',this)">Macro</div>
+              <div class="pill" onclick="newsFilter('Economy - Fiscal',this)">Fiscal</div>
+              <div class="pill" onclick="newsFilter('Energy & Transportation',this)">Energy</div>
             </div>
           </div>
         </div>
-        <div class="page-body">
-          <div class="news-list">
-            <div class="news-item"><div class="news-item-header"><span class="news-tag news-tag-macro">Macro</span><span class="news-time">2 min ago</span></div><div class="news-headline">Fed officials signal patience on rate cuts as inflation data disappoints for third consecutive month</div><div class="news-source">Reuters · Federal Reserve</div></div>
-            <div class="news-item"><div class="news-item-header"><span class="news-tag news-tag-rates">Rates</span><span class="news-time">14 min ago</span></div><div class="news-headline">10-year Treasury yield climbs to 4.62% as strong jobs report reduces near-term cut expectations</div><div class="news-source">Bloomberg · Fixed Income</div></div>
-            <div class="news-item"><div class="news-item-header"><span class="news-tag news-tag-equity">Equity</span><span class="news-time">31 min ago</span></div><div class="news-headline">Nvidia surges 8% after earnings beat, AI chip demand outlook upgraded for fiscal 2025</div><div class="news-source">FT · Technology</div></div>
-            <div class="news-item"><div class="news-item-header"><span class="news-tag news-tag-macro">Macro</span><span class="news-time">1h ago</span></div><div class="news-headline">ECB signals June cut is likely as European inflation continues to moderate toward 2% target</div><div class="news-source">WSJ · Europe</div></div>
-            <div class="news-item"><div class="news-item-header"><span class="news-tag news-tag-credit">Credit</span><span class="news-time">2h ago</span></div><div class="news-headline">High yield spreads tighten to post-GFC lows amid robust corporate earnings and declining default rates</div><div class="news-source">FT · Credit Markets</div></div>
+        <div class="page-body" style="flex-direction:column;overflow-y:auto;">
+          <div id="news-refresh-bar" class="news-refresh-bar" style="display:none">
+            <div class="news-refresh-dot"></div>
+            <span id="news-refresh-label">—</span>
           </div>
+          <div id="news-list" class="news-list"></div>
         </div>
       </div>
 
@@ -7583,6 +7596,160 @@ window.stUpdateWeight    = stUpdateWeight;
 window.stLoadTemplate    = stLoadTemplate;
 window.stClearPositions  = stClearPositions;
 window.stReRun           = stReRun;
+
+/* ══════════════════════════════════════════════════════════════════════
+   MARKET INTELLIGENCE — News & Sentiment
+══════════════════════════════════════════════════════════════════════ */
+
+const NEWS_DATA_URL = './news_data.json';
+
+const newsState = {
+  articles:    [],
+  filter:      'all',
+  updatedAt:   null,
+  booted:      false,
+  refreshTimer: null,
+};
+
+const NEWS_TOPIC_CSS = {
+  'Monetary Policy':         'news-tag-macro',
+  'Economy - Monetary':      'news-tag-macro',
+  'Economy - Fiscal':        'news-tag-macro',
+  'Economy - Macro':         'news-tag-rates',
+  'Financial Markets':       'news-tag-equity',
+  'Energy & Transportation': 'news-tag-energy',
+};
+
+function newsSentimentCls(label) {
+  const l = (label || '').toLowerCase();
+  if (l === 'bullish')           return 'news-sentiment-bull';
+  if (l === 'somewhat-bullish')  return 'news-sentiment-sbull';
+  if (l === 'bearish')           return 'news-sentiment-bear';
+  if (l === 'somewhat-bearish')  return 'news-sentiment-sbear';
+  return 'news-sentiment-neut';
+}
+
+function newsSentimentLabel(label) {
+  return (label || 'Neutral').replace('Somewhat-', 'Swt. ');
+}
+
+function newsTimeAgo(isoStr) {
+  if (!isoStr) return '—';
+  const diff = (Date.now() - new Date(isoStr)) / 1000;
+  if (diff < 60)   return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+
+function newsTopicTag(primaryTopic) {
+  const css = NEWS_TOPIC_CSS[primaryTopic] || 'news-tag-macro';
+  const label = (primaryTopic || 'General')
+    .replace('Economy - ', '')
+    .replace('Financial Markets', 'Markets')
+    .replace('Energy & Transportation', 'Energy');
+  return `<span class="news-tag ${css}">${label}</span>`;
+}
+
+async function newsLoad() {
+  try {
+    const r = await fetch(NEWS_DATA_URL + '?_=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    newsState.articles  = j.articles || [];
+    newsState.updatedAt = j.updated_at || null;
+  } catch(e) {
+    console.warn('News data not loaded:', e.message);
+  }
+}
+
+function newsRender() {
+  const list = document.getElementById('news-list');
+  const bar  = document.getElementById('news-refresh-bar');
+  const lbl  = document.getElementById('news-refresh-label');
+  if (!list) return;
+
+  // Refresh bar
+  if (bar && lbl) {
+    if (newsState.updatedAt) {
+      bar.style.display = 'flex';
+      lbl.textContent = 'Last refreshed ' + newsTimeAgo(newsState.updatedAt)
+        + '  ·  Hourly · 8 AM–6 PM ET  ·  Alpha Vantage';
+    }
+  }
+
+  const articles = newsState.filter === 'all'
+    ? newsState.articles
+    : newsState.articles.filter(a =>
+        a.primary_topic === newsState.filter ||
+        (a.topics || []).includes(newsState.filter)
+      );
+
+  if (!articles.length) {
+    list.innerHTML = `<div style="padding:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">
+      ${newsState.articles.length === 0
+        ? 'No news data loaded yet — check back after the next hourly refresh.'
+        : 'No articles match the selected filter.'}
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = articles.map(a => {
+    const sentCls   = newsSentimentCls(a.sentiment_label);
+    const sentLbl   = newsSentimentLabel(a.sentiment_label);
+    const score     = typeof a.sentiment_score === 'number'
+                        ? (a.sentiment_score >= 0 ? '+' : '') + a.sentiment_score.toFixed(3)
+                        : '';
+    const topicTag  = newsTopicTag(a.primary_topic);
+    const timeAgo   = newsTimeAgo(a.published);
+    const summary   = a.summary
+                        ? `<div class="news-summary">${a.summary.slice(0, 220)}${a.summary.length > 220 ? '…' : ''}</div>`
+                        : '';
+    return `<div class="news-item">
+      <div class="news-item-header">
+        <div class="news-meta">
+          ${topicTag}
+          <span class="news-sentiment ${sentCls}">${sentLbl}</span>
+          <span class="news-score">${score}</span>
+        </div>
+        <span class="news-time">${timeAgo}</span>
+      </div>
+      <div class="news-headline">
+        <a href="${a.url}" target="_blank" rel="noopener"
+           style="color:var(--text);text-decoration:none;"
+           onmouseover="this.style.color='var(--amber)'"
+           onmouseout="this.style.color='var(--text)'">${a.title}</a>
+      </div>
+      ${summary}
+      <div class="news-source">${a.source}</div>
+    </div>`;
+  }).join('');
+}
+
+function newsFilter(topic, btn) {
+  newsState.filter = topic;
+  document.querySelectorAll('#news-topic-pills .pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  newsRender();
+}
+
+async function newsBoot() {
+  if (!newsState.booted) {
+    newsState.booted = true;
+    await newsLoad();
+    newsRender();
+    // Auto-refresh every 5 minutes while the page is open
+    newsState.refreshTimer = setInterval(async () => {
+      if (document.getElementById('page-news')?.classList.contains('active')) {
+        await newsLoad();
+        newsRender();
+      }
+    }, 5 * 60 * 1000);
+  } else {
+    // Re-render with latest data on each visit
+    newsRender();
+  }
+}
 </script>
 </body>
 </html>
