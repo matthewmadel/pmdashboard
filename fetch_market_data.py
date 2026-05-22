@@ -96,6 +96,8 @@ TICKERS = [
     {"key": "EEM",     "fetch": "EEM",        "name": "MSCI EM",              "panel": "eq"},
     {"key": "^HSI",    "fetch": "^HSI",       "name": "Hang Seng",            "panel": "eq"},
     {"key": "^BVSP",   "fetch": "^BVSP",      "name": "Bovespa",              "panel": "eq"},
+    # Global
+    {"key": "ACWI",    "fetch": "ACWI",       "name": "MSCI ACWI",            "panel": "eq"},
 
     # ── RATES ─────────────────────────────────────────────────────────────────
     {"key": "^IRX",    "fetch": "^IRX",       "name": "U.S. 3M",              "panel": "rates"},

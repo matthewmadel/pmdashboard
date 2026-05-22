@@ -1517,7 +1517,7 @@ a      { color: inherit; text-decoration: none; }
                 <tbody id="mk-tbody-eq"></tbody>
               </table>
             </div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.8;">ETF proxies: EAFE→EFA, MSCI EM→EEM. Yahoo Finance 15-min delay.</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.8;">ETF proxies: EAFE→EFA, MSCI EM→EEM, MSCI ACWI→ACWI. Yahoo Finance 15-min delay.</div>
           </div>
 
           <!-- ── FIXED INCOME ── -->
@@ -3930,6 +3930,7 @@ const TICKERS = [
   {t:'EEM',    n:'MSCI EM',             g:'Emerging Markets',  p:'eq',     d:2, card:true, etf:true},
   {t:'^HSI',   n:'Hang Seng',           g:'Emerging Markets',  p:'eq',     d:2, card:false},
   {t:'^BVSP',  n:'Bovespa',             g:'Emerging Markets',  p:'eq',     d:2, card:false},
+  {t:'ACWI',   n:'MSCI ACWI',          g:'Global',            p:'eq',     d:2, card:true, etf:true},
   // RATES
   {t:'^IRX',   n:'U.S. 3M',             g:'U.S. Treasuries',   p:'rates',  d:3, card:true,  yield:true},
   {t:'^FVX',   n:'U.S. 5Y',             g:'U.S. Treasuries',   p:'rates',  d:3, card:true,  yield:true},
@@ -5878,7 +5879,7 @@ const FE_TICKER_PANEL = {};
   // All tickers tracked in our dashboard panels
   [
     {t:'SPY',p:'eq'},{t:'QQQ',p:'eq'},{t:'IWB',p:'eq'},{t:'IWF',p:'eq'},{t:'IWD',p:'eq'},
-    {t:'IWM',p:'eq'},{t:'EFA',p:'eq'},{t:'FEZ',p:'eq'},{t:'EEM',p:'eq'},
+    {t:'IWM',p:'eq'},{t:'EFA',p:'eq'},{t:'FEZ',p:'eq'},{t:'EEM',p:'eq'},{t:'ACWI',p:'eq'},
     {t:'AGG',p:'credit'},{t:'GOVT',p:'credit'},{t:'LQD',p:'credit'},{t:'MBB',p:'credit'},
     {t:'HYG',p:'credit'},{t:'IAGG',p:'credit'},{t:'EMB',p:'credit'},
     {t:'GC=F',p:'cmd'},{t:'CL=F',p:'cmd'},{t:'BZ=F',p:'cmd'},{t:'NG=F',p:'cmd'},
