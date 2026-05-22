@@ -48,7 +48,7 @@ SHORT_NAMES = {
     "Bloomberg US Corporate Investment Grade":                             "US IG Corp",
     "Bloomberg U.S. Government":                                           "US Government",
     "Bloomberg US Aggregate Securitized - MBS & ABS & CMBS":              "US Securitized",
-    "Bloomberg US Treasury Inflation Protected Notes (TIPS)":              "TIPS",
+    "Bloomberg US Treasury Inflation Protected Notes (TIPS)":              "US TIPS",
     "Bloomberg US Corporate (1-3 Y) (Inception 11/28/2003)":              "US Corp 1-3Y",
     "ICE BofA US Treasury Bill (0-3 M) (USD Unhedged)":                   "T-Bills (0-3M)",
 }
@@ -109,8 +109,8 @@ BENCHMARK_ORDER = [
     "Bloomberg US Aggregate",
     "Bloomberg U.S. Government",
     "Bloomberg US Corporate Investment Grade",
-    "Bloomberg US Aggregate Credit - Corporate - High Yield (BA-B) 2% Issuer Cap",
     "Bloomberg US Aggregate Securitized - MBS & ABS & CMBS",
+    "Bloomberg US Aggregate Credit - Corporate - High Yield (BA-B) 2% Issuer Cap",
     "Bloomberg US Treasury Inflation Protected Notes (TIPS)",
     "Bloomberg US Corporate (1-3 Y) (Inception 11/28/2003)",
     "ICE BofA US Treasury Bill (0-3 M) (USD Unhedged)",
