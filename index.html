@@ -2699,6 +2699,14 @@ a      { color: inherit; text-decoration: none; }
 
           <!-- Trailing Returns Panel -->
           <div id="br-panel-trailing" class="br-panel">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 0 14px;flex-shrink:0;">
+              <label style="font-family:var(--mono);font-size:10px;color:var(--text3)">As of</label>
+              <input type="date" id="br-trailing-asof"
+                style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;"
+                onchange="brRenderTrailing()">
+              <button onclick="document.getElementById('br-trailing-asof').value=brData?.as_of||'';brRenderTrailing();"
+                style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:3px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;cursor:pointer;">Reset</button>
+            </div>
             <div class="data-table-wrap" style="overflow-x:auto;flex:1;">
               <table class="data-table" style="min-width:1020px;">
                 <thead>
@@ -7754,7 +7762,9 @@ async function brBoot() {
   // Update subtitle
   const sub = document.getElementById('br-subtitle');
   if (sub && brData) sub.textContent = `${brData.benchmarks.length} benchmarks · as of ${brData.as_of}`;
-  // Seed custom date inputs on first load
+  // Seed date inputs on first load
+  const taEl = document.getElementById('br-trailing-asof');
+  if (taEl && !taEl.value && brData?.as_of) taEl.value = brData.as_of;
   brInitCustomDates();
   // Render active panel
   if (brActivePanel === 'trailing') brRenderTrailing();
@@ -7855,17 +7865,19 @@ function brAnn(dec, years) {
   return Math.pow(1 + dec, 1 / years) - 1;
 }
 
-function brCalcTrailing(bm) {
-  const data = bm.data; // newest first
-  if (!data.length || !brData.as_of) return {};
-  const asOf   = brData.as_of;
+function brCalcTrailing(bm, asOf) {
+  // Filter the benchmark's data to everything on or before the asOf date,
+  // so all trailing windows are anchored to the user-selected end point.
+  const allData = bm.data; // newest first, full history
+  const data    = asOf ? allData.filter(p => p.d <= asOf) : allData;
+  if (!data.length || !asOf) return {};
   const year   = asOf.substring(0, 4);
   const mo     = parseInt(asOf.substring(5, 7)) - 1; // 0-indexed
   const qStart = `${year}-${String(Math.floor(mo / 3) * 3 + 1).padStart(2, '0')}-01`;
 
   const m1   = data.length >= 1  ? data[0].r / 100 : null;
-  const qtd  = (() => { const p = data.filter(x => x.d >= qStart && x.d <= asOf); return p.length ? brCompound(p) : null; })();
-  const ytd  = (() => { const p = data.filter(x => x.d.startsWith(year));         return p.length ? brCompound(p) : null; })();
+  const qtd  = (() => { const p = data.filter(x => x.d >= qStart); return p.length ? brCompound(p) : null; })();
+  const ytd  = (() => { const p = data.filter(x => x.d.startsWith(year)); return p.length ? brCompound(p) : null; })();
   const y1   = data.length >= 12  ? brCompound(data.slice(0, 12))                          : null;
   const y3   = data.length >= 36  ? brAnn(brCompound(data.slice(0, 36)),  3)               : null;
   const y5   = data.length >= 60  ? brAnn(brCompound(data.slice(0, 60)),  5)               : null;
@@ -7921,13 +7933,14 @@ function brRenderTrailing() {
   if (!brData) return;
   const tbody = document.getElementById('br-trailing-tbody');
   if (!tbody) return;
+  const asOf = document.getElementById('br-trailing-asof')?.value || brData.as_of;
   let html = '', lastGroup = null;
   for (const bm of brData.benchmarks) {
     if (bm.group !== lastGroup) {
       html += `<tr class="mk-group-hdr"><td colspan="12">${bm.group}</td></tr>`;
       lastGroup = bm.group;
     }
-    const t = brCalcTrailing(bm);
+    const t = brCalcTrailing(bm, asOf);
     html += `<tr class="mk-row">
       <td style="text-align:left;padding-left:10px">${bm.name}</td>
       <td>${brFmt(t.m1)}</td><td>${brFmt(t.qtd)}</td><td>${brFmt(t.ytd)}</td>
