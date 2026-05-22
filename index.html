@@ -1655,7 +1655,7 @@ a      { color: inherit; text-decoration: none; }
                 <thead><tr>
                   <th style="text-align:left;min-width:160px">Asset</th>
                   <th>Ticker</th><th>Last</th><th>1D</th><th>5D</th><th>MTD</th><th>1M</th>
-                  <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y (ann.)</th><th>5Y (ann.)</th>
+                  <th>QTD</th><th>3M</th><th>YTD</th><th>1Y</th><th>3Y (ann.)</th><th>5Y (ann.)</th><th>10Y (ann.)</th>
                 </tr></thead>
                 <tbody id="crypto-tbody"></tbody>
               </table>
@@ -3900,7 +3900,7 @@ const CRYPTO_TICKERS = [
   {t:'BNB-USD', n:'BNB',      d:2},
   {t:'SOL-USD', n:'Solana',   d:2},
 ];
-const MK_TABLE_PERIODS_CRYPTO = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y'];
+const MK_TABLE_PERIODS_CRYPTO = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y','10Y'];
 let cryptoState = { prices:{}, rawHistory:{}, selected:null, period:'1Y', booted:false };
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -3912,7 +3912,7 @@ let cryptoState = { prices:{}, rawHistory:{}, selected:null, period:'1Y', booted
 
 const MK_PANELS = ['eq','credit','cmd','fx','vol'];
 const MK_PERIODS = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y','7Y','10Y','20Y','30Y','All'];
-const MK_TABLE_PERIODS = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y'];
+const MK_TABLE_PERIODS = ['1D','5D','MTD','1M','QTD','3M','YTD','1Y','3Y','5Y','10Y'];
 
 const TICKERS = [
   // EQUITIES
@@ -4107,7 +4107,7 @@ function mkRenderTable(panel) {
   let html='', lastGroup=null;
   items.forEach(item => {
     if (item.g !== lastGroup) {
-      html += `<tr class="mk-group-hdr"><td colspan="12">${item.g}</td></tr>`;
+      html += `<tr class="mk-group-hdr"><td colspan="13">${item.g}</td></tr>`;
       lastGroup = item.g;
     }
     const q = mkState.prices[item.t];
@@ -4439,7 +4439,8 @@ function mkCalcReturn(rows, period) {
     for (let i = rows.length - 1; i >= 0; i--) {
       if (rows[i].date <= startDate) { startRow = rows[i]; break; }
     }
-    if (!startRow) startRow = rows[0];
+    // No row at/before the period start → data doesn't cover the full period
+    if (!startRow) return 'NA';
   } else {
     startRow = rows[0];
   }
@@ -4596,7 +4597,7 @@ mkRenderTable = function(panel) {
   }
   items.forEach(item => {
     if (item.g !== lastGroup) {
-      html += `<tr class="mk-group-hdr"><td colspan="13">${item.g}</td></tr>`;
+      html += `<tr class="mk-group-hdr"><td colspan="14">${item.g}</td></tr>`;
       lastGroup = item.g;
     }
     const q = mkState.prices[item.t];
@@ -4609,6 +4610,7 @@ mkRenderTable = function(panel) {
         return `<td>${q ? mkFmtChg(q.changePct) : '<span style="color:var(--text3)">—</span>'}</td>`;
       }
       const ret = rows ? mkCalcReturn(rows, period) : null;
+      if (ret === 'NA') return `<td><span style="color:var(--text3);font-size:9px">NA</span></td>`;
       return `<td>${ret != null ? mkFmtChg(ret) : '<span style="color:var(--text3)">—</span>'}</td>`;
     }).join('');
     html += `<tr class="mk-row"${sel} onclick="mkSelectTicker('${panel}','${item.t}')" style="cursor:pointer">
@@ -4747,6 +4749,7 @@ function cryptoRenderTable() {
       }
       const ret = rows ? mkCalcReturn(rows, period) : null;
       if (ret == null) return '<td>—</td>';
+      if (ret === 'NA') return `<td><span style="color:var(--text3);font-size:9px">NA</span></td>`;
       const cls = ret > 0.05 ? 'up' : ret < -0.05 ? 'dn' : 'flat';
       return `<td><span class="${cls}">${ret>=0?'+':''}${ret.toFixed(2)}%</span></td>`;
     }).join('');
