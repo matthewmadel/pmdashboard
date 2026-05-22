@@ -498,7 +498,7 @@ a      { color: inherit; text-decoration: none; }
 .tool-card-meta::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--text3); }
 
 /* News cards */
-/* ── Benchmark Returns ──────────────────────────────────────────────── */
+/* ── Index Returns ──────────────────────────────────────────────────── */
 .br-panel { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
 .br-panel .data-table-wrap { flex:1; overflow:auto; }
 .br-footnote { font-family:var(--mono); font-size:9px; color:var(--text3); padding:6px 0 10px; flex-shrink:0; }
@@ -1480,8 +1480,11 @@ a      { color: inherit; text-decoration: none; }
             <div class="nav-item" onclick="showPage('stress-test');stBoot()" data-label="Stress Tester">
               <div class="nav-dot"></div>Stress Tester<span class="nav-item-badge">ST</span>
             </div>
-            <div class="nav-item" onclick="showPage('benchmark-returns');brBoot()" data-label="Benchmark Returns">
-              <div class="nav-dot"></div>Benchmark Returns<span class="nav-item-badge">BM</span>
+            <div class="nav-item" onclick="showPage('benchmark-returns');brBoot()" data-label="Index Returns">
+              <div class="nav-dot"></div>Index Returns<span class="nav-item-badge">IDX</span>
+            </div>
+            <div class="nav-item" onclick="showPage('benchmark-builder');bbBoot()" data-label="Benchmark Builder">
+              <div class="nav-dot"></div>Benchmark Builder<span class="nav-item-badge">BB</span>
             </div>
           </div>
         </div>
@@ -2684,7 +2687,7 @@ a      { color: inherit; text-decoration: none; }
       <div class="section-page" id="page-benchmark-returns">
         <div class="page-header">
           <div class="page-title-group">
-            <div class="page-title">Benchmark Returns <span class="page-title-badge">Monthly</span></div>
+            <div class="page-title">Index Returns <span class="page-title-badge">Monthly</span></div>
             <div class="page-subtitle" id="br-subtitle">26 benchmarks · loading…</div>
           </div>
           <div class="page-controls">
@@ -2757,6 +2760,85 @@ a      { color: inherit; text-decoration: none; }
 
         </div>
       </div><!-- /page-benchmark-returns -->
+
+      <!-- ════════════════════════════════════════
+           PAGE: BENCHMARK BUILDER
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-benchmark-builder">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Benchmark Builder <span class="page-title-badge">Custom</span></div>
+            <div class="page-subtitle">Blend any indices from Index Returns · weights must sum to 100%</div>
+          </div>
+        </div>
+        <div class="page-body" style="flex-direction:column;overflow:hidden;">
+
+          <!-- Saved benchmark selector -->
+          <div id="bb-pills" style="display:flex;gap:6px;flex-wrap:wrap;padding:10px 0 14px;flex-shrink:0;align-items:center;"></div>
+
+          <!-- Editor + Results stacked, scrollable together -->
+          <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:0;">
+
+            <!-- Composition editor -->
+            <div style="flex-shrink:0;border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-bottom:14px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                <label style="font-family:var(--mono);font-size:10px;color:var(--text3)">Name</label>
+                <input id="bb-name" type="text" maxlength="60"
+                  style="flex:1;min-width:160px;max-width:320px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
+                <span id="bb-weight-total" style="font-family:var(--mono);font-size:11px;margin-left:auto;"></span>
+              </div>
+              <table style="width:100%;border-collapse:collapse;" id="bb-editor-table">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--border);">
+                    <th style="text-align:left;font-family:var(--mono);font-size:9px;color:var(--text3);padding:0 0 6px;font-weight:400;">INDEX</th>
+                    <th style="text-align:right;font-family:var(--mono);font-size:9px;color:var(--text3);padding:0 0 6px;font-weight:400;width:90px;">WEIGHT %</th>
+                    <th style="width:28px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="bb-editor-body"></tbody>
+              </table>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                <button onclick="bbAddComponent()"
+                  style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:3px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;cursor:pointer;">+ Add Index</button>
+                <div style="margin-left:auto;display:flex;gap:8px;">
+                  <button onclick="bbCalculate()"
+                    style="background:var(--amber);color:#000;border:none;padding:4px 14px;border-radius:4px;font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;">Calculate</button>
+                  <button onclick="bbSave()"
+                    style="background:transparent;border:1px solid var(--amber);color:var(--amber);padding:4px 12px;border-radius:4px;font-family:var(--mono);font-size:11px;cursor:pointer;">Save</button>
+                  <button onclick="bbDeleteActive()" id="bb-delete-btn"
+                    style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:4px 12px;border-radius:4px;font-family:var(--mono);font-size:11px;cursor:pointer;">Delete</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Results -->
+            <div style="flex-shrink:0;">
+              <div style="display:flex;gap:6px;margin-bottom:10px;" id="bb-result-pills">
+                <div class="pill active" onclick="bbResultTab('trailing',this)">Trailing Returns</div>
+                <div class="pill" onclick="bbResultTab('calendar',this)">Calendar Year</div>
+              </div>
+              <div id="bb-panel-trailing">
+                <div class="data-table-wrap" style="overflow-x:auto;">
+                  <table class="data-table" style="min-width:1020px;">
+                    <thead><tr>
+                      <th style="text-align:left;min-width:170px">Benchmark</th>
+                      <th>1M</th><th>QTD</th><th>YTD</th><th>1Y</th>
+                      <th>3Y (ann.)</th><th>5Y (ann.)</th><th>10Y (ann.)</th><th>20Y (ann.)</th><th>30Y (ann.)</th><th>ITD (ann.)</th>
+                    </tr></thead>
+                    <tbody id="bb-trailing-tbody"></tbody>
+                  </table>
+                </div>
+                <div class="br-footnote">Periods >1Y annualized. NA = insufficient history. Monthly returns only.</div>
+              </div>
+              <div id="bb-panel-calendar" style="display:none;">
+                <div class="data-table-wrap" style="overflow-x:auto;" id="bb-calendar-wrap"></div>
+                <div class="br-footnote">Calendar year returns. Current year partial. Color intensity reflects magnitude.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div><!-- /page-benchmark-builder -->
 
 
       <!-- ════════════════════════════════════════
@@ -7989,6 +8071,295 @@ function brRenderCalendar() {
     tbody += `</tr>`;
   }
 
+  wrap.innerHTML = `<table class="data-table" style="min-width:${170 + years.length * 58}px;">
+    <thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BENCHMARK BUILDER
+══════════════════════════════════════════════════════════════════════ */
+
+const BB_DEFAULTS = [
+  { id:'bb_6040', name:'60/40 ACWI / AGG', components:[{name:'MSCI ACWI',weight:60},{name:'Bloomberg US Agg',weight:40}] },
+  { id:'bb_6535', name:'65/35 ACWI / AGG', components:[{name:'MSCI ACWI',weight:65},{name:'Bloomberg US Agg',weight:35}] },
+  { id:'bb_7030', name:'70/30 ACWI / AGG', components:[{name:'MSCI ACWI',weight:70},{name:'Bloomberg US Agg',weight:30}] },
+  { id:'bb_7525', name:'75/25 ACWI / AGG', components:[{name:'MSCI ACWI',weight:75},{name:'Bloomberg US Agg',weight:25}] },
+  { id:'bb_8020', name:'80/20 ACWI / AGG', components:[{name:'MSCI ACWI',weight:80},{name:'Bloomberg US Agg',weight:20}] },
+];
+
+const BB_LS_KEY = 'bb_custom_benchmarks';
+let bbState = {
+  benchmarks: [],   // all active benchmarks (defaults + user-saved)
+  activeId:   null,
+  resultPanel:'trailing',
+  blended:    {},   // id → [{d,r},...] synthetic series
+};
+let bbBooted = false;
+
+// ── Boot & data ────────────────────────────────────────────────────────────
+
+async function bbBoot() {
+  if (!bbBooted) {
+    bbBooted = true;
+    // Reuse Index Returns data load
+    await brBoot();
+  }
+  // Merge defaults + user-saved (localStorage)
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem(BB_LS_KEY) || '[]'); } catch(e) {}
+  // Defaults always present; user benchmarks appended after
+  const defaultIds = new Set(BB_DEFAULTS.map(b => b.id));
+  bbState.benchmarks = [
+    ...BB_DEFAULTS,
+    ...saved.filter(b => !defaultIds.has(b.id)),
+  ];
+  // Pre-compute blended series for all benchmarks
+  for (const bm of bbState.benchmarks) bbState.blended[bm.id] = bbBlendSeries(bm.components);
+  // Select first by default
+  if (!bbState.activeId) bbState.activeId = bbState.benchmarks[0]?.id;
+  bbRenderPills();
+  bbLoadEditor(bbState.activeId);
+  bbRenderResults();
+}
+
+// ── Blending ───────────────────────────────────────────────────────────────
+
+function bbBlendSeries(components) {
+  if (!brData || !components?.length) return null;
+  // Resolve each component to its data array
+  const resolved = components.map(c => ({
+    weight: c.weight,
+    data:   brData.benchmarks.find(b => b.name === c.name)?.data || [],
+  }));
+  if (resolved.some(c => !c.data.length)) return null;
+  // Build date → return maps per component
+  const maps = resolved.map(c => Object.fromEntries(c.data.map(p => [p.d, p.r])));
+  // Intersection of dates where every component has a value
+  const dates = resolved[0].data.map(p => p.d).filter(d => resolved.every((_, i) => maps[i][d] != null));
+  if (!dates.length) return null;
+  // Weighted average return for each date
+  return dates.map(d => ({
+    d,
+    r: +resolved.reduce((s, c, i) => s + (c.weight / 100) * maps[i][d], 0).toFixed(6),
+  }));  // already newest-first because source data is newest-first
+}
+
+// ── Pills ──────────────────────────────────────────────────────────────────
+
+function bbRenderPills() {
+  const el = document.getElementById('bb-pills');
+  if (!el) return;
+  el.innerHTML = bbState.benchmarks.map(bm =>
+    `<div class="pill${bm.id === bbState.activeId ? ' active' : ''}"
+      onclick="bbSelectBenchmark('${bm.id}')">${bm.name}</div>`
+  ).join('') +
+  `<div class="pill" onclick="bbNewBenchmark()" style="border-style:dashed">+ New</div>`;
+}
+
+function bbSelectBenchmark(id) {
+  bbState.activeId = id;
+  bbRenderPills();
+  bbLoadEditor(id);
+  bbRenderResults();
+}
+
+// ── Editor ─────────────────────────────────────────────────────────────────
+
+function bbLoadEditor(id) {
+  const bm = bbState.benchmarks.find(b => b.id === id);
+  if (!bm) return;
+  document.getElementById('bb-name').value = bm.name;
+  // Clone components so edits don't mutate the saved state until Save
+  bbState._editComponents = bm.components.map(c => ({...c}));
+  bbRenderEditorRows();
+  // Hide Delete for default benchmarks
+  const del = document.getElementById('bb-delete-btn');
+  if (del) del.style.display = BB_DEFAULTS.some(d => d.id === id) ? 'none' : '';
+}
+
+function bbRenderEditorRows() {
+  const indices = brData?.benchmarks.map(b => b.name) || [];
+  const tbody = document.getElementById('bb-editor-body');
+  if (!tbody) return;
+  tbody.innerHTML = (bbState._editComponents || []).map((c, i) => `
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:6px 0;">
+        <select onchange="bbState._editComponents[${i}].name=this.value;bbUpdateTotal()"
+          style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:3px 6px;border-radius:4px;width:100%;max-width:320px;">
+          ${indices.map(n => `<option${n===c.name?' selected':''}>${n}</option>`).join('')}
+        </select>
+      </td>
+      <td style="padding:6px 0;text-align:right;">
+        <input type="number" min="0" max="100" step="0.1" value="${c.weight}"
+          onchange="bbState._editComponents[${i}].weight=+this.value;bbUpdateTotal()"
+          style="width:70px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:3px 6px;border-radius:4px;text-align:right;">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">%</span>
+      </td>
+      <td style="padding:6px 0 6px 8px;">
+        <button onclick="bbRemoveComponent(${i})"
+          style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">×</button>
+      </td>
+    </tr>`).join('');
+  bbUpdateTotal();
+}
+
+function bbUpdateTotal() {
+  const total = (bbState._editComponents || []).reduce((s, c) => s + (+c.weight || 0), 0);
+  const el = document.getElementById('bb-weight-total');
+  if (!el) return;
+  const ok = Math.abs(total - 100) < 0.01;
+  el.textContent = `Total: ${total.toFixed(1)}%`;
+  el.style.color = ok ? 'var(--green)' : 'var(--red)';
+}
+
+function bbAddComponent() {
+  const first = brData?.benchmarks[0]?.name || '';
+  bbState._editComponents = [...(bbState._editComponents || []), { name: first, weight: 0 }];
+  bbRenderEditorRows();
+}
+
+function bbRemoveComponent(i) {
+  bbState._editComponents.splice(i, 1);
+  bbRenderEditorRows();
+}
+
+// ── Calculate / Save / Delete ──────────────────────────────────────────────
+
+function bbCalculate() {
+  const total = (bbState._editComponents || []).reduce((s, c) => s + (+c.weight || 0), 0);
+  if (Math.abs(total - 100) > 0.01) {
+    alert(`Weights must sum to 100% (currently ${total.toFixed(1)}%).`);
+    return;
+  }
+  // Update blended series for active benchmark using current editor components
+  bbState.blended[bbState.activeId] = bbBlendSeries(bbState._editComponents);
+  bbRenderResults();
+}
+
+function bbSave() {
+  const total = (bbState._editComponents || []).reduce((s, c) => s + (+c.weight || 0), 0);
+  if (Math.abs(total - 100) > 0.01) {
+    alert(`Weights must sum to 100% (currently ${total.toFixed(1)}%).`);
+    return;
+  }
+  const name = document.getElementById('bb-name')?.value.trim() || 'Custom Benchmark';
+  const bm = bbState.benchmarks.find(b => b.id === bbState.activeId);
+  if (bm) {
+    bm.name = name;
+    bm.components = bbState._editComponents.map(c => ({...c}));
+    bbState.blended[bm.id] = bbBlendSeries(bm.components);
+  }
+  bbPersist();
+  bbRenderPills();
+  bbRenderResults();
+}
+
+function bbNewBenchmark() {
+  const id = 'bb_custom_' + Date.now();
+  const bm = { id, name: 'New Benchmark', components: [
+    { name: brData?.benchmarks[0]?.name || '', weight: 100 },
+  ]};
+  bbState.benchmarks.push(bm);
+  bbState.blended[id] = null;
+  bbState.activeId = id;
+  bbPersist();
+  bbRenderPills();
+  bbLoadEditor(id);
+  bbRenderResults();
+}
+
+function bbDeleteActive() {
+  if (BB_DEFAULTS.some(d => d.id === bbState.activeId)) return; // can't delete defaults
+  bbState.benchmarks = bbState.benchmarks.filter(b => b.id !== bbState.activeId);
+  delete bbState.blended[bbState.activeId];
+  bbState.activeId = bbState.benchmarks[0]?.id;
+  bbPersist();
+  bbRenderPills();
+  bbLoadEditor(bbState.activeId);
+  bbRenderResults();
+}
+
+function bbPersist() {
+  // Only persist user-created benchmarks (not defaults)
+  const defaultIds = new Set(BB_DEFAULTS.map(b => b.id));
+  const custom = bbState.benchmarks.filter(b => !defaultIds.has(b.id));
+  try { localStorage.setItem(BB_LS_KEY, JSON.stringify(custom)); } catch(e) {}
+}
+
+// ── Results ────────────────────────────────────────────────────────────────
+
+function bbResultTab(panel, btn) {
+  bbState.resultPanel = panel;
+  document.querySelectorAll('#bb-result-pills .pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('bb-panel-trailing').style.display = panel === 'trailing' ? '' : 'none';
+  document.getElementById('bb-panel-calendar').style.display  = panel === 'calendar'  ? '' : 'none';
+  bbRenderResults();
+}
+
+function bbRenderResults() {
+  if (bbState.resultPanel === 'trailing') bbRenderBBTrailing();
+  else bbRenderBBCalendar();
+}
+
+function bbRenderBBTrailing() {
+  const tbody = document.getElementById('bb-trailing-tbody');
+  if (!tbody) return;
+  let html = '';
+  for (const bm of bbState.benchmarks) {
+    const series = bbState.blended[bm.id];
+    if (!series) {
+      html += `<tr class="mk-row">
+        <td style="text-align:left;padding-left:10px;font-weight:${bm.id===bbState.activeId?'600':'400'}">${bm.name}</td>
+        <td colspan="10" style="color:var(--text3);font-family:var(--mono);font-size:9px">No data — check index names and weights</td>
+      </tr>`;
+      continue;
+    }
+    const synth = { data: series };
+    const t = brCalcTrailing(synth, brData.as_of);
+    const bold = bm.id === bbState.activeId ? 'font-weight:600' : '';
+    html += `<tr class="mk-row">
+      <td style="text-align:left;padding-left:10px;${bold}">${bm.name}</td>
+      <td>${brFmt(t.m1)}</td><td>${brFmt(t.qtd)}</td><td>${brFmt(t.ytd)}</td>
+      <td>${brFmt(t.y1)}</td><td>${brFmt(t.y3)}</td><td>${brFmt(t.y5)}</td>
+      <td>${brFmt(t.y10)}</td><td>${brFmt(t.y20)}</td><td>${brFmt(t.y30)}</td>
+      <td>${brFmt(t.inc)}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+function bbRenderBBCalendar() {
+  const wrap = document.getElementById('bb-calendar-wrap');
+  if (!wrap) return;
+  const curYear = new Date().getFullYear();
+  // Find earliest year across all blended series
+  let minYear = curYear;
+  for (const bm of bbState.benchmarks) {
+    const s = bbState.blended[bm.id];
+    if (s?.length) minYear = Math.min(minYear, parseInt(s[s.length - 1].d));
+  }
+  const years = [];
+  for (let y = curYear; y >= minYear; y--) years.push(y);
+  let thead = `<tr><th style="text-align:left;min-width:170px">Benchmark</th>`;
+  for (const y of years) thead += `<th style="min-width:58px">${y === curYear ? y + '*' : y}</th>`;
+  thead += `</tr>`;
+  let tbody = '';
+  for (const bm of bbState.benchmarks) {
+    const series = bbState.blended[bm.id];
+    const bold = bm.id === bbState.activeId ? 'font-weight:600' : '';
+    tbody += `<tr class="mk-row"><td style="text-align:left;padding-left:10px;${bold}">${bm.name}</td>`;
+    if (!series) {
+      tbody += `<td colspan="${years.length}" style="color:var(--text3);font-family:var(--mono);font-size:9px">No data</td>`;
+    } else {
+      const synth = { data: series };
+      for (const y of years) {
+        const v = brCalcCalYear(synth, y);
+        tbody += `<td style="${brHeatStyle(v)}">${brFmtHeat(v)}</td>`;
+      }
+    }
+    tbody += `</tr>`;
+  }
   wrap.innerHTML = `<table class="data-table" style="min-width:${170 + years.length * 58}px;">
     <thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
 }
