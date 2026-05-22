@@ -2341,11 +2341,19 @@ a      { color: inherit; text-decoration: none; }
               <!-- Quick-add templates -->
               <div>
                 <div class="st-lbl">Templates</div>
-                <div style="display:flex;flex-wrap:wrap;gap:5px;">
-                  <button class="mc-add-btn" onclick="stLoadTemplate('6040')" style="width:auto;padding:4px 9px;">60 / 40</button>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;">
+                  <button class="mc-add-btn" onclick="stLoadTemplate('6040')" style="width:auto;padding:4px 9px;">60/40 SPY</button>
                   <button class="mc-add-btn" onclick="stLoadTemplate('rp')" style="width:auto;padding:4px 9px;">Risk Parity</button>
                   <button class="mc-add-btn" onclick="stLoadTemplate('equity')" style="width:auto;padding:4px 9px;">All Equity</button>
                   <button class="mc-add-btn" onclick="stLoadTemplate('ma')" style="width:auto;padding:4px 9px;">Multi-Asset</button>
+                </div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:4px;">ACWI / AGG Benchmarks</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;">
+                  <button class="mc-add-btn" onclick="stLoadTemplate('acwi_6040')" style="width:auto;padding:4px 9px;">60/40</button>
+                  <button class="mc-add-btn" onclick="stLoadTemplate('acwi_6535')" style="width:auto;padding:4px 9px;">65/35</button>
+                  <button class="mc-add-btn" onclick="stLoadTemplate('acwi_7030')" style="width:auto;padding:4px 9px;">70/30</button>
+                  <button class="mc-add-btn" onclick="stLoadTemplate('acwi_7525')" style="width:auto;padding:4px 9px;">75/25</button>
+                  <button class="mc-add-btn" onclick="stLoadTemplate('acwi_8020')" style="width:auto;padding:4px 9px;">80/20</button>
                 </div>
               </div>
 
@@ -2797,9 +2805,14 @@ a      { color: inherit; text-decoration: none; }
                 </thead>
                 <tbody id="bb-editor-body"></tbody>
               </table>
+              <!-- Period indicator (shows which period is being edited in multi-period mode) -->
+              <div id="bb-period-label" style="display:none;font-family:var(--mono);font-size:9px;color:var(--amber);margin-bottom:6px;"></div>
+
               <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;">
                 <button onclick="bbAddComponent()"
                   style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:3px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;cursor:pointer;">+ Add Index</button>
+                <button onclick="bbAddPeriodBreak()"
+                  style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:3px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;cursor:pointer;">+ Add Period Break</button>
                 <div style="margin-left:auto;display:flex;gap:8px;">
                   <button onclick="bbCalculate()"
                     style="background:var(--amber);color:#000;border:none;padding:4px 14px;border-radius:4px;font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;">Calculate</button>
@@ -2809,13 +2822,26 @@ a      { color: inherit; text-decoration: none; }
                     style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:4px 12px;border-radius:4px;font-family:var(--mono);font-size:11px;cursor:pointer;">Delete</button>
                 </div>
               </div>
+
+              <!-- Prior periods list (shown in multi-period mode) -->
+              <div id="bb-periods-list" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:10px;"></div>
             </div>
 
             <!-- Results -->
             <div style="flex-shrink:0;">
-              <div style="display:flex;gap:6px;margin-bottom:10px;" id="bb-result-pills">
-                <div class="pill active" onclick="bbResultTab('trailing',this)">Trailing Returns</div>
-                <div class="pill" onclick="bbResultTab('calendar',this)">Calendar Year</div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+                <div id="bb-result-pills" style="display:flex;gap:6px;">
+                  <div class="pill active" onclick="bbResultTab('trailing',this)">Trailing Returns</div>
+                  <div class="pill" onclick="bbResultTab('calendar',this)">Calendar Year</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+                  <label style="font-family:var(--mono);font-size:10px;color:var(--text3)">As of</label>
+                  <input type="date" id="bb-asof"
+                    style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:3px 7px;border-radius:4px;outline:none;"
+                    onchange="bbRenderResults()">
+                  <button onclick="bbPushToStressTester()"
+                    style="background:transparent;border:1px solid var(--border);color:var(--text2);padding:3px 10px;border-radius:4px;font-family:var(--mono);font-size:10px;cursor:pointer;">→ Stress Tester</button>
+                </div>
               </div>
               <div id="bb-panel-trailing">
                 <div class="data-table-wrap" style="overflow-x:auto;">
@@ -7409,10 +7435,15 @@ const ST_SCENARIOS = [
 ];
 
 const ST_TEMPLATES = {
-  '6040':  [{ ticker:'SPY', weight:60, name:'S&P 500' }, { ticker:'AGG', weight:40, name:'US Aggregate' }],
-  'rp':    [{ ticker:'SPY', weight:25, name:'S&P 500' }, { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:25, name:'Gold' }, { ticker:'DJP', weight:25, name:'Bloomberg Cmdty' }],
-  'equity':[{ ticker:'SPY', weight:40, name:'S&P 500' }, { ticker:'EFA', weight:30, name:'MSCI EAFE' }, { ticker:'EEM', weight:20, name:'MSCI EM' }, { ticker:'IWM', weight:10, name:'Russell 2000' }],
-  'ma':    [{ ticker:'SPY', weight:35, name:'S&P 500' }, { ticker:'EFA', weight:15, name:'MSCI EAFE' }, { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:15, name:'Gold' }, { ticker:'HYG', weight:10, name:'US High Yield' }],
+  '6040':       [{ ticker:'SPY',  weight:60, name:'S&P 500' },     { ticker:'AGG', weight:40, name:'US Aggregate' }],
+  'rp':         [{ ticker:'SPY',  weight:25, name:'S&P 500' },     { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:25, name:'Gold' }, { ticker:'DJP', weight:25, name:'Bloomberg Cmdty' }],
+  'equity':     [{ ticker:'SPY',  weight:40, name:'S&P 500' },     { ticker:'EFA', weight:30, name:'MSCI EAFE' },   { ticker:'EEM', weight:20, name:'MSCI EM' }, { ticker:'IWM', weight:10, name:'Russell 2000' }],
+  'ma':         [{ ticker:'SPY',  weight:35, name:'S&P 500' },     { ticker:'EFA', weight:15, name:'MSCI EAFE' },   { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:15, name:'Gold' }, { ticker:'HYG', weight:10, name:'US High Yield' }],
+  'acwi_6040':  [{ ticker:'ACWI', weight:60, name:'MSCI ACWI' },   { ticker:'AGG', weight:40, name:'US Aggregate' }],
+  'acwi_6535':  [{ ticker:'ACWI', weight:65, name:'MSCI ACWI' },   { ticker:'AGG', weight:35, name:'US Aggregate' }],
+  'acwi_7030':  [{ ticker:'ACWI', weight:70, name:'MSCI ACWI' },   { ticker:'AGG', weight:30, name:'US Aggregate' }],
+  'acwi_7525':  [{ ticker:'ACWI', weight:75, name:'MSCI ACWI' },   { ticker:'AGG', weight:25, name:'US Aggregate' }],
+  'acwi_8020':  [{ ticker:'ACWI', weight:80, name:'MSCI ACWI' },   { ticker:'AGG', weight:20, name:'US Aggregate' }],
 };
 
 const stState = { positions:[], scenarioId:null, customStart:'', customEnd:'' };
@@ -7549,6 +7580,71 @@ function stBuildPortfolioNav(validResults, startDate, endDate) {
   return [...dateMap.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([d,v])=>({ date:d, nav:100*v.wsum/v.wtot }));
 }
 
+/* ── Recovery to high watermark ────────────────────────────────────── */
+function stCalcRecovery(positions, scenarioStart, scenarioEnd, totalW) {
+  if (!positions.length || !totalW) return null;
+  // Build month list from scenarioStart to most recent data across all tickers
+  const allRows = positions.map(p => window.mkState.rawHistory[p.ticker] || []);
+  if (allRows.some(r => !r.length)) return null;
+  const latestDate = allRows.map(r => r[r.length-1].date).sort().at(-1);
+
+  // Start prices at scenarioStart for each ticker
+  const startPrices = {};
+  for (const p of positions) {
+    const rows = window.mkState.rawHistory[p.ticker] || [];
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (rows[i].date <= scenarioStart) { startPrices[p.ticker] = rows[i].close; break; }
+    }
+    if (!startPrices[p.ticker]) return null;
+  }
+
+  // Walk month-end prices from scenarioStart through latestDate
+  let curD = new Date(scenarioStart + 'T00:00:00Z');
+  curD.setDate(1);
+  const endD  = new Date(latestDate + 'T00:00:00Z');
+  let portVal = 100;
+  let prevPrices = {...startPrices};
+  let droppedBelow = false;
+  let recoveryResult = null;
+
+  while (curD <= endD) {
+    const ym = curD.toISOString().slice(0, 7);
+    let monthRet = 0, hasAll = true;
+    for (const p of positions) {
+      const rows = window.mkState.rawHistory[p.ticker] || [];
+      const monthRows = rows.filter(r => r.date.startsWith(ym));
+      if (!monthRows.length || !prevPrices[p.ticker]) { hasAll = false; break; }
+      const curr = monthRows.at(-1).close;
+      monthRet += (p.weight / totalW) * ((curr - prevPrices[p.ticker]) / prevPrices[p.ticker]);
+      prevPrices[p.ticker] = curr;
+    }
+    if (hasAll) {
+      portVal *= (1 + monthRet);
+      if (portVal < 100) droppedBelow = true;
+      if (droppedBelow && portVal >= 100 && !recoveryResult) {
+        const recDate = new Date(ym + '-01T00:00:00Z');
+        const startMs = new Date(scenarioStart + 'T00:00:00Z');
+        const months  = (recDate.getFullYear() - startMs.getFullYear()) * 12 + (recDate.getMonth() - startMs.getMonth());
+        recoveryResult = {
+          date:   recDate.toLocaleDateString('en-US', { month:'short', year:'numeric', timeZone:'UTC' }),
+          months,
+          recovered: true,
+        };
+        break;
+      }
+    }
+    curD.setMonth(curD.getMonth() + 1);
+  }
+
+  if (!recoveryResult) {
+    // Still underwater — report where we stand
+    const pct = ((portVal - 100) / 100 * 100).toFixed(1);
+    return { recovered: false, currentPct: pct,
+             latestDate: new Date(latestDate + 'T00:00:00Z').toLocaleDateString('en-US', {month:'short', year:'numeric', timeZone:'UTC'}) };
+  }
+  return recoveryResult;
+}
+
 function stReRun() {
   if (!stState.scenarioId || !stState.positions.length) { stShowHint(); return; }
   let startDate, endDate, scenLabel;
@@ -7584,7 +7680,8 @@ function stReRun() {
     maxDD /= 100;
   }
 
-  stRenderResults(results, portRet, portPnL, pv, scenLabel, startDate, endDate, valid.length, results.length, maxDD, navSeries);
+  const recovery = stCalcRecovery(valid.map(r=>({ticker:r.ticker, weight:r.nw*100})), startDate, endDate, 100);
+  stRenderResults(results, portRet, portPnL, pv, scenLabel, startDate, endDate, valid.length, results.length, maxDD, navSeries, recovery);
 }
 
 function stShowHint() {
@@ -7593,7 +7690,7 @@ function stShowHint() {
 }
 
 /* ── Render results ─────────────────────────────────────────────────── */
-function stRenderResults(results, portRet, portPnL, pv, scenLabel, start, end, covered, total, maxDD, navSeries) {
+function stRenderResults(results, portRet, portPnL, pv, scenLabel, start, end, covered, total, maxDD, navSeries, recovery) {
   const wrap = document.getElementById('st-results-wrap');
   if (!wrap) return;
   const rc = portRet >= 0 ? 'var(--green)' : 'var(--red)';
@@ -7607,7 +7704,7 @@ function stRenderResults(results, portRet, portPnL, pv, scenLabel, start, end, c
   wrap.innerHTML = `
     <div>
       <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:10px;letter-spacing:0.04em">${scenLabel} &nbsp;·&nbsp; ${start} → ${end}</div>
-      <div class="st-kpi-row">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
         <div class="st-kpi">
           <div class="st-kpi-label">Portfolio Return</div>
           <div class="st-kpi-val" style="color:${rc}">${retStr}</div>
@@ -7626,11 +7723,20 @@ function stRenderResults(results, portRet, portPnL, pv, scenLabel, start, end, c
         <div class="st-kpi">
           <div class="st-kpi-label">Best / Worst</div>
           <div class="st-kpi-val" style="font-size:14px;line-height:1.5">
-            <span style="color:var(--green)">${best ? (best.ret>=0?'+':''+(best.ret*100).toFixed(1)+'%') : '—'}</span>
+            <span style="color:var(--green)">${best ? (best.ret>=0?'+':'')+(best.ret*100).toFixed(1)+'%' : '—'}</span>
             <span style="color:var(--text3);font-size:10px"> / </span>
             <span style="color:var(--red)">${worst ? (worst.ret*100).toFixed(1)+'%' : '—'}</span>
           </div>
           <div class="st-kpi-sub">${best?.ticker||''} / ${worst?.ticker||''}</div>
+        </div>
+        <div class="st-kpi">
+          <div class="st-kpi-label">Recovery to HWM</div>
+          ${!recovery
+            ? `<div class="st-kpi-val" style="font-size:14px;color:var(--text3)">—</div><div class="st-kpi-sub">no data</div>`
+            : recovery.recovered
+              ? `<div class="st-kpi-val" style="font-size:16px;color:var(--green)">${recovery.date}</div><div class="st-kpi-sub">${recovery.months} months from start</div>`
+              : `<div class="st-kpi-val" style="font-size:14px;color:var(--amber)">Not recovered</div><div class="st-kpi-sub">${recovery.currentPct}% vs HWM · as of ${recovery.latestDate}</div>`
+          }
         </div>
       </div>
       ${covMsg}
@@ -8363,6 +8469,253 @@ function bbRenderBBCalendar() {
   wrap.innerHTML = `<table class="data-table" style="min-width:${170 + years.length * 58}px;">
     <thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
 }
+
+// ── BB as-of date wiring ───────────────────────────────────────────────────
+
+// Override bbRenderBBTrailing to respect the as-of date selector
+const _bbRenderBBTrailingOrig = bbRenderBBTrailing;
+bbRenderBBTrailing = function() {
+  if (!brData) return;
+  const tbody = document.getElementById('bb-trailing-tbody');
+  if (!tbody) return;
+  // Seed as-of input on first render
+  const asofEl = document.getElementById('bb-asof');
+  if (asofEl && !asofEl.value && brData.as_of) asofEl.value = brData.as_of;
+  const asOf = asofEl?.value || brData.as_of;
+
+  let html = '';
+  for (const bm of bbState.benchmarks) {
+    const series = bbState.blended[bm.id];
+    if (!series) {
+      html += `<tr class="mk-row">
+        <td style="text-align:left;padding-left:10px;font-weight:${bm.id===bbState.activeId?'600':'400'}">${bm.name}</td>
+        <td colspan="10" style="color:var(--text3);font-family:var(--mono);font-size:9px">No data — check index names and weights</td>
+      </tr>`;
+      continue;
+    }
+    const synth = { data: series };
+    const t = brCalcTrailing(synth, asOf);
+    const bold = bm.id === bbState.activeId ? 'font-weight:600' : '';
+    html += `<tr class="mk-row">
+      <td style="text-align:left;padding-left:10px;${bold}">${bm.name}</td>
+      <td>${brFmt(t.m1)}</td><td>${brFmt(t.qtd)}</td><td>${brFmt(t.ytd)}</td>
+      <td>${brFmt(t.y1)}</td><td>${brFmt(t.y3)}</td><td>${brFmt(t.y5)}</td>
+      <td>${brFmt(t.y10)}</td><td>${brFmt(t.y20)}</td><td>${brFmt(t.y30)}</td>
+      <td>${brFmt(t.inc)}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+};
+
+// ── Sub-period reconstitution ──────────────────────────────────────────────
+
+function bbGetActivePeriods() {
+  const bm = bbState.benchmarks.find(b => b.id === bbState.activeId);
+  if (!bm) return [];
+  if (bm.periods?.length) return bm.periods;
+  // Single-period benchmark — normalise to periods format
+  return [{ end: null, components: bm.components || [] }];
+}
+
+function bbAddPeriodBreak() {
+  // Get or create periods array for active benchmark
+  const bm = bbState.benchmarks.find(b => b.id === bbState.activeId);
+  if (!bm) return;
+  // Convert to multi-period if needed
+  if (!bm.periods) {
+    bm.periods = [{ end: null, components: (bm.components || []).map(c => ({...c})) }];
+    delete bm.components;
+  }
+  // Insert a new EARLIER period before the last one
+  const currentComponents = bm.periods.at(-1).components.map(c => ({...c}));
+  const breakDate = prompt('Enter period break date (YYYY-MM-DD):\nComponents before this date will form the earlier period.', '2020-01-01');
+  if (!breakDate || !/^\d{4}-\d{2}-\d{2}$/.test(breakDate)) return;
+  // Find the position to insert (maintain chronological order of ends)
+  const insertBefore = bm.periods.findIndex(p => !p.end || p.end > breakDate);
+  bm.periods.splice(insertBefore, 0, { end: breakDate, components: currentComponents });
+  bbRenderPeriodsUI();
+  bbState.blended[bm.id] = bbBlendSeries(bm);
+  bbRenderResults();
+}
+
+function bbRenderPeriodsUI() {
+  const bm = bbState.benchmarks.find(b => b.id === bbState.activeId);
+  const listEl = document.getElementById('bb-periods-list');
+  const labelEl = document.getElementById('bb-period-label');
+  if (!listEl) return;
+
+  if (!bm?.periods || bm.periods.length <= 1) {
+    listEl.style.display = 'none';
+    if (labelEl) labelEl.style.display = 'none';
+    return;
+  }
+
+  listEl.style.display = '';
+  // Show all periods except the last (current) — those are prior periods
+  const prior = bm.periods.slice(0, -1);
+  listEl.innerHTML = `<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:6px;">PRIOR PERIODS</div>` +
+    prior.map((p, i) => {
+      const summary = p.components.map(c => `${c.name} ${c.weight}%`).join(', ');
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Through</span>
+        <input type="date" value="${p.end||''}"
+          style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:3px;"
+          onchange="bbUpdatePeriodEnd(${i},this.value)">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${summary}</span>
+        <button onclick="bbEditPeriod(${i})" style="background:transparent;border:1px solid var(--border);color:var(--text3);padding:2px 8px;border-radius:3px;font-family:var(--mono);font-size:9px;cursor:pointer;">Edit</button>
+        <button onclick="bbDeletePeriod(${i})" style="background:transparent;border:none;color:var(--text3);padding:2px 4px;font-size:13px;cursor:pointer;">×</button>
+      </div>`;
+    }).join('');
+
+  // Label which period is active in the editor
+  if (labelEl) {
+    labelEl.style.display = '';
+    const editIdx = bbState._editingPeriodIdx ?? bm.periods.length - 1;
+    labelEl.textContent = editIdx === bm.periods.length - 1
+      ? 'Editing: Current period (most recent)'
+      : `Editing: Period through ${bm.periods[editIdx].end}`;
+  }
+}
+
+function bbUpdatePeriodEnd(idx, newDate) {
+  const bm = bbState.benchmarks.find(b => b.id === bbState.activeId);
+  if (!bm?.periods) return;
+  bm.periods[idx].end = newDate;
+  bbState.blended[bm.id] = bbBlendSeries(bm);
+  bbRenderResults();
+}
+
+function bbEditPeriod(idx) {
+  const bm = bbState.benchmarks.find(b => b.id === bbState.activeId);
+  if (!bm?.periods) return;
+  bbState._editingPeriodIdx = idx;
+  bbState._editComponents = bm.periods[idx].components.map(c => ({...c}));
+  bbRenderEditorRows();
+  bbRenderPeriodsUI();
+}
+
+function bbDeletePeriod(idx) {
+  const bm = bbState.benchmarks.find(b => b.id === bbState.activeId);
+  if (!bm?.periods || bm.periods.length <= 1) return;
+  bm.periods.splice(idx, 1);
+  if (bm.periods.length === 1) {
+    // Revert to simple mode
+    bm.components = bm.periods[0].components;
+    delete bm.periods;
+  }
+  bbState._editingPeriodIdx = null;
+  bbState._editComponents = (bm.periods?.at(-1) || bm).components.map(c => ({...c}));
+  bbRenderEditorRows();
+  bbRenderPeriodsUI();
+  bbState.blended[bm.id] = bbBlendSeries(bm);
+  bbRenderResults();
+}
+
+// Updated bbSave to handle multi-period
+const _bbSaveOrig = bbSave;
+bbSave = function() {
+  const total = (bbState._editComponents || []).reduce((s, c) => s + (+c.weight || 0), 0);
+  if (Math.abs(total - 100) > 0.01) { alert(`Weights must sum to 100% (currently ${total.toFixed(1)}%).`); return; }
+  const name = document.getElementById('bb-name')?.value.trim() || 'Custom Benchmark';
+  const bm = bbState.benchmarks.find(b => b.id === bbState.activeId);
+  if (!bm) return;
+  bm.name = name;
+  if (bm.periods) {
+    const idx = bbState._editingPeriodIdx ?? bm.periods.length - 1;
+    bm.periods[idx].components = bbState._editComponents.map(c => ({...c}));
+  } else {
+    bm.components = bbState._editComponents.map(c => ({...c}));
+  }
+  bbState._editingPeriodIdx = null;
+  bbState.blended[bm.id] = bbBlendSeries(bm);
+  bbPersist();
+  bbRenderPills();
+  bbRenderPeriodsUI();
+  bbRenderResults();
+};
+
+// Updated bbBlendSeries to handle multi-period benchmarks
+const _bbBlendSeriesOrig = bbBlendSeries;
+bbBlendSeries = function(bmOrComponents) {
+  // Accept either a benchmark object {periods?:[], components?:[]} or a components array
+  const bm = Array.isArray(bmOrComponents) ? { components: bmOrComponents } : bmOrComponents;
+  if (!bm.periods || bm.periods.length === 0) {
+    return _bbBlendSeriesOrig(bm.components || bm);
+  }
+  // Multi-period: compute each period separately then stitch together
+  const allPoints = {};
+  let prevEnd = null;
+  for (const period of bm.periods) {
+    const series = _bbBlendSeriesOrig(period.components);
+    if (!series) continue;
+    for (const pt of series) {
+      if (prevEnd && pt.d <= prevEnd) continue;
+      if (period.end && pt.d > period.end) continue;
+      allPoints[pt.d] = pt.r;
+    }
+    prevEnd = period.end;
+  }
+  return Object.entries(allPoints)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([d, r]) => ({ d, r }));
+};
+
+// ── Push to Stress Tester ─────────────────────────────────────────────────
+
+const BB_TO_TICKER = {
+  'MSCI ACWI':        'ACWI', 'MSCI World':       null,  'MSCI USA':         null,
+  'MSCI EAFE':        'EFA',  'MSCI World ex USA': null,  'MSCI EM':          'EEM',
+  'S&P 500':          'SPY',  'Russell 3000':      null,  'Russell 1000':     'IWB',
+  'R1000 Growth':     'IWF',  'R1000 Value':       'IWD', 'Russell 2000':     'IWM',
+  'DJIA':             null,   'Bloomberg Cmdty':   'DJP', 'DJ US RESI':       null,
+  'HFRI FoF Composite':null,  'HFRI FoF Conservative':null,'HFRI FoF Strategic':null,
+  'Bloomberg US Agg': 'AGG',  'US Government':     'GOVT','US IG Corp':       'LQD',
+  'US High Yield':    'HYG',  'US Securitized':    'MBB', 'US TIPS':          null,
+  'US Corp 1-3Y':     null,   'T-Bills (0-3M)':    null,
+};
+
+function bbPushToStressTester() {
+  const bm = bbState.benchmarks.find(b => b.id === bbState.activeId);
+  if (!bm) return;
+  // Use the most recent period's components
+  const comps = bm.periods ? bm.periods.at(-1).components : (bm.components || []);
+  const totalW = comps.reduce((s, c) => s + (+c.weight || 0), 0);
+  if (!totalW) { alert('Benchmark has no components.'); return; }
+
+  const positions = [];
+  const unmapped = [];
+  for (const c of comps) {
+    const ticker = BB_TO_TICKER[c.name];
+    if (ticker) {
+      positions.push({ ticker, weight: c.weight, name: c.name });
+    } else {
+      unmapped.push(c.name);
+    }
+  }
+  if (!positions.length) {
+    alert('No components could be mapped to market tickers. The stress tester uses ETF price data.\n\nUnmapped: ' + unmapped.join(', '));
+    return;
+  }
+  if (unmapped.length) {
+    const proceed = confirm(`${unmapped.length} component(s) have no ETF equivalent and will be excluded:\n${unmapped.join(', ')}\n\nProceed with the remaining ${positions.length} component(s)?`);
+    if (!proceed) return;
+  }
+  // Navigate to stress tester and populate positions
+  showPage('stress-test');
+  stBoot().then(() => {
+    stState.positions = positions;
+    stRenderPositions();
+    stReRun();
+  });
+}
+
+// Updated bbLoadEditor to reset period state and refresh periods UI
+const _bbLoadEditorOrig = bbLoadEditor;
+bbLoadEditor = function(id) {
+  bbState._editingPeriodIdx = null;
+  _bbLoadEditorOrig(id);
+  bbRenderPeriodsUI();
+};
 
 /* ══════════════════════════════════════════════════════════════════════
    MARKET INTELLIGENCE — News & Sentiment
