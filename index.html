@@ -7574,20 +7574,21 @@ function stGetReturn(indexName, startDate, endDate) {
   return pts.reduce((acc, p) => acc * (1 + p.r / 100), 1) - 1;
 }
 
-function stBuildPortfolioNav(validResults, startDate, endDate) {
+// Builds NAV series from scenario start through recovery (or latest data).
+// Each point is tagged inScenario:true/false so the chart can shade the recovery path.
+function stBuildNavSeries(validResults, startDate, endDate) {
   const sm = stNextMonth(startDate);
   const em = endDate.slice(0, 7);
-  // Collect all relevant month-end dates
   const dateSet = new Set();
   for (const r of validResults) {
     const bm = stFindIndex(r.ticker);
     if (!bm) continue;
-    bm.data.filter(p => p.d.slice(0,7) >= sm && p.d.slice(0,7) <= em).forEach(p => dateSet.add(p.d));
+    bm.data.filter(p => p.d.slice(0, 7) >= sm).forEach(p => dateSet.add(p.d));
   }
   const dates = [...dateSet].sort();
   if (!dates.length) return [];
-  const navSeries = [{ date: startDate, nav: 100 }];
-  let val = 1;
+  const series = [{ date: startDate, nav: 100, inScenario: true }];
+  let val = 1, drewDown = false, postRecovered = false;
   for (const d of dates) {
     let monthRet = 0;
     for (const r of validResults) {
@@ -7597,9 +7598,15 @@ function stBuildPortfolioNav(validResults, startDate, endDate) {
       if (pt) monthRet += r.nw * (pt.r / 100);
     }
     val *= (1 + monthRet);
-    navSeries.push({ date: d, nav: val * 100 });
+    const inScenario = d.slice(0, 7) <= em;
+    series.push({ date: d, nav: val * 100, inScenario });
+    if (inScenario && val < 1) drewDown = true;
+    if (!inScenario) {
+      if (!drewDown) break; // no drawdown — don't extend past scenario
+      if (val >= 1 && !postRecovered) { postRecovered = true; break; } // stop at recovery
+    }
   }
-  return navSeries;
+  return series;
 }
 
 /* ── Recovery to high watermark (monthly index returns) ────────────── */
@@ -7684,20 +7691,22 @@ function stReRun() {
   const portRet = valid.reduce((s, r) => s + r.contrib, 0);
   const portPnL = portRet * pv;
 
-  // Max drawdown from NAV series
-  const navSeries = stBuildPortfolioNav(valid.map(r=>({ticker:r.ticker, nw:r.nw})), startDate, endDate);
+  // Build full NAV series (scenario + recovery path) and derive maxDD from scenario portion only
+  const navSeries = stBuildNavSeries(valid.map(r=>({ticker:r.ticker, nw:r.nw})), startDate, endDate);
   let maxDD = 0;
-  if (navSeries.length > 1) {
-    let peak = navSeries[0].nav;
-    navSeries.forEach(d => {
+  const scenPts = navSeries.filter(d => d.inScenario);
+  if (scenPts.length > 1) {
+    let peak = scenPts[0].nav;
+    scenPts.forEach(d => {
       peak = Math.max(peak, d.nav);
       const dd = peak > 0 ? (d.nav - peak) / peak : 0;
       if (dd < maxDD) maxDD = dd;
     });
   }
+  const maxDDPnL = maxDD * pv;
 
   const recovery = stCalcRecovery(valid.map(r=>({ticker:r.ticker, weight:r.nw*100})), startDate, endDate, 100);
-  stRenderResults(results, portRet, portPnL, pv, scenLabel, startDate, endDate, valid.length, results.length, maxDD, navSeries, recovery);
+  stRenderResults(results, portRet, portPnL, pv, scenLabel, startDate, endDate, valid.length, results.length, maxDD, maxDDPnL, navSeries, recovery);
 }
 
 function stShowHint() {
@@ -7706,49 +7715,34 @@ function stShowHint() {
 }
 
 /* ── Render results ─────────────────────────────────────────────────── */
-function stRenderResults(results, portRet, portPnL, pv, scenLabel, start, end, covered, total, maxDD, navSeries, recovery) {
+function stRenderResults(results, portRet, portPnL, pv, scenLabel, start, end, covered, total, maxDD, maxDDPnL, navSeries, recovery) {
   const wrap = document.getElementById('st-results-wrap');
   if (!wrap) return;
   const rc = portRet >= 0 ? 'var(--green)' : 'var(--red)';
   const retStr = (portRet >= 0 ? '+' : '') + (portRet * 100).toFixed(2) + '%';
   const pnlStr = (portPnL >= 0 ? '+$' : '−$') + Math.abs(portPnL).toLocaleString('en-US', {maximumFractionDigits:0});
-  const worst  = results.filter(r => r.ret !== null).sort((a,b) => a.ret - b.ret)[0];
-  const best   = results.filter(r => r.ret !== null).sort((a,b) => b.ret - a.ret)[0];
+  const ddPnLStr = maxDD < 0 ? '−$' + Math.abs(maxDDPnL).toLocaleString('en-US', {maximumFractionDigits:0}) : '—';
   const covMsg = covered < total ? `<div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:6px;">⚠ ${total - covered} position(s) excluded — no price data for this period</div>` : '';
   const chartH = Math.max(160, results.length * 30 + 60);
 
   wrap.innerHTML = `
     <div>
       <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:10px;letter-spacing:0.04em">${scenLabel} &nbsp;·&nbsp; ${start} → ${end}</div>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
-        <div class="st-kpi">
-          <div class="st-kpi-label">Portfolio Return</div>
-          <div class="st-kpi-val" style="color:${rc}">${retStr}</div>
-          <div class="st-kpi-sub">${covered}/${total} positions</div>
-        </div>
-        <div class="st-kpi">
-          <div class="st-kpi-label">Dollar P&amp;L</div>
-          <div class="st-kpi-val" style="color:${rc};font-size:18px">${pnlStr}</div>
-          <div class="st-kpi-sub">\$${(pv/1e6).toFixed(1)}M portfolio</div>
-        </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
         <div class="st-kpi">
           <div class="st-kpi-label">Max Drawdown</div>
           <div class="st-kpi-val" style="color:var(--red)">${maxDD < 0 ? (maxDD*100).toFixed(2)+'%' : '—'}</div>
-          <div class="st-kpi-sub">peak-to-trough</div>
+          <div class="st-kpi-sub">peak-to-trough · ${covered}/${total} positions</div>
         </div>
         <div class="st-kpi">
-          <div class="st-kpi-label">Best / Worst</div>
-          <div class="st-kpi-val" style="font-size:14px;line-height:1.5">
-            <span style="color:var(--green)">${best ? (best.ret>=0?'+':'')+(best.ret*100).toFixed(1)+'%' : '—'}</span>
-            <span style="color:var(--text3);font-size:10px"> / </span>
-            <span style="color:var(--red)">${worst ? (worst.ret*100).toFixed(1)+'%' : '—'}</span>
-          </div>
-          <div class="st-kpi-sub">${best?.ticker||''} / ${worst?.ticker||''}</div>
+          <div class="st-kpi-label">Max Drawdown P&amp;L</div>
+          <div class="st-kpi-val" style="color:var(--red);font-size:18px">${ddPnLStr}</div>
+          <div class="st-kpi-sub">\$${(pv/1e6).toFixed(1)}M portfolio</div>
         </div>
         <div class="st-kpi">
           <div class="st-kpi-label">Recovery to HWM</div>
           ${!recovery
-            ? `<div class="st-kpi-val" style="font-size:14px;color:var(--text3)">—</div><div class="st-kpi-sub">no data</div>`
+            ? `<div class="st-kpi-val" style="font-size:14px;color:var(--text3)">—</div><div class="st-kpi-sub">no drawdown</div>`
             : recovery.recovered
               ? `<div class="st-kpi-val" style="font-size:16px;color:var(--green)">${recovery.date}</div><div class="st-kpi-sub">${recovery.months} months from start</div>`
               : `<div class="st-kpi-val" style="font-size:14px;color:var(--amber)">Not recovered</div><div class="st-kpi-sub">${recovery.currentPct}% vs HWM · as of ${recovery.latestDate}</div>`
@@ -7801,7 +7795,7 @@ function stRenderResults(results, portRet, portPnL, pv, scenLabel, start, end, c
 
   requestAnimationFrame(() => {
     stDrawContribChart(results.filter(r => r.contrib !== null));
-    stDrawNavChart(navSeries);
+    stDrawNavChart(navSeries, end);
   });
 }
 
@@ -7831,7 +7825,8 @@ function stDrawContribChart(results) {
     const color = r.contrib >= 0 ? 'var(--green)' : 'var(--red)';
     g.append('rect').attr('x', x0).attr('y', yScale(r.ticker)).attr('width', bw).attr('height', yScale.bandwidth())
       .attr('fill', color).attr('opacity', 0.8).attr('rx', 2);
-    const lx = r.contrib >= 0 ? xScale(r.contrib) + 4 : xScale(r.contrib) - 4;
+    // Negative labels anchor just left of the zero line (inside the bar) to avoid overlapping Y-axis names
+    const lx = r.contrib >= 0 ? xScale(r.contrib) + 4 : xScale(0) - 4;
     g.append('text').attr('x', lx).attr('y', yScale(r.ticker) + yScale.bandwidth()/2 + 3)
       .attr('text-anchor', r.contrib >= 0 ? 'start' : 'end')
       .attr('fill', color).attr('font-size', 9).attr('font-family', "'IBM Plex Mono'")
@@ -7848,42 +7843,86 @@ function stDrawContribChart(results) {
 }
 
 /* ── Portfolio NAV time series ──────────────────────────────────────── */
-function stDrawNavChart(series) {
+function stDrawNavChart(series, endDate) {
   const wrap = document.getElementById('st-nav-wrap');
   if (!wrap || series.length < 2) return;
   d3.select(wrap).selectAll('*').remove();
-  const vals = series.map(d => d.nav);
-  const margin = { top:6, right:14, bottom:22, left:42 };
+  const vals     = series.map(d => d.nav);
+  const hasRecov = series.some(d => !d.inScenario);
+  const em       = endDate ? endDate.slice(0, 7) : null;
+  const margin   = { top:6, right:14, bottom:22, left:42 };
   const W = wrap.getBoundingClientRect().width || 320;
   const H = wrap.getBoundingClientRect().height || 200;
   const iw = W - margin.left - margin.right, ih = H - margin.top - margin.bottom;
   const svg = d3.select(wrap).append('svg').attr('width', W).attr('height', H);
   const g   = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
   const dateObjs = series.map(d => new Date(d.date + 'T12:00:00'));
-  const xScale = d3.scaleTime().domain(d3.extent(dateObjs)).range([0, iw]);
+  const xScale   = d3.scaleTime().domain(d3.extent(dateObjs)).range([0, iw]);
   const [vMin, vMax] = d3.extent(vals);
-  const pad = Math.max((vMax - vMin) * 0.05, 0.5);
+  const pad    = Math.max((vMax - vMin) * 0.05, 0.5);
   const yScale = d3.scaleLinear().domain([vMin - pad, vMax + pad]).range([ih, 0]).nice();
-  const lineColor = vals[vals.length-1] >= 100 ? '#4caf82' : '#e05555';
 
+  // Grid lines
   yScale.ticks(5).forEach(t => {
     g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t))
       .attr('stroke','rgba(255,255,255,0.04)').attr('stroke-width',1);
   });
+  // HWM reference line at 100
   if (yScale.domain()[0] <= 100 && yScale.domain()[1] >= 100) {
     g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(100)).attr('y2',yScale(100))
-      .attr('stroke','rgba(255,255,255,0.15)').attr('stroke-width',1).attr('stroke-dasharray','4 3');
+      .attr('stroke','rgba(255,255,255,0.2)').attr('stroke-width',1).attr('stroke-dasharray','4 3');
+    g.append('text').attr('x', iw - 2).attr('y', yScale(100) - 3)
+      .attr('text-anchor','end').attr('fill','rgba(255,255,255,0.3)').attr('font-size',7).attr('font-family',"'IBM Plex Mono'")
+      .text('HWM 100');
   }
+
+  // Scenario-end vertical marker
+  if (hasRecov && em) {
+    const endPt = series.find(d => !d.inScenario);
+    if (endPt) {
+      const ex = xScale(new Date(endPt.date + 'T12:00:00'));
+      g.append('line').attr('x1',ex).attr('x2',ex).attr('y1',0).attr('y2',ih)
+        .attr('stroke','rgba(255,255,255,0.2)').attr('stroke-width',1).attr('stroke-dasharray','3 2');
+      g.append('text').attr('x', ex + 3).attr('y', 10)
+        .attr('fill','rgba(255,255,255,0.3)').attr('font-size',7).attr('font-family',"'IBM Plex Mono'")
+        .text('scenario end');
+    }
+  }
+
   const defs = svg.append('defs');
-  const grad = defs.append('linearGradient').attr('id','st-nav-grad').attr('x1','0').attr('x2','0').attr('y1','0').attr('y2','1');
-  grad.append('stop').attr('offset','0%').attr('stop-color',lineColor).attr('stop-opacity',0.2);
-  grad.append('stop').attr('offset','100%').attr('stop-color',lineColor).attr('stop-opacity',0.01);
-  g.append('path').datum(vals)
-    .attr('d', d3.area().x((_,i)=>xScale(dateObjs[i])).y0(ih).y1((_,i)=>yScale(vals[i])).curve(d3.curveMonotoneX))
-    .attr('fill','url(#st-nav-grad)');
-  g.append('path').datum(vals)
-    .attr('d', d3.line().x((_,i)=>xScale(dateObjs[i])).y((_,i)=>yScale(vals[i])).curve(d3.curveMonotoneX))
-    .attr('fill','none').attr('stroke',lineColor).attr('stroke-width',1.5);
+
+  // Scenario segment (red fill)
+  const scenSeries  = series.filter(d => d.inScenario);
+  const scenDates   = scenSeries.map(d => new Date(d.date + 'T12:00:00'));
+  const scenVals    = scenSeries.map(d => d.nav);
+  const gScen = defs.append('linearGradient').attr('id','st-grad-scen').attr('x1','0').attr('x2','0').attr('y1','0').attr('y2','1');
+  gScen.append('stop').attr('offset','0%').attr('stop-color','#e05555').attr('stop-opacity',0.18);
+  gScen.append('stop').attr('offset','100%').attr('stop-color','#e05555').attr('stop-opacity',0.01);
+  g.append('path').datum(scenVals)
+    .attr('d', d3.area().x((_,i)=>xScale(scenDates[i])).y0(ih).y1((_,i)=>yScale(scenVals[i])).curve(d3.curveMonotoneX))
+    .attr('fill','url(#st-grad-scen)');
+  g.append('path').datum(scenVals)
+    .attr('d', d3.line().x((_,i)=>xScale(scenDates[i])).y((_,i)=>yScale(scenVals[i])).curve(d3.curveMonotoneX))
+    .attr('fill','none').attr('stroke','#e05555').attr('stroke-width',1.5);
+
+  // Recovery segment (green, if present)
+  if (hasRecov) {
+    // Stitch from last scenario point so the line is continuous
+    const lastScen   = scenSeries[scenSeries.length - 1];
+    const recovSeries = [lastScen, ...series.filter(d => !d.inScenario)];
+    const recovDates  = recovSeries.map(d => new Date(d.date + 'T12:00:00'));
+    const recovVals   = recovSeries.map(d => d.nav);
+    const gRecov = defs.append('linearGradient').attr('id','st-grad-recov').attr('x1','0').attr('x2','0').attr('y1','0').attr('y2','1');
+    gRecov.append('stop').attr('offset','0%').attr('stop-color','#4caf82').attr('stop-opacity',0.15);
+    gRecov.append('stop').attr('offset','100%').attr('stop-color','#4caf82').attr('stop-opacity',0.01);
+    g.append('path').datum(recovVals)
+      .attr('d', d3.area().x((_,i)=>xScale(recovDates[i])).y0(ih).y1((_,i)=>yScale(recovVals[i])).curve(d3.curveMonotoneX))
+      .attr('fill','url(#st-grad-recov)');
+    g.append('path').datum(recovVals)
+      .attr('d', d3.line().x((_,i)=>xScale(recovDates[i])).y((_,i)=>yScale(recovVals[i])).curve(d3.curveMonotoneX))
+      .attr('fill','none').attr('stroke','#4caf82').attr('stroke-width',1.5);
+  }
+
   g.append('g').attr('transform',`translate(0,${ih})`).call(
     d3.axisBottom(xScale).ticks(5).tickFormat(d3.timeFormat('%b %y')).tickSize(3)
   ).call(ax=>ax.select('.domain').remove()).selectAll('text').attr('fill','var(--text3)').attr('font-size',8).attr('font-family',"'IBM Plex Mono'");
@@ -7894,17 +7933,18 @@ function stDrawNavChart(series) {
   // Hover
   wrap.style.position = 'relative';
   const vline = g.append('line').attr('y1',0).attr('y2',ih).attr('stroke','rgba(255,255,255,0.15)').attr('stroke-width',1).style('display','none');
-  const dot   = g.append('circle').attr('r',3).attr('fill',lineColor).style('display','none');
+  const dot   = g.append('circle').attr('r',3).attr('fill','rgba(255,255,255,0.7)').style('display','none');
   const htip  = (() => { const el = document.createElement('div'); Object.assign(el.style,{position:'absolute',pointerEvents:'none',opacity:'0',background:'var(--bg4)',border:'1px solid var(--border2)',padding:'6px 10px',borderRadius:'4px',fontFamily:"'IBM Plex Mono'",fontSize:'10px',zIndex:'50',whiteSpace:'nowrap',transition:'opacity 0.1s',boxShadow:'0 4px 20px rgba(0,0,0,0.5)',lineHeight:'1.6'}); wrap.appendChild(el); return el; })();
   svg.on('mousemove', function(event) {
     const [mx] = d3.pointer(event, g.node());
     const idx  = Math.max(0, Math.min(vals.length-1, d3.bisectLeft(dateObjs, xScale.invert(mx))));
     const cx   = xScale(dateObjs[idx]), cy = yScale(vals[idx]);
+    const ptColor = series[idx].inScenario ? '#e05555' : '#4caf82';
     vline.attr('x1',cx).attr('x2',cx).style('display',null);
-    dot.attr('cx',cx).attr('cy',cy).style('display',null);
+    dot.attr('cx',cx).attr('cy',cy).attr('fill',ptColor).style('display',null);
     const chg = (vals[idx]-100).toFixed(2);
     htip.style.opacity='1';
-    htip.innerHTML=`<div style="color:var(--text3);margin-bottom:2px">${series[idx].date}</div><div style="color:${lineColor};font-weight:500">NAV ${vals[idx].toFixed(1)}</div><div style="color:var(--text3)">${chg>=0?'+':''}${chg}%</div>`;
+    htip.innerHTML=`<div style="color:var(--text3);margin-bottom:2px">${series[idx].date}</div><div style="color:${ptColor};font-weight:500">NAV ${vals[idx].toFixed(1)}</div><div style="color:var(--text3)">${chg>=0?'+':''}${chg}%</div>`;
     const bx = wrap.getBoundingClientRect(), ex = event.clientX-bx.left;
     htip.style.left=(ex>W/2?ex-htip.offsetWidth-10:ex+10)+'px'; htip.style.top='10px';
   }).on('mouseleave',()=>{vline.style('display','none');dot.style('display','none');htip.style.opacity='0';});
