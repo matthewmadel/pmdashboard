@@ -7617,6 +7617,7 @@ function stCalcRecovery(positions, scenarioStart, scenarioEnd, totalW) {
   }
   const dates = [...dateSet].sort();
 
+  const em = scenarioEnd.slice(0, 7); // only allow recovery after scenario ends
   let portVal = 100, droppedBelow = false, recoveryResult = null;
   for (const date of dates) {
     let monthRet = 0;
@@ -7628,7 +7629,8 @@ function stCalcRecovery(positions, scenarioStart, scenarioEnd, totalW) {
     }
     portVal *= (1 + monthRet);
     if (portVal < 100) droppedBelow = true;
-    if (droppedBelow && portVal >= 100 && !recoveryResult) {
+    // Require date to be after scenario end — prevents bear-market bounces during the crash from triggering false recovery
+    if (droppedBelow && portVal >= 100 && !recoveryResult && date.slice(0, 7) > em) {
       const recD   = new Date(date + 'T00:00:00Z');
       const startMs = new Date(scenarioStart + 'T00:00:00Z');
       const months  = Math.round((recD - startMs) / (365.25/12 * 86400000));
