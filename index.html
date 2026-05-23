@@ -2399,6 +2399,23 @@ a      { color: inherit; text-decoration: none; }
             -->
 
             <div class="cl-entry">
+              <div class="cl-version">May 22, 2026 — Stress Tester overhaul</div>
+              <ul class="cl-list">
+                <li><strong>Index Returns data underlying:</strong> Stress Tester now runs on monthly index returns from the Index Returns dataset (26 benchmarks) instead of ETF price history — longer history, true index data, broader coverage</li>
+                <li><strong>Position picker:</strong> replaced free-text ticker input with a dropdown of all available index benchmarks grouped by asset class</li>
+                <li><strong>Removed template presets</strong> from Stress Tester; default portfolio is 70/30 MSCI ACWI / Bloomberg US Agg</li>
+                <li><strong>KPI cards:</strong> replaced Portfolio Return and Dollar P&amp;L with Max Drawdown %, Max Drawdown P&amp;L $, and Recovery to HWM</li>
+                <li><strong>NAV chart extended to recovery:</strong> chart now continues past scenario end (red line) and plots the recovery path back to HWM in green, with a scenario-end boundary marker and HWM 100 reference line</li>
+                <li><strong>Scenario date fixes:</strong> all scenarios now apply returns starting from the month <em>after</em> the start date (no partial-month distortion); COVID corrected to Jan–Mar 2020, Rate Shock to Jan–Oct 2022, GFC to Nov 2007–Feb 2009</li>
+                <li><strong>Max drawdown formula corrected:</strong> now divides by running peak NAV (not hardcoded 100), and is calculated from the scenario period only — not the recovery path</li>
+                <li><strong>Recovery to HWM fixes:</strong> (1) bear-market bounces during a crash no longer trigger false recovery — recovery only counts after scenario end; (2) scenarios with no drawdown now show "—" instead of "Not recovered +X%"</li>
+                <li><strong>Scenarios added:</strong> Asian Crisis (Aug 1997–Jan 1998), China/Oil Selloff (Aug 2015–Jan 2016)</li>
+                <li><strong>Scenarios removed:</strong> SVB Crisis, Q4 2018 Selloff, Russia/LTCM</li>
+                <li><strong>Contribution chart:</strong> fixed return % labels overlapping index names on the Y-axis</li>
+              </ul>
+            </div>
+
+            <div class="cl-entry">
               <div class="cl-version">May 22, 2026</div>
               <ul class="cl-list">
                 <li>Added 15 new FRED macro series across Tier 1 &amp; 2: TIPS real yields (2Y/5Y/10Y/30Y), 5Y5Y Forward Breakeven, Chicago Fed NFCI, ISM Manufacturing &amp; Services PMI, U-6 Unemployment, Continuing Jobless Claims, JOLTS Quit Rate, Sahm Rule Indicator, M2 Velocity, Senior Loan Officer Survey, New Home Sales</li>
