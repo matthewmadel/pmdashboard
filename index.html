@@ -7587,7 +7587,7 @@ function stBuildPortfolioNav(validResults, startDate, endDate) {
   const dates = [...dateSet].sort();
   if (!dates.length) return [];
   const navSeries = [{ date: startDate, nav: 100 }];
-  let val = 100;
+  let val = 1;
   for (const d of dates) {
     let monthRet = 0;
     for (const r of validResults) {
