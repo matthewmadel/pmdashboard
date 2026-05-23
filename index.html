@@ -7553,13 +7553,21 @@ function stFindIndex(name) {
   return brData?.benchmarks?.find(b => b.name === name) ?? null;
 }
 
-// Include months whose YYYY-MM falls within [startMonth, endMonth] inclusive.
-// This means partial-month scenarios still capture the full month's return,
-// which gives a more complete picture of stress events (e.g. COVID: Feb+Mar 2020).
+// Returns YYYY-MM of the month immediately following the given date string.
+function stNextMonth(dateStr) {
+  const y = parseInt(dateStr.slice(0, 4));
+  const m = parseInt(dateStr.slice(5, 7));
+  return m === 12
+    ? `${y + 1}-01`
+    : `${y}-${String(m + 1).padStart(2, '0')}`;
+}
+
+// Apply returns starting from the month AFTER the scenario start date.
+// Using only full months avoids partial-month distortion at the entry point.
 function stGetReturn(indexName, startDate, endDate) {
   const bm = stFindIndex(indexName);
   if (!bm?.data?.length) return null;
-  const sm = startDate.slice(0, 7);
+  const sm = stNextMonth(startDate);
   const em = endDate.slice(0, 7);
   const pts = bm.data.filter(p => p.d.slice(0,7) >= sm && p.d.slice(0,7) <= em);
   if (!pts.length) return null;
@@ -7567,7 +7575,7 @@ function stGetReturn(indexName, startDate, endDate) {
 }
 
 function stBuildPortfolioNav(validResults, startDate, endDate) {
-  const sm = startDate.slice(0, 7);
+  const sm = stNextMonth(startDate);
   const em = endDate.slice(0, 7);
   // Collect all relevant month-end dates
   const dateSet = new Set();
@@ -7607,8 +7615,8 @@ function stCalcRecovery(positions, scenarioStart, scenarioEnd, totalW) {
   }
   if (!latestDate) return null;
 
-  // Collect all month-end dates from scenario start month onwards
-  const sm = scenarioStart.slice(0, 7);
+  // Collect all month-end dates starting from the month AFTER scenario start
+  const sm = stNextMonth(scenarioStart);
   const dateSet = new Set();
   for (const p of positions) {
     const bm = stFindIndex(p.ticker);
