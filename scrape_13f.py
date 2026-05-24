@@ -211,7 +211,7 @@ def parse_holdings_xml(content):
 
         raw_val = text(node, 'value').replace(',', '')
         try:
-            value = int(raw_val) * 1000   # EDGAR stores in $thousands
+            value = int(raw_val)   # EDGAR 13F XML value field is in dollars
         except ValueError:
             value = 0
 
@@ -224,6 +224,15 @@ def parse_holdings_xml(content):
         })
 
     holdings.sort(key=lambda h: h['value'], reverse=True)
+
+    # Some EDGAR filers store value in $thousands (old format); others in dollars (new format).
+    # Heuristic: if the average position value is under $1M, assume thousands and scale up.
+    if holdings:
+        avg = sum(h['value'] for h in holdings) / len(holdings)
+        if avg < 1_000_000:
+            for h in holdings:
+                h['value'] *= 1000
+
     return holdings
 
 
