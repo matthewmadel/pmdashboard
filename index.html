@@ -908,64 +908,46 @@ a      { color: inherit; text-decoration: none; }
 .fb-direct a { color:var(--amber); text-decoration:none; }
 .fb-success { display:none; background:var(--green-dim); border:1px solid var(--green); border-radius:var(--radius); padding:12px 16px; font-family:var(--mono); font-size:11px; color:var(--green); }
 /* ── 13F Tracker ─────────────────────────────────────────────────────── */
-.f13-body { flex:1; overflow-y:auto; padding:16px 20px 40px; }
-.f13-section-label { font-size:9px; font-weight:500; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); margin-bottom:8px; font-family:var(--mono); }
-.f13-fund-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:6px; margin-bottom:16px; }
-.f13-fund-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; cursor:pointer; transition:border-color .15s,background .15s; position:relative; }
-.f13-fund-card:hover { border-color:var(--border2); background:var(--bg3); }
-.f13-fund-card.selected { border-color:rgba(74,144,217,0.5); background:rgba(74,144,217,0.06); }
-.f13-fund-card.selected::after { content:'✓'; position:absolute; top:8px; right:10px; font-size:10px; color:var(--blue); }
-.f13-fund-name { font-size:11px; font-weight:500; color:var(--text); padding-right:16px; margin-bottom:2px; }
-.f13-fund-cik { font-size:9px; color:var(--text3); font-family:var(--mono); }
-.f13-controls { display:flex; gap:8px; margin-bottom:12px; align-items:center; flex-wrap:wrap; }
+.f13-page-tabs { display:flex; gap:2px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:2px; }
+.f13-page-tab { padding:5px 14px; border-radius:4px; font-size:11px; font-family:var(--mono); cursor:pointer; color:var(--text2); transition:all .15s; user-select:none; }
+.f13-page-tab:hover { color:var(--text); }
+.f13-page-tab.active { background:var(--bg4); color:var(--text); }
+.f13-ctrl-bar { padding:10px 16px; border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:center; flex-shrink:0; }
 .f13-select { height:32px; padding:0 10px; font-size:11px; font-family:var(--mono); border-radius:var(--radius); border:1px solid var(--border2); background:var(--bg2); color:var(--text); cursor:pointer; outline:none; }
 .f13-select:focus { border-color:var(--blue); }
 .f13-run-btn { height:32px; padding:0 14px; font-size:11px; font-family:var(--mono); font-weight:500; border-radius:var(--radius); border:1px solid rgba(74,144,217,0.4); background:rgba(74,144,217,0.1); color:var(--blue); cursor:pointer; display:flex; align-items:center; gap:6px; transition:background .15s; }
 .f13-run-btn:hover { background:rgba(74,144,217,0.18); }
 .f13-run-btn:disabled { opacity:.4; cursor:not-allowed; }
-.f13-status { font-size:10px; color:var(--text2); font-family:var(--mono); min-height:18px; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.f13-status { font-size:10px; color:var(--text2); font-family:var(--mono); display:flex; align-items:center; gap:8px; flex:1; }
 .f13-spinner { width:9px; height:9px; border:1.5px solid var(--border2); border-top-color:var(--blue); border-radius:50%; animation:spin .6s linear infinite; flex-shrink:0; }
-.f13-error { padding:9px 13px; border-radius:var(--radius); background:rgba(224,85,85,0.08); border:1px solid rgba(224,85,85,0.25); color:#fca5a5; font-size:11px; margin-bottom:12px; display:none; font-family:var(--mono); }
-.f13-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
-.f13-metric { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:11px 14px; }
-.f13-metric-label { font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; font-family:var(--mono); margin-bottom:5px; }
-.f13-metric-val { font-size:20px; font-weight:300; color:var(--text); font-variant-numeric:tabular-nums; }
-.f13-metric-val.green { color:var(--green); }
-.f13-metric-val.red { color:var(--red); }
-.f13-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:14px; }
-.f13-tab { padding:7px 14px; font-size:11px; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s; font-family:var(--mono); }
-.f13-tab:hover { color:var(--text); }
-.f13-tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+.f13-error { padding:9px 13px; border-radius:var(--radius); background:rgba(224,85,85,0.08); border:1px solid rgba(224,85,85,0.25); color:#fca5a5; font-size:11px; margin:0 16px; display:none; font-family:var(--mono); flex-shrink:0; }
+.f13-split { flex:1; display:flex; overflow:hidden; min-height:0; }
+.f13-left-rail { width:210px; border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0; }
+.f13-fund-row { padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background .12s; }
+.f13-fund-row:hover { background:var(--bg2); }
+.f13-fund-row.active { background:rgba(74,144,217,0.08); border-left:2px solid var(--blue); padding-left:12px; }
+.f13-fund-row-name { font-size:11px; font-weight:500; color:var(--text); line-height:1.3; }
+.f13-fund-row-meta { font-size:9px; color:var(--text3); font-family:var(--mono); margin-top:3px; }
+.f13-right-content { flex:1; overflow-y:auto; padding:16px 20px 40px; min-width:0; }
+.f13-fund-summary { display:flex; align-items:baseline; gap:12px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.f13-fund-summary-name { font-size:14px; font-weight:500; color:var(--text); }
+.f13-fund-summary-meta { font-size:10px; color:var(--text3); font-family:var(--mono); }
 .f13-badge { display:inline-block; padding:2px 7px; border-radius:20px; font-size:9px; font-weight:500; font-family:var(--mono); white-space:nowrap; }
 .f13-badge-new   { background:rgba(76,175,130,0.1);  border:1px solid rgba(76,175,130,0.3);  color:#86efac; }
 .f13-badge-add   { background:rgba(74,144,217,0.1);  border:1px solid rgba(74,144,217,0.3);  color:#93c5fd; }
 .f13-badge-trim  { background:rgba(245,158,11,0.1);  border:1px solid rgba(245,158,11,0.3);  color:#fcd34d; }
 .f13-badge-flat  { background:rgba(255,255,255,0.04);border:1px solid var(--border);          color:var(--text3); }
 .f13-badge-close { background:rgba(224,85,85,0.1);   border:1px solid rgba(224,85,85,0.3);   color:#fca5a5; }
-.f13-fund-pills { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
-.f13-pill { padding:3px 10px; border-radius:20px; font-size:10px; font-family:var(--mono); border:1px solid var(--border); cursor:pointer; color:var(--text2); background:transparent; transition:all .15s; }
-.f13-pill:hover { border-color:var(--border2); color:var(--text); }
-.f13-pill.active { background:rgba(74,144,217,0.1); border-color:rgba(74,144,217,0.4); color:var(--blue); }
-.f13-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
-.f13-bar-rank { font-size:9px; color:var(--text3); font-family:var(--mono); width:20px; text-align:right; flex-shrink:0; }
-.f13-bar-name { font-size:11px; color:var(--text); width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
-.f13-bar-track { flex:1; background:var(--bg3); border-radius:3px; height:5px; overflow:hidden; }
-.f13-bar-fill { height:100%; border-radius:3px; background:var(--blue); }
-.f13-bar-meta { font-size:10px; color:var(--text2); font-family:var(--mono); white-space:nowrap; }
+.f13-pct-bar-inline { width:80px; height:4px; background:var(--bg3); border-radius:2px; overflow:hidden; flex-shrink:0; }
+.f13-pct-fill-inline { height:100%; border-radius:2px; background:var(--blue); }
 .f13-empty { padding:3rem 1rem; text-align:center; color:var(--text3); font-size:12px; font-family:var(--mono); }
 .f13-pct-pos { color:var(--green); font-family:var(--mono); }
 .f13-pct-neg { color:var(--red);   font-family:var(--mono); }
 .f13-pct-neu { color:var(--text3); font-family:var(--mono); }
-.f13-fund-sub-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:14px; }
-.f13-fund-sub-tab { padding:5px 12px; border-radius:var(--radius); font-size:11px; font-family:var(--mono); border:1px solid var(--border); cursor:pointer; color:var(--text2); background:var(--bg2); transition:all .15s; white-space:nowrap; }
-.f13-fund-sub-tab:hover { border-color:var(--border2); color:var(--text); background:var(--bg3); }
-.f13-fund-sub-tab.active { background:rgba(74,144,217,0.1); border-color:rgba(74,144,217,0.4); color:var(--blue); }
-.f13-fund-summary { display:flex; align-items:baseline; gap:12px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--border); }
-.f13-fund-summary-name { font-size:14px; font-weight:500; color:var(--text); }
-.f13-fund-summary-meta { font-size:10px; color:var(--text3); font-family:var(--mono); }
-.f13-pct-bar-inline { width:80px; height:4px; background:var(--bg3); border-radius:2px; overflow:hidden; flex-shrink:0; }
-.f13-pct-fill-inline { height:100%; border-radius:2px; background:var(--blue); }
-.f13-fund-badge { display:inline-block; padding:2px 7px; border-radius:20px; font-size:9px; font-family:var(--mono); border:1px solid var(--border2); color:var(--text2); background:var(--bg3); white-space:nowrap; }
+.f13-conc-badge { display:inline-block; padding:2px 7px; border-radius:20px; font-size:9px; font-family:var(--mono); white-space:nowrap; border:1px solid; }
+.f13-conc-high { background:rgba(224,85,85,0.1); border-color:rgba(224,85,85,0.3); color:#fca5a5; }
+.f13-conc-mid  { background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3); color:#fcd34d; }
+.f13-conc-low  { background:rgba(255,255,255,0.04); border-color:var(--border); color:var(--text2); }
 
 /* ── Stress Tester ────────────────────────────────────────────────────── */
 .st-layout { display:grid; grid-template-columns:300px 1fr; flex:1; min-height:0; overflow:hidden; }
@@ -2940,37 +2922,41 @@ a      { color: inherit; text-decoration: none; }
             <div class="page-title">13F Tracker <span class="page-title-badge">Tool</span></div>
             <div class="page-subtitle">SEC EDGAR quarterly filings · positions · market value · common holdings</div>
           </div>
+          <div class="f13-page-tabs">
+            <div class="f13-page-tab active" id="f13-ptab-funds"     onclick="f13SetPageTab('funds')">Funds</div>
+            <div class="f13-page-tab"        id="f13-ptab-crossfund" onclick="f13SetPageTab('crossfund')">Cross-Fund</div>
+          </div>
         </div>
 
-        <div class="f13-body">
-
-          <!-- Fund selector -->
-          <div class="f13-section-label">Select funds</div>
-          <div class="f13-fund-grid" id="f13-fund-grid"></div>
-
-          <!-- Controls -->
-          <div class="f13-controls">
+        <!-- Funds pane -->
+        <div id="f13-pane-funds" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+          <div class="f13-ctrl-bar">
             <select class="f13-select" id="f13-quarter-sel" aria-label="Current quarter"></select>
             <select class="f13-select" id="f13-prev-sel" aria-label="Comparison quarter"></select>
-            <button class="f13-run-btn" id="f13-run-btn" onclick="f13RunAnalysis()">
-              Analyze
-            </button>
+            <button class="f13-run-btn" id="f13-run-btn" onclick="f13RunAnalysis()">Analyze</button>
+            <div class="f13-status" id="f13-status"></div>
           </div>
-
-          <div class="f13-status" id="f13-status"></div>
           <div class="f13-error" id="f13-error"></div>
-
-          <!-- Results -->
-          <div id="f13-results" style="display:none">
-            <div class="f13-metrics" id="f13-metrics"></div>
-            <div class="f13-tabs">
-              <div class="f13-tab active" onclick="f13ShowTab('holdings')" id="f13-tab-holdings">Holdings</div>
-              <div class="f13-tab"        onclick="f13ShowTab('common')"   id="f13-tab-common">Common Holdings</div>
+          <div class="f13-split">
+            <div class="f13-left-rail" id="f13-left-rail"></div>
+            <div class="f13-right-content" id="f13-right-content">
+              <div class="f13-empty">Loading holdings data…</div>
             </div>
-            <div id="f13-results-area"></div>
           </div>
-
         </div>
+
+        <!-- Cross-Fund pane -->
+        <div id="f13-pane-crossfund" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
+          <div class="f13-ctrl-bar">
+            <select class="f13-select" id="f13-cf-quarter-sel" aria-label="Quarter"></select>
+            <button class="f13-run-btn" onclick="f13RunCrossFund()">Analyze</button>
+            <div class="f13-status" id="f13-cf-status"></div>
+          </div>
+          <div class="f13-right-content" id="f13-cf-content">
+            <div class="f13-empty">Click Analyze to find common positions</div>
+          </div>
+        </div>
+
       </div><!-- /page-13f -->
 
 
@@ -9038,60 +9024,11 @@ async function newsBoot() {
 ══════════════════════════════════════════════════════════════════════ */
 
 let f13Data          = null;
-let f13Selected      = new Set(['0001336528','0001536411','0001135730']);
-let f13AllData       = {};
-let f13ActiveTab     = 'holdings';
+let f13PageTab       = 'funds';
 let f13ActiveFundCik = null;
+let f13CurQ          = null;
+let f13PrevQ         = null;
 let f13Booted        = false;
-
-async function f13Boot() {
-  if (f13Booted) return;
-  f13Booted = true;
-  f13SetStatus('Loading holdings data…', true);
-  try {
-    const r = await fetch('13f-data.json');
-    if (!r.ok) throw new Error(`13f-data.json not found (HTTP ${r.status}) — run scrape_13f.py first`);
-    f13Data = await r.json();
-    f13BuildFundGrid();
-    f13BuildQuarterSelects();
-    const q0 = f13Data.meta.quarters[0] || '—';
-    const qN = f13Data.meta.quarters[f13Data.meta.quarters.length - 1] || '—';
-    f13SetStatus(`${Object.keys(f13Data.funds).length} funds · ${qN} – ${q0} · updated ${f13Data.meta.generated}`);
-  } catch(e) {
-    f13SetStatus(`Error: ${e.message}`);
-  }
-}
-
-// ── UI builders ─────────────────────────────────────────────────────
-function f13BuildFundGrid() {
-  if (!f13Data) return;
-  document.getElementById('f13-fund-grid').innerHTML =
-    Object.entries(f13Data.funds).map(([cik, fd]) => `
-      <div class="f13-fund-card${f13Selected.has(cik)?' selected':''}"
-           onclick="f13ToggleFund('${cik}')" id="f13-fc-${cik.replace(/\D/g,'')}">
-        <div class="f13-fund-name">${fd.name}</div>
-        <div class="f13-fund-cik">CIK ${cik}</div>
-      </div>`).join('');
-}
-
-function f13BuildQuarterSelects() {
-  if (!f13Data) return;
-  const qs = f13Data.meta.quarters;   // newest-first
-  const s1 = document.getElementById('f13-quarter-sel');
-  const s2 = document.getElementById('f13-prev-sel');
-  s1.innerHTML = qs.map((q,i) => `<option value="${i}">${q}${i===0?' (latest)':''}</option>`).join('');
-  s2.innerHTML = qs.map((q,i) => `<option value="${i}"${i===1?' selected':''}>${q}</option>`).join('');
-}
-
-function f13ToggleFund(cik) {
-  f13Selected.has(cik) ? f13Selected.delete(cik) : f13Selected.add(cik);
-  f13BuildFundGrid();
-}
-
-function f13SetStatus(msg, spin=false) {
-  document.getElementById('f13-status').innerHTML =
-    (spin ? '<div class="f13-spinner"></div>' : '') + `<span>${msg}</span>`;
-}
 
 // ── Number formatting ────────────────────────────────────────────────
 function f13Fmt(n) {
@@ -9101,136 +9038,119 @@ function f13Fmt(n) {
   return n.toString();
 }
 
-// ── Main analysis runner (reads static 13f-data.json — no EDGAR calls) ──────
+// ── Boot ─────────────────────────────────────────────────────────────
+async function f13Boot() {
+  if (f13Booted) return;
+  f13Booted = true;
+  f13SetStatus('Loading holdings data…', true);
+  try {
+    const r = await fetch('13f-data.json');
+    if (!r.ok) throw new Error(`HTTP ${r.status} — run scrape_13f.py first`);
+    f13Data = await r.json();
+    f13BuildQuarterSelects();
+    f13BuildLeftRail();
+    const firstCik = Object.keys(f13Data.funds)[0];
+    if (firstCik) f13SelectFundRail(firstCik);
+    const q0 = f13Data.meta.quarters[0] || '—';
+    const qN = f13Data.meta.quarters[f13Data.meta.quarters.length - 1] || '—';
+    f13SetStatus(`${Object.keys(f13Data.funds).length} funds · ${qN} – ${q0} · ${f13Data.meta.generated}`);
+  } catch(e) {
+    f13SetStatus(`Error: ${e.message}`);
+  }
+}
+
+// ── Page tabs ─────────────────────────────────────────────────────────
+function f13SetPageTab(t) {
+  f13PageTab = t;
+  document.getElementById('f13-ptab-funds').classList.toggle('active', t === 'funds');
+  document.getElementById('f13-ptab-crossfund').classList.toggle('active', t === 'crossfund');
+  document.getElementById('f13-pane-funds').style.display     = t === 'funds'     ? 'flex' : 'none';
+  document.getElementById('f13-pane-crossfund').style.display = t === 'crossfund' ? 'flex' : 'none';
+}
+
+// ── Quarter selects ───────────────────────────────────────────────────
+function f13BuildQuarterSelects() {
+  if (!f13Data) return;
+  const qs = f13Data.meta.quarters;
+  f13CurQ  = qs[0] || null;
+  f13PrevQ = qs[1] || null;
+  const opts     = qs.map((q,i) => `<option value="${q}"${i===0?' selected':''}>${q}${i===0?' (latest)':''}</option>`).join('');
+  const prevOpts = qs.map((q,i) => `<option value="${q}"${i===1?' selected':''}>${q}</option>`).join('');
+  document.getElementById('f13-quarter-sel').innerHTML    = opts;
+  document.getElementById('f13-prev-sel').innerHTML       = prevOpts;
+  document.getElementById('f13-cf-quarter-sel').innerHTML = opts;
+}
+
+// ── Left rail ─────────────────────────────────────────────────────────
+function f13BuildLeftRail() {
+  if (!f13Data) return;
+  const q = f13CurQ;
+  document.getElementById('f13-left-rail').innerHTML =
+    Object.entries(f13Data.funds).map(([cik, fd]) => {
+      const holdings = (fd.quarters[q] || []).filter(h => h.name && h.cusip);
+      const aum  = holdings.reduce((s, h) => s + h.value, 0);
+      const meta = holdings.length ? `${holdings.length} pos · $${f13Fmt(aum)}` : 'No data';
+      return `<div class="f13-fund-row${cik === f13ActiveFundCik ? ' active' : ''}"
+               id="f13-fr-${cik.replace(/\D/g,'')}"
+               onclick="f13SelectFundRail('${cik}')">
+        <div class="f13-fund-row-name">${fd.name}</div>
+        <div class="f13-fund-row-meta">${meta}</div>
+      </div>`;
+    }).join('');
+}
+
+function f13SelectFundRail(cik) {
+  f13ActiveFundCik = cik;
+  document.querySelectorAll('.f13-fund-row').forEach(el => el.classList.remove('active'));
+  const rowEl = document.getElementById('f13-fr-' + cik.replace(/\D/g,''));
+  if (rowEl) rowEl.classList.add('active');
+  f13RenderSingleFund(cik);
+}
+
+// ── Analyze button (Funds tab) ────────────────────────────────────────
 function f13RunAnalysis() {
-  if (!f13Data) { f13SetStatus('Data not loaded — refresh the page'); return; }
-  if (!f13Selected.size) { f13SetStatus('Select at least one fund'); return; }
+  if (!f13Data) return;
+  f13CurQ  = document.getElementById('f13-quarter-sel').value;
+  f13PrevQ = document.getElementById('f13-prev-sel').value;
+  f13BuildLeftRail();
+  if (f13ActiveFundCik) f13RenderSingleFund(f13ActiveFundCik);
+}
 
-  const qs  = f13Data.meta.quarters;
-  const qi  = parseInt(document.getElementById('f13-quarter-sel').value);
-  const pi  = parseInt(document.getElementById('f13-prev-sel').value);
-  const err = document.getElementById('f13-error');
+// ── Render single fund holdings ───────────────────────────────────────
+function f13RenderSingleFund(cik) {
+  if (!f13Data) return;
+  const fd = f13Data.funds[cik];
+  if (!fd) return;
+  const el       = document.getElementById('f13-right-content');
+  const holdings = (fd.quarters[f13CurQ]  || []).filter(h => h.name && h.cusip);
+  const prevH    = (fd.quarters[f13PrevQ] || []).filter(h => h.name && h.cusip);
+  const totalValue = holdings.reduce((s, h) => s + h.value, 0);
+  const maxValue   = holdings.length ? holdings[0].value : 1;
 
-  if (qi >= pi) {
-    err.textContent = 'Current quarter must be more recent than the comparison quarter.';
-    err.style.display = '';
+  const prevMap = {};
+  prevH.forEach(h => { prevMap[h.cusip] = h; });
+
+  if (!holdings.length) {
+    el.innerHTML = `
+      <div class="f13-fund-summary">
+        <span class="f13-fund-summary-name">${fd.name}</span>
+        <span class="f13-fund-summary-meta">No holdings data for ${f13CurQ}</span>
+      </div>
+      <div class="f13-empty">No holdings found for this quarter</div>`;
     return;
   }
-  err.style.display = 'none';
-  document.getElementById('f13-results').style.display = 'none';
-  f13AllData       = {};
-  f13ActiveFundCik = null;
-
-  const curQ  = qs[qi];
-  const prevQ = qs[pi];
-
-  for (const [cik, fd] of Object.entries(f13Data.funds)) {
-    if (!f13Selected.has(cik)) continue;
-    const curH  = (fd.quarters[curQ]  || []).filter(h => h.name && h.cusip);
-    const prevH = (fd.quarters[prevQ] || []).filter(h => h.name && h.cusip);
-    f13AllData[cik] = { fund: { name: fd.name, cik }, curH, prevH };
-  }
-
-  const n = Object.keys(f13AllData).length;
-  f13SetStatus(`${n} fund${n !== 1 ? 's' : ''} · ${curQ} vs ${prevQ}`);
-  document.getElementById('f13-results').style.display = '';
-  f13RenderMetrics();
-  f13RenderTab(f13ActiveTab);
-}
-
-// ── Change computation ───────────────────────────────────────────────
-function f13ComputeChanges(cur, prev) {
-  const prevMap={}, curMap={};
-  prev.forEach(h => prevMap[h.cusip]=h);
-  cur.forEach(h  => curMap[h.cusip]=h);
-  const rows=[];
-  cur.forEach(h => {
-    const p=prevMap[h.cusip];
-    if (!p) { rows.push({...h,type:'new',prevVal:0,prevShares:0,chg:null}); }
-    else {
-      const pct=p.shares>0?(h.shares-p.shares)/p.shares*100:0;
-      rows.push({...h,type:pct>5?'add':pct<-5?'trim':'flat',prevVal:p.value,prevShares:p.shares,chg:pct});
-    }
-  });
-  prev.forEach(h => { if (!curMap[h.cusip]) rows.push({...h,type:'close',value:0,shares:0,chg:-100,prevVal:h.value,prevShares:h.shares}); });
-  const order={new:0,add:1,flat:2,trim:3,close:4};
-  return rows.sort((a,b)=>order[a.type]-order[b.type]||b.value-a.value);
-}
-
-function f13Badge(type) {
-  return {
-    new:  '<span class="f13-badge f13-badge-new">NEW</span>',
-    add:  '<span class="f13-badge f13-badge-add">ADDED</span>',
-    trim: '<span class="f13-badge f13-badge-trim">TRIMMED</span>',
-    flat: '<span class="f13-badge f13-badge-flat">UNCHANGED</span>',
-    close:'<span class="f13-badge f13-badge-close">CLOSED</span>',
-  }[type]||'';
-}
-
-// ── Metrics strip ────────────────────────────────────────────────────
-function f13RenderMetrics() {
-  const funds = Object.values(f13AllData);
-  const fundCount = funds.length;
-  const totalPositions = funds.reduce((s, d) => s + d.curH.length, 0);
-  const totalAUM = funds.reduce((s, d) => s + d.curH.reduce((ss, h) => ss + h.value, 0), 0);
-  const cusipSet = new Set();
-  funds.forEach(d => d.curH.forEach(h => cusipSet.add(h.cusip)));
-
-  document.getElementById('f13-metrics').innerHTML = `
-    <div class="f13-metric"><div class="f13-metric-label">Funds</div><div class="f13-metric-val">${fundCount}</div></div>
-    <div class="f13-metric"><div class="f13-metric-label">Positions</div><div class="f13-metric-val">${totalPositions.toLocaleString()}</div></div>
-    <div class="f13-metric"><div class="f13-metric-label">Unique Names</div><div class="f13-metric-val">${cusipSet.size.toLocaleString()}</div></div>
-    <div class="f13-metric"><div class="f13-metric-label">Disclosed AUM</div><div class="f13-metric-val" style="font-size:15px">$${f13Fmt(totalAUM)}</div></div>`;
-}
-
-// ── Tab switching ────────────────────────────────────────────────────
-function f13ShowTab(t) {
-  f13ActiveTab = t;
-  document.querySelectorAll('.f13-tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('f13-tab-' + t).classList.add('active');
-  f13RenderTab(t);
-}
-
-function f13RenderTab(t) {
-  if (t === 'holdings') f13RenderHoldings();
-  else                  f13RenderCommon();
-}
-
-// ── Tab: Holdings (per-fund with sub-navigation) ──────────────────────
-function f13RenderHoldings() {
-  const el = document.getElementById('f13-results-area');
-  const funds = Object.entries(f13AllData);
-  if (!funds.length) { el.innerHTML = '<div class="f13-empty">No data loaded</div>'; return; }
-
-  if (!f13ActiveFundCik || !f13AllData[f13ActiveFundCik]) {
-    f13ActiveFundCik = funds[0][0];
-  }
-
-  const subNav = funds.map(([cik, d]) =>
-    `<div class="f13-fund-sub-tab${cik === f13ActiveFundCik ? ' active' : ''}"
-          onclick="f13SelectFund('${cik}')">${d.fund.name}</div>`
-  ).join('');
-
-  const d = f13AllData[f13ActiveFundCik];
-  const holdings = d.curH;
-  const totalValue = holdings.reduce((s, h) => s + h.value, 0);
-  const maxValue = holdings.length ? holdings[0].value : 1;
-
-  // Build QoQ share-change map
-  const prevMap = {};
-  (d.prevH || []).forEach(h => { prevMap[h.cusip] = h; });
 
   const rows = holdings.map((h, i) => {
     const pct  = totalValue > 0 ? h.value / totalValue * 100 : 0;
-    const barW = maxValue  > 0 ? h.value / maxValue  * 100 : 0;
+    const barW = maxValue   > 0 ? h.value / maxValue   * 100 : 0;
     const prev = prevMap[h.cusip];
-    let chgHtml = '';
+    let chgHtml = '<span class="f13-pct-neu">—</span>';
     if (!prev) {
       chgHtml = '<span class="f13-badge f13-badge-new">NEW</span>';
-    } else {
-      const chg = prev.shares > 0 ? (h.shares - prev.shares) / prev.shares * 100 : 0;
-      if (Math.abs(chg) < 0.5) chgHtml = '<span class="f13-pct-neu">—</span>';
-      else chgHtml = `<span class="${chg > 0 ? 'f13-pct-pos' : 'f13-pct-neg'}">${chg > 0 ? '+' : ''}${chg.toFixed(1)}%</span>`;
+    } else if (prev.shares > 0) {
+      const chg = (h.shares - prev.shares) / prev.shares * 100;
+      if (Math.abs(chg) >= 0.5)
+        chgHtml = `<span class="${chg > 0 ? 'f13-pct-pos' : 'f13-pct-neg'}">${chg > 0 ? '+' : ''}${chg.toFixed(1)}%</span>`;
     }
     return `<tr>
       <td style="color:var(--text3);font-family:var(--mono);width:28px">${i + 1}</td>
@@ -9249,10 +9169,9 @@ function f13RenderHoldings() {
   }).join('');
 
   el.innerHTML = `
-    <div class="f13-fund-sub-tabs">${subNav}</div>
     <div class="f13-fund-summary">
-      <span class="f13-fund-summary-name">${d.fund.name}</span>
-      <span class="f13-fund-summary-meta">${holdings.length} positions &nbsp;·&nbsp; $${f13Fmt(totalValue)} disclosed</span>
+      <span class="f13-fund-summary-name">${fd.name}</span>
+      <span class="f13-fund-summary-meta">${holdings.length} positions &nbsp;·&nbsp; $${f13Fmt(totalValue)} disclosed &nbsp;·&nbsp; ${f13CurQ} vs ${f13PrevQ}</span>
     </div>
     <div style="overflow-x:auto">
       <table class="st-table">
@@ -9268,79 +9187,125 @@ function f13RenderHoldings() {
     </div>`;
 }
 
-function f13SelectFund(cik) {
-  f13ActiveFundCik = cik;
-  f13RenderHoldings();
-}
+// ── Cross-Fund analysis ───────────────────────────────────────────────
+function f13RunCrossFund() {
+  if (!f13Data) { f13SetCfStatus('Data not loaded'); return; }
+  const q = document.getElementById('f13-cf-quarter-sel').value;
+  if (!q) return;
+  f13SetCfStatus(`Scanning ${Object.keys(f13Data.funds).length} funds…`);
 
-// ── Tab: Common holdings ──────────────────────────────────────────────
-function f13RenderCommon() {
-  const el = document.getElementById('f13-results-area');
-  const fundCount = Object.keys(f13AllData).length;
-  if (!fundCount) { el.innerHTML = '<div class="f13-empty">Load data first</div>'; return; }
-
-  // Build map: cusip → {name, class, funds: [{fundName, cik, value, shares}]}
   const holdingMap = {};
-  for (const [cik, d] of Object.entries(f13AllData)) {
+  const fundTotals = {};
+
+  for (const [cik, fd] of Object.entries(f13Data.funds)) {
+    const holdings = (fd.quarters[q] || []).filter(h => h.name && h.cusip);
+    if (!holdings.length) continue;
+    const total = holdings.reduce((s, h) => s + h.value, 0);
+    fundTotals[cik] = total;
     const seen = new Set();
-    d.curH.forEach(h => {
+    holdings.forEach(h => {
       if (seen.has(h.cusip)) return;
       seen.add(h.cusip);
       if (!holdingMap[h.cusip]) holdingMap[h.cusip] = { name: h.name, class: h.class, cusip: h.cusip, funds: [] };
-      holdingMap[h.cusip].funds.push({ fundName: d.fund.name, cik, value: h.value, shares: h.shares });
+      const conc = total > 0 ? h.value / total * 100 : 0;
+      holdingMap[h.cusip].funds.push({ fundName: fd.name, cik, value: h.value, shares: h.shares, conc });
     });
   }
 
+  const totalFunds = Object.keys(fundTotals).length;
   const commons = Object.values(holdingMap)
     .filter(h => h.funds.length >= 2)
     .sort((a, b) => {
       if (b.funds.length !== a.funds.length) return b.funds.length - a.funds.length;
-      const va = a.funds.reduce((s, f) => s + f.value, 0);
-      const vb = b.funds.reduce((s, f) => s + f.value, 0);
-      return vb - va;
+      return b.funds.reduce((s,f)=>s+f.value,0) - a.funds.reduce((s,f)=>s+f.value,0);
     });
 
+  const el = document.getElementById('f13-cf-content');
   if (!commons.length) {
-    el.innerHTML = '<div class="f13-empty">No holdings appear in 2 or more selected funds</div>';
+    el.innerHTML = '<div class="f13-empty">No positions held by 2 or more funds this quarter</div>';
+    f13SetCfStatus('');
     return;
   }
 
-  const maxFunds = commons[0].funds.length;
+  const maxOwners = commons[0].funds.length;
 
   const rows = commons.map((h, idx) => {
     const totalVal = h.funds.reduce((s, f) => s + f.value, 0);
-    const barW = Math.round(h.funds.length / maxFunds * 100);
-    const badges = h.funds
-      .slice().sort((a, b) => b.value - a.value)
-      .map(f => `<span class="f13-fund-badge">${f.fundName}</span>`)
-      .join(' ');
+    const peakConc = Math.max(...h.funds.map(f => f.conc));
+    const barW     = Math.round(h.funds.length / maxOwners * 100);
+    const badges   = h.funds.slice().sort((a,b) => b.value - a.value).map(f => {
+      const cls = f.conc >= 10 ? 'f13-conc-high' : f.conc >= 5 ? 'f13-conc-mid' : 'f13-conc-low';
+      return `<span class="f13-conc-badge ${cls}" title="${f.fundName}">${f13ShortName(f.fundName)} ${f.conc.toFixed(1)}%</span>`;
+    }).join(' ');
     return `<tr>
       <td style="color:var(--text3);font-family:var(--mono);width:28px">${idx + 1}</td>
       <td>${h.name}</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px">
           <div class="f13-pct-bar-inline" style="width:60px"><div class="f13-pct-fill-inline" style="width:${barW}%"></div></div>
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text)">${h.funds.length}/${fundCount}</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text)">${h.funds.length} / ${totalFunds}</span>
         </div>
       </td>
       <td><div style="display:flex;flex-wrap:wrap;gap:4px">${badges}</div></td>
+      <td style="text-align:right;font-family:var(--mono);white-space:nowrap">${peakConc.toFixed(1)}%</td>
       <td style="text-align:right;font-family:var(--mono)">$${f13Fmt(totalVal)}</td>
     </tr>`;
   }).join('');
 
   el.innerHTML = `
     <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:12px">
-      ${commons.length} name${commons.length !== 1 ? 's' : ''} held by 2 or more of ${fundCount} selected fund${fundCount !== 1 ? 's' : ''}
+      ${commons.length} position${commons.length !== 1 ? 's' : ''} held by 2+ of ${totalFunds} funds with holdings in ${q}
     </div>
     <div style="overflow-x:auto">
       <table class="st-table">
         <thead><tr>
-          <th>#</th><th>Company</th><th>Conviction</th><th>Funds</th>
+          <th>#</th><th>Company</th>
+          <th>Ownership</th>
+          <th>Fund Concentration</th>
+          <th style="text-align:right">Peak Conc.</th>
           <th style="text-align:right">Combined Value</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
+  f13SetCfStatus(`${commons.length} common position${commons.length !== 1 ? 's' : ''} across ${totalFunds} active funds`);
+}
+
+function f13ShortName(name) {
+  const map = {
+    'Pershing Square':         'PS',
+    'Altimeter Capital':       'ALT',
+    'Atreides Management':     'ATR',
+    'Appaloosa':               'APP',
+    'Duquesne Family Office':  'DUQ',
+    'Lone Pine Capital':       'LPC',
+    'Coatue Management':       'COA',
+    'Viking Global Investors': 'VGI',
+    'TCI Fund Management':     'TCI',
+    'Baupost Group':           'BAU',
+    'Third Point':             'TP',
+    'Durable Capital Partners':'DCP',
+    'D1 Capital Partners':     'D1',
+    'Situational Awareness':   'SA',
+    'Maverick Capital':        'MAV',
+    'ValueAct Capital':        'VA',
+    'Jericho Capital':         'JER',
+    'Kensico Capital':         'KEN',
+    'Par Capital Management':  'PAR',
+    'Whalerock Point Partners': 'WPP',
+    'Firstwave Capital':       'FWC',
+  };
+  return map[name] || name.slice(0, 3).toUpperCase();
+}
+
+// ── Status helpers ────────────────────────────────────────────────────
+function f13SetStatus(msg, spin=false) {
+  document.getElementById('f13-status').innerHTML =
+    (spin ? '<div class="f13-spinner"></div>' : '') + `<span>${msg}</span>`;
+}
+
+function f13SetCfStatus(msg) {
+  document.getElementById('f13-cf-status').innerHTML = `<span>${msg}</span>`;
 }
 </script>
 </body>
