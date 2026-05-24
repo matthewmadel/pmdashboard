@@ -36,7 +36,7 @@ FUNDS = [
     {"name": "Coatue Management",        "cik": "0001135730"},
     {"name": "Viking Global Investors",  "cik": "0001103804"},
     {"name": "TCI Fund Management",      "cik": "0001647251"},
-    {"name": "Baupost Group",            "cik": "0001738693"},
+    {"name": "Baupost Group",            "cik": "0001061768"},
     {"name": "Third Point",              "cik": "0001040273"},
     {"name": "Durable Capital Partners", "cik": "0001798849"},
     {"name": "D1 Capital Partners",      "cik": "0001747057"},
@@ -54,7 +54,7 @@ N_QUARTERS = 8   # quarters of history to fetch
 OUT_FILE   = "13f-data.json"
 
 
-# ── helpers ──────────────────────────────────────────────────────────────────
+# -- helpers ------------------------------------------------------------------
 
 def pause():
     """Stay well under EDGAR's 10 req/sec limit."""
@@ -81,7 +81,7 @@ def get_json(url, timeout=30):
     return r.json()
 
 
-# ── EDGAR fetch logic ─────────────────────────────────────────────────────────
+# -- EDGAR fetch logic ---------------------------------------------------------
 
 def get_filings(cik):
     """Return list of {quarter, accession, period} for the last N_QUARTERS 13F-HR filings."""
@@ -136,41 +136,56 @@ def get_filings(cik):
 
 
 def find_infotable_filename(cik_int, acc_nodash):
-    """Return the infotable XML filename from the filing index, or None."""
-    index_url = (
+    """
+    Return the infotable XML filename by parsing the filing's index.htm.
+    EDGAR index cells repeat in groups of 5: [seq, desc, filename, type, size].
+    We want type='INFORMATION TABLE', filename ends in .xml, size is numeric.
+    """
+    acc_dashes = f"{acc_nodash[:10]}-{acc_nodash[10:12]}-{acc_nodash[12:]}"
+    url = (
         f"https://www.sec.gov/Archives/edgar/data/"
-        f"{cik_int}/{acc_nodash}/{acc_nodash}-index.json"
+        f"{cik_int}/{acc_nodash}/{acc_dashes}-index.htm"
     )
     try:
-        idx = get_json(index_url)
-        for doc in idx.get('documents', []):
-            dtype = doc.get('type', '').upper()
-            fname = doc.get('filename', '').lower()
-            if dtype == 'INFORMATION TABLE':
-                return doc['filename']
-            if 'infotable' in fname or '13finfotable' in fname:
-                return doc['filename']
+        r = requests.get(url, headers=HEADERS, timeout=30)
+        r.raise_for_status()
+        pause()
+
+        # Strip all tags to get plain cell text, preserving order
+        raw_cells = re.findall(r'<td[^>]*>(.*?)</td>', r.text, re.S | re.I)
+        cells = [re.sub(r'<[^>]+>', '', c).strip() for c in raw_cells]
+
+        # Also capture hrefs from the same cells for the filename
+        href_cells = [
+            (re.findall(r'href="[^"]+"', c, re.I) or [''])[0]
+            for c in raw_cells
+        ]
+
+        # Walk in groups of 5: [seq, desc, file, type, size]
+        for i in range(0, len(cells) - 4, 5):
+            fname = cells[i + 2]
+            ftype = cells[i + 3].upper()
+            fsize = cells[i + 4]
+            if (ftype == 'INFORMATION TABLE'
+                    and fname.lower().endswith('.xml')
+                    and fsize.strip() not in ('', '&nbsp;', '\xa0')
+                    and fsize.strip().replace(',', '').isdigit()):
+                return fname
     except Exception:
         pass
-
-    # Fallback: probe common filenames
-    for candidate in ['form13fInfoTable.xml', 'infotable.xml', 'informationtable.xml']:
-        url = f"https://www.sec.gov/Archives/edgar/data/{cik_int}/{acc_nodash}/{candidate}"
-        try:
-            r = requests.head(url, headers=HEADERS, timeout=10)
-            pause()
-            if r.status_code == 200:
-                return candidate
-        except Exception:
-            pass
 
     return None
 
 
 def parse_holdings_xml(content):
     """Parse 13F infotable XML bytes → list of holding dicts."""
-    # Strip namespace declarations so ElementTree doesn't require qualified tags
-    content = re.sub(rb'\s+xmlns(?::\w+)?="[^"]*"', b'', content)
+    # Normalise namespace markup so ElementTree can parse any EDGAR dialect:
+    #   1. strip xmlns declarations:         xmlns="..." and xmlns:foo="..."
+    #   2. strip ns-prefixed attributes:     xsi:schemaLocation="..."
+    #   3. strip ns-prefixes from tag names: <ns1:infoTable> → <infoTable>
+    content = re.sub(rb'\s+xmlns(?::\w+)?=(?:"[^"]*"|\'[^\']*\')', b'', content)
+    content = re.sub(rb'\s+\w+:\w+=(?:"[^"]*"|\'[^\']*\')',        b'', content)
+    content = re.sub(rb'(</?)\w+:([\w])',                           rb'\1\2', content)
 
     try:
         root = ET.fromstring(content)
@@ -233,12 +248,12 @@ def get_holdings(cik, accession):
     return parse_holdings_xml(r.content)
 
 
-# ── main ──────────────────────────────────────────────────────────────────────
+# -- main ----------------------------------------------------------------------
 
 def main():
     output = {
         'meta': {
-            'generated': datetime.utcnow().strftime('%Y-%m-%d'),
+            'generated': datetime.now().strftime('%Y-%m-%d'),
             'n_quarters': N_QUARTERS,
             'quarters': [],
         },
@@ -250,7 +265,7 @@ def main():
     for fund in FUNDS:
         cik  = fund['cik']
         name = fund['name']
-        print(f"\n{'─'*55}")
+        print(f"\n{'-'*55}")
         print(f"  {name}  ({cik})")
 
         try:
@@ -271,7 +286,8 @@ def main():
             try:
                 holdings = get_holdings(cik, acc)
                 fund_entry['quarters'][q] = holdings
-                all_quarters.add(q)
+                if holdings:          # only track quarters with actual data
+                    all_quarters.add(q)
                 total = sum(h['value'] for h in holdings)
                 print(f"{len(holdings)} positions  ${total / 1e6:,.0f}M")
             except Exception as exc:
