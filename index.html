@@ -907,6 +907,56 @@ a      { color: inherit; text-decoration: none; }
 .fb-direct { font-family:var(--mono); font-size:10px; color:var(--text3); text-align:center; }
 .fb-direct a { color:var(--amber); text-decoration:none; }
 .fb-success { display:none; background:var(--green-dim); border:1px solid var(--green); border-radius:var(--radius); padding:12px 16px; font-family:var(--mono); font-size:11px; color:var(--green); }
+/* ── 13F Tracker ─────────────────────────────────────────────────────── */
+.f13-body { flex:1; overflow-y:auto; padding:16px 20px 40px; }
+.f13-section-label { font-size:9px; font-weight:500; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); margin-bottom:8px; font-family:var(--mono); }
+.f13-fund-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:6px; margin-bottom:16px; }
+.f13-fund-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; cursor:pointer; transition:border-color .15s,background .15s; position:relative; }
+.f13-fund-card:hover { border-color:var(--border2); background:var(--bg3); }
+.f13-fund-card.selected { border-color:rgba(74,144,217,0.5); background:rgba(74,144,217,0.06); }
+.f13-fund-card.selected::after { content:'✓'; position:absolute; top:8px; right:10px; font-size:10px; color:var(--blue); }
+.f13-fund-name { font-size:11px; font-weight:500; color:var(--text); padding-right:16px; margin-bottom:2px; }
+.f13-fund-cik { font-size:9px; color:var(--text3); font-family:var(--mono); }
+.f13-controls { display:flex; gap:8px; margin-bottom:12px; align-items:center; flex-wrap:wrap; }
+.f13-select { height:32px; padding:0 10px; font-size:11px; font-family:var(--mono); border-radius:var(--radius); border:1px solid var(--border2); background:var(--bg2); color:var(--text); cursor:pointer; outline:none; }
+.f13-select:focus { border-color:var(--blue); }
+.f13-run-btn { height:32px; padding:0 14px; font-size:11px; font-family:var(--mono); font-weight:500; border-radius:var(--radius); border:1px solid rgba(74,144,217,0.4); background:rgba(74,144,217,0.1); color:var(--blue); cursor:pointer; display:flex; align-items:center; gap:6px; transition:background .15s; }
+.f13-run-btn:hover { background:rgba(74,144,217,0.18); }
+.f13-run-btn:disabled { opacity:.4; cursor:not-allowed; }
+.f13-status { font-size:10px; color:var(--text2); font-family:var(--mono); min-height:18px; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.f13-spinner { width:9px; height:9px; border:1.5px solid var(--border2); border-top-color:var(--blue); border-radius:50%; animation:spin .6s linear infinite; flex-shrink:0; }
+.f13-error { padding:9px 13px; border-radius:var(--radius); background:rgba(224,85,85,0.08); border:1px solid rgba(224,85,85,0.25); color:#fca5a5; font-size:11px; margin-bottom:12px; display:none; font-family:var(--mono); }
+.f13-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+.f13-metric { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:11px 14px; }
+.f13-metric-label { font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; font-family:var(--mono); margin-bottom:5px; }
+.f13-metric-val { font-size:20px; font-weight:300; color:var(--text); font-variant-numeric:tabular-nums; }
+.f13-metric-val.green { color:var(--green); }
+.f13-metric-val.red { color:var(--red); }
+.f13-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:14px; }
+.f13-tab { padding:7px 14px; font-size:11px; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s; font-family:var(--mono); }
+.f13-tab:hover { color:var(--text); }
+.f13-tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+.f13-badge { display:inline-block; padding:2px 7px; border-radius:20px; font-size:9px; font-weight:500; font-family:var(--mono); white-space:nowrap; }
+.f13-badge-new   { background:rgba(76,175,130,0.1);  border:1px solid rgba(76,175,130,0.3);  color:#86efac; }
+.f13-badge-add   { background:rgba(74,144,217,0.1);  border:1px solid rgba(74,144,217,0.3);  color:#93c5fd; }
+.f13-badge-trim  { background:rgba(245,158,11,0.1);  border:1px solid rgba(245,158,11,0.3);  color:#fcd34d; }
+.f13-badge-flat  { background:rgba(255,255,255,0.04);border:1px solid var(--border);          color:var(--text3); }
+.f13-badge-close { background:rgba(224,85,85,0.1);   border:1px solid rgba(224,85,85,0.3);   color:#fca5a5; }
+.f13-fund-pills { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.f13-pill { padding:3px 10px; border-radius:20px; font-size:10px; font-family:var(--mono); border:1px solid var(--border); cursor:pointer; color:var(--text2); background:transparent; transition:all .15s; }
+.f13-pill:hover { border-color:var(--border2); color:var(--text); }
+.f13-pill.active { background:rgba(74,144,217,0.1); border-color:rgba(74,144,217,0.4); color:var(--blue); }
+.f13-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
+.f13-bar-rank { font-size:9px; color:var(--text3); font-family:var(--mono); width:20px; text-align:right; flex-shrink:0; }
+.f13-bar-name { font-size:11px; color:var(--text); width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
+.f13-bar-track { flex:1; background:var(--bg3); border-radius:3px; height:5px; overflow:hidden; }
+.f13-bar-fill { height:100%; border-radius:3px; background:var(--blue); }
+.f13-bar-meta { font-size:10px; color:var(--text2); font-family:var(--mono); white-space:nowrap; }
+.f13-empty { padding:3rem 1rem; text-align:center; color:var(--text3); font-size:12px; font-family:var(--mono); }
+.f13-pct-pos { color:var(--green); font-family:var(--mono); }
+.f13-pct-neg { color:var(--red);   font-family:var(--mono); }
+.f13-pct-neu { color:var(--text3); font-family:var(--mono); }
+
 /* ── Stress Tester ────────────────────────────────────────────────────── */
 .st-layout { display:grid; grid-template-columns:300px 1fr; flex:1; min-height:0; overflow:hidden; }
 .st-left { display:flex; flex-direction:column; border-right:1px solid var(--border); overflow-y:auto; min-height:0; }
@@ -1485,6 +1535,9 @@ a      { color: inherit; text-decoration: none; }
             </div>
             <div class="nav-item" onclick="showPage('benchmark-builder');bbBoot()" data-label="Benchmark Builder">
               <div class="nav-dot"></div>Benchmark Builder<span class="nav-item-badge">BB</span>
+            </div>
+            <div class="nav-item" onclick="showPage('13f');f13Boot()" data-label="13F Tracker">
+              <div class="nav-dot"></div>13F Tracker<span class="nav-item-badge">13F</span>
             </div>
           </div>
         </div>
@@ -2866,6 +2919,51 @@ a      { color: inherit; text-decoration: none; }
           </div>
         </div>
       </div><!-- /page-benchmark-builder -->
+
+
+      <!-- ════════════════════════════════════════
+           PAGE: 13F TRACKER
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-13f" style="flex-direction:column;overflow:hidden;">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">13F Tracker <span class="page-title-badge">Tool</span></div>
+            <div class="page-subtitle">SEC EDGAR quarterly filings · QoQ changes · common holdings across funds</div>
+          </div>
+        </div>
+
+        <div class="f13-body">
+
+          <!-- Fund selector -->
+          <div class="f13-section-label">Select funds</div>
+          <div class="f13-fund-grid" id="f13-fund-grid"></div>
+
+          <!-- Controls -->
+          <div class="f13-controls">
+            <select class="f13-select" id="f13-quarter-sel" aria-label="Current quarter"></select>
+            <select class="f13-select" id="f13-prev-sel" aria-label="Comparison quarter"></select>
+            <button class="f13-run-btn" id="f13-run-btn" onclick="f13RunAnalysis()">
+              ↻ Fetch &amp; analyze
+            </button>
+          </div>
+
+          <div class="f13-status" id="f13-status"></div>
+          <div class="f13-error" id="f13-error"></div>
+
+          <!-- Results -->
+          <div id="f13-results" style="display:none">
+            <div class="f13-metrics" id="f13-metrics"></div>
+            <div class="f13-tabs">
+              <div class="f13-tab active" onclick="f13ShowTab('qoq')"    id="f13-tab-qoq">QoQ Changes</div>
+              <div class="f13-tab"        onclick="f13ShowTab('common')" id="f13-tab-common">Common Holdings</div>
+              <div class="f13-tab"        onclick="f13ShowTab('all')"    id="f13-tab-all">All Holdings</div>
+            </div>
+            <div id="f13-results-area"></div>
+          </div>
+
+        </div>
+      </div><!-- /page-13f -->
+
 
 
       <!-- ════════════════════════════════════════
@@ -8923,6 +9021,357 @@ async function newsBoot() {
     // Re-render with latest data on each visit
     newsRender();
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   13F TRACKER — SEC EDGAR Holdings Analysis
+══════════════════════════════════════════════════════════════════════ */
+
+const F13_FUNDS = [
+  {name:'Berkshire Hathaway',   cik:'0001067983'},
+  {name:'Pershing Square',      cik:'0001336528'},
+  {name:'Appaloosa Management', cik:'0001060349'},
+  {name:'Greenlight Capital',   cik:'0001079114'},
+  {name:'Third Point',          cik:'0001040570'},
+  {name:'Baupost Group',        cik:'0001061768'},
+  {name:'Viking Global',        cik:'0001103804'},
+  {name:'Coatue Management',    cik:'0001336752'},
+  {name:'Tiger Global',         cik:'0001167483'},
+  {name:'Dragoneer Investment', cik:'0001517767'},
+  {name:'D1 Capital',           cik:'0001741830'},
+  {name:'Lone Pine Capital',    cik:'0001070527'},
+];
+
+let f13Selected  = new Set(['0001067983','0001336528','0001060349']);
+let f13AllData   = {};
+let f13ActiveTab = 'qoq';
+let f13Filter    = 'all';
+let f13Booted    = false;
+
+function f13Boot() {
+  if (f13Booted) return;
+  f13Booted = true;
+  f13BuildFundGrid();
+  f13BuildQuarterSelects();
+}
+
+// ── Quarter helpers ─────────────────────────────────────────────────
+function f13Quarters(n) {
+  const out = [];
+  const now = new Date();
+  let y = now.getFullYear(), q = Math.ceil((now.getMonth()+1)/3);
+  q--; if (q < 1) { q = 4; y--; }
+  for (let i = 0; i < n; i++) {
+    out.push({label:`Q${q} ${y}`, year:y, quarter:q});
+    q--; if (q < 1) { q = 4; y--; }
+  }
+  return out;
+}
+
+// ── UI builders ─────────────────────────────────────────────────────
+function f13BuildFundGrid() {
+  document.getElementById('f13-fund-grid').innerHTML = F13_FUNDS.map(f => `
+    <div class="f13-fund-card${f13Selected.has(f.cik)?' selected':''}"
+         onclick="f13ToggleFund('${f.cik}')" id="f13-fc-${f.cik.replace(/\D/g,'')}">
+      <div class="f13-fund-name">${f.name}</div>
+      <div class="f13-fund-cik">CIK ${f.cik}</div>
+    </div>`).join('');
+}
+
+function f13BuildQuarterSelects() {
+  const qs = f13Quarters(8);
+  const s1 = document.getElementById('f13-quarter-sel');
+  const s2 = document.getElementById('f13-prev-sel');
+  s1.innerHTML = qs.map((q,i) => `<option value="${i}">${q.label}${i===0?' (latest)':''}</option>`).join('');
+  s2.innerHTML = qs.map((q,i) => `<option value="${i}"${i===1?' selected':''}>${q.label}</option>`).join('');
+}
+
+function f13ToggleFund(cik) {
+  f13Selected.has(cik) ? f13Selected.delete(cik) : f13Selected.add(cik);
+  f13BuildFundGrid();
+}
+
+function f13SetStatus(msg, spin=false) {
+  document.getElementById('f13-status').innerHTML =
+    (spin ? '<div class="f13-spinner"></div>' : '') + `<span>${msg}</span>`;
+}
+
+// ── Number formatting ────────────────────────────────────────────────
+function f13Fmt(n) {
+  if (n >= 1e9) return (n/1e9).toFixed(2)+'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0)+'K';
+  return n.toString();
+}
+
+// ── SEC EDGAR fetchers ───────────────────────────────────────────────
+async function f13FetchFilings(cik, year, quarter) {
+  const paddedCik = cik.replace(/^0+/,'').padStart(10,'0');
+  const r = await fetch(`https://data.sec.gov/submissions/CIK${paddedCik}.json`);
+  if (!r.ok) throw new Error(`CIK ${cik} not found`);
+  const d = await r.json();
+
+  const search = async (forms, dates, accs, ends) => {
+    const qStart = new Date(year, quarter*3-3, 1);
+    const qEnd   = new Date(year, quarter*3, 0);
+    for (let i = 0; i < forms.length; i++) {
+      if (forms[i] === '13F-HR') {
+        const fd = new Date(dates[i]);
+        const ed = ends[i] ? new Date(ends[i]) : null;
+        if ((ed && ed >= qStart && ed <= qEnd) ||
+            (fd >= qStart && fd <= new Date(year, quarter*3+2, 0))) {
+          return {accession:accs[i], filingDate:dates[i], reportDate:ends[i]};
+        }
+      }
+    }
+    return null;
+  };
+
+  let hit = await search(
+    d.filings.recent.form||[], d.filings.recent.filingDate||[],
+    d.filings.recent.accessionNumber||[], d.filings.recent.reportDate||[]
+  );
+  if (hit) return hit;
+
+  if (d.filings.files) {
+    for (const f of d.filings.files) {
+      const r2 = await fetch(`https://data.sec.gov/submissions/${f.name}`);
+      if (!r2.ok) continue;
+      const d2 = await r2.json();
+      hit = await search(d2.form||[], d2.filingDate||[], d2.accessionNumber||[], d2.reportDate||[]);
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
+
+async function f13FetchHoldings(cik, accession) {
+  const acc    = accession.replace(/-/g,'');
+  const intCik = parseInt(cik);
+  const accFmt = `${acc.slice(0,10)}-${acc.slice(10,12)}-${acc.slice(12)}`;
+  const idxUrl = `https://www.sec.gov/Archives/edgar/data/${intCik}/${accFmt}-index.json`;
+  const r = await fetch(idxUrl);
+  if (!r.ok) throw new Error('Filing index not found');
+  const idx = await r.json();
+  const xmlFile = idx.directory.item.find(x =>
+    /infotable\.xml$/i.test(x.name) ||
+    (/\.xml$/i.test(x.name) && !/xbrl|instance|label/i.test(x.name))
+  );
+  if (!xmlFile) throw new Error('No information table XML found');
+  const r2 = await fetch(`https://www.sec.gov/Archives/edgar/data/${intCik}/${accFmt}/${xmlFile.name}`);
+  if (!r2.ok) throw new Error('XML fetch failed');
+  const doc  = new DOMParser().parseFromString(await r2.text(), 'text/xml');
+  const nodes = doc.querySelectorAll('infoTable');
+  const out = [];
+  nodes.forEach(n => {
+    const g = t => n.querySelector(t)?.textContent?.trim()||'';
+    const name=g('nameOfIssuer'), cusip=g('cusip');
+    const val=parseInt(g('value').replace(/,/g,'')||'0')*1000;
+    const shrs=parseInt(g('sshPrnamt').replace(/,/g,'')||'0');
+    if (name && cusip) out.push({name,cusip,value:val,shares:shrs});
+  });
+  return out;
+}
+
+// ── Main analysis runner ─────────────────────────────────────────────
+async function f13RunAnalysis() {
+  if (!f13Selected.size) { f13SetStatus('Select at least one fund'); return; }
+  const qs  = f13Quarters(8);
+  const qi  = parseInt(document.getElementById('f13-quarter-sel').value);
+  const pi  = parseInt(document.getElementById('f13-prev-sel').value);
+  const err = document.getElementById('f13-error');
+
+  if (qi >= pi) {
+    err.textContent = 'Current quarter must be more recent than the comparison quarter.';
+    err.style.display = '';
+    return;
+  }
+  err.style.display = 'none';
+  document.getElementById('f13-results').style.display = 'none';
+  document.getElementById('f13-run-btn').disabled = true;
+  f13AllData = {};
+
+  const curQ  = qs[qi], prevQ = qs[pi];
+  const funds = F13_FUNDS.filter(f => f13Selected.has(f.cik));
+
+  for (let i = 0; i < funds.length; i++) {
+    const fund = funds[i];
+    f13SetStatus(`Fetching ${fund.name} (${i+1}/${funds.length})…`, true);
+    try {
+      const [curFiling, prevFiling] = await Promise.all([
+        f13FetchFilings(fund.cik, curQ.year,  curQ.quarter),
+        f13FetchFilings(fund.cik, prevQ.year, prevQ.quarter),
+      ]);
+      const [curH, prevH] = await Promise.all([
+        curFiling  ? f13FetchHoldings(fund.cik, curFiling.accession)  : [],
+        prevFiling ? f13FetchHoldings(fund.cik, prevFiling.accession) : [],
+      ]);
+      f13AllData[fund.cik] = {fund, curH, prevH, curFiling, prevFiling};
+    } catch(e) {
+      f13AllData[fund.cik] = {fund, curH:[], prevH:[], error:e.message};
+      f13SetStatus(`Warning: ${fund.name} — ${e.message}`);
+      await new Promise(r => setTimeout(r, 600));
+    }
+  }
+
+  f13SetStatus(`Done · ${funds.length} fund${funds.length>1?'s':''} loaded`);
+  document.getElementById('f13-run-btn').disabled = false;
+  document.getElementById('f13-results').style.display = '';
+  f13RenderMetrics();
+  f13RenderTab(f13ActiveTab);
+}
+
+// ── Change computation ───────────────────────────────────────────────
+function f13ComputeChanges(cur, prev) {
+  const prevMap={}, curMap={};
+  prev.forEach(h => prevMap[h.cusip]=h);
+  cur.forEach(h  => curMap[h.cusip]=h);
+  const rows=[];
+  cur.forEach(h => {
+    const p=prevMap[h.cusip];
+    if (!p) { rows.push({...h,type:'new',prevVal:0,prevShares:0,chg:null}); }
+    else {
+      const pct=p.shares>0?(h.shares-p.shares)/p.shares*100:0;
+      rows.push({...h,type:pct>5?'add':pct<-5?'trim':'flat',prevVal:p.value,prevShares:p.shares,chg:pct});
+    }
+  });
+  prev.forEach(h => { if (!curMap[h.cusip]) rows.push({...h,type:'close',value:0,shares:0,chg:-100,prevVal:h.value,prevShares:h.shares}); });
+  const order={new:0,add:1,flat:2,trim:3,close:4};
+  return rows.sort((a,b)=>order[a.type]-order[b.type]||b.value-a.value);
+}
+
+function f13Badge(type) {
+  return {
+    new:  '<span class="f13-badge f13-badge-new">NEW</span>',
+    add:  '<span class="f13-badge f13-badge-add">ADDED</span>',
+    trim: '<span class="f13-badge f13-badge-trim">TRIMMED</span>',
+    flat: '<span class="f13-badge f13-badge-flat">UNCHANGED</span>',
+    close:'<span class="f13-badge f13-badge-close">CLOSED</span>',
+  }[type]||'';
+}
+
+// ── Metrics strip ────────────────────────────────────────────────────
+function f13RenderMetrics() {
+  let total=0,newPos=0,closed=0;
+  for (const d of Object.values(f13AllData)) {
+    total+=d.curH.length;
+    f13ComputeChanges(d.curH,d.prevH).forEach(c=>{
+      if(c.type==='new') newPos++;
+      if(c.type==='close') closed++;
+    });
+  }
+  document.getElementById('f13-metrics').innerHTML=`
+    <div class="f13-metric"><div class="f13-metric-label">Funds loaded</div><div class="f13-metric-val">${Object.keys(f13AllData).length}</div></div>
+    <div class="f13-metric"><div class="f13-metric-label">Total positions</div><div class="f13-metric-val">${total.toLocaleString()}</div></div>
+    <div class="f13-metric"><div class="f13-metric-label">New positions</div><div class="f13-metric-val green">${newPos}</div></div>
+    <div class="f13-metric"><div class="f13-metric-label">Closed positions</div><div class="f13-metric-val red">${closed}</div></div>`;
+}
+
+// ── Tab switching ────────────────────────────────────────────────────
+function f13ShowTab(t) {
+  f13ActiveTab=t;
+  document.querySelectorAll('.f13-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('f13-tab-'+t).classList.add('active');
+  f13RenderTab(t);
+}
+
+function f13RenderTab(t) {
+  if      (t==='qoq')    f13RenderQoQ();
+  else if (t==='common') f13RenderCommon();
+  else                   f13RenderAll();
+}
+
+// ── Tab: QoQ changes ─────────────────────────────────────────────────
+function f13RenderQoQ() {
+  const el=document.getElementById('f13-results-area');
+  const rows=[];
+  for (const d of Object.values(f13AllData))
+    f13ComputeChanges(d.curH,d.prevH).filter(c=>c.type!=='flat').forEach(c=>rows.push({...c,fundName:d.fund.name}));
+
+  if (!rows.length) { el.innerHTML='<div class="f13-empty">No changes found or no data loaded</div>'; return; }
+
+  const fundNames=[...new Set(rows.map(r=>r.fundName))];
+  let html='<div class="f13-fund-pills">'+
+    `<span class="f13-pill${f13Filter==='all'?' active':''}" onclick="f13SetFilter('all')">all funds</span>`+
+    fundNames.map(n=>`<span class="f13-pill${f13Filter===n?' active':''}" onclick="f13SetFilter(${JSON.stringify(n)})">${n}</span>`).join('')+
+    '</div>';
+
+  const filtered=f13Filter==='all'?rows:rows.filter(r=>r.fundName===f13Filter);
+  html+=`<div style="overflow-x:auto"><table class="st-table"><thead><tr>
+    <th>Company</th><th>Fund</th><th>Action</th><th style="text-align:right">Value</th><th style="text-align:right">Shares Δ</th>
+    </tr></thead><tbody>`;
+  filtered.slice(0,300).forEach(r=>{
+    const chgHtml=r.chg!=null
+      ?`<span class="${r.chg>=0?'f13-pct-pos':'f13-pct-neg'}">${r.chg>=0?'+':''}${r.chg.toFixed(1)}%</span>`
+      :r.type==='new'?'<span class="f13-pct-pos">+NEW</span>':'<span class="f13-pct-neg">−100%</span>';
+    html+=`<tr>
+      <td>${r.name}</td>
+      <td style="color:var(--text2);font-size:10px;font-family:var(--mono)">${r.fundName}</td>
+      <td>${f13Badge(r.type)}</td>
+      <td style="text-align:right;font-family:var(--mono)">${r.type!=='close'?'$'+f13Fmt(r.value):'—'}</td>
+      <td style="text-align:right">${chgHtml}</td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+}
+
+function f13SetFilter(f) { f13Filter=f; f13RenderQoQ(); }
+
+// ── Tab: Common holdings ─────────────────────────────────────────────
+function f13RenderCommon() {
+  const el=document.getElementById('f13-results-area');
+  const fundCount=Object.keys(f13AllData).length;
+  if (!fundCount) { el.innerHTML='<div class="f13-empty">Load data first</div>'; return; }
+
+  const countMap={},nameMap={},valMap={};
+  for (const d of Object.values(f13AllData)) {
+    const seen=new Set();
+    d.curH.forEach(h=>{
+      if (!seen.has(h.cusip)){
+        seen.add(h.cusip);
+        countMap[h.cusip]=(countMap[h.cusip]||0)+1;
+        nameMap[h.cusip]=h.name;
+        valMap[h.cusip]=(valMap[h.cusip]||0)+h.value;
+      }
+    });
+  }
+  const sorted=Object.keys(countMap).sort((a,b)=>countMap[b]-countMap[a]||valMap[b]-valMap[a]).slice(0,50);
+  const maxCount=sorted.length?countMap[sorted[0]]:1;
+  let html=`<div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:14px">Top 50 names by conviction across ${fundCount} fund${fundCount>1?'s':''}</div>`;
+  sorted.forEach((cusip,i)=>{
+    const pct=Math.round(countMap[cusip]/maxCount*100);
+    html+=`<div class="f13-bar-row">
+      <span class="f13-bar-rank">${i+1}</span>
+      <span class="f13-bar-name" title="${nameMap[cusip]}">${nameMap[cusip]}</span>
+      <div class="f13-bar-track"><div class="f13-bar-fill" style="width:${pct}%"></div></div>
+      <span class="f13-bar-meta">${countMap[cusip]}/${fundCount} · $${f13Fmt(valMap[cusip])}</span>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+// ── Tab: All holdings ────────────────────────────────────────────────
+function f13RenderAll() {
+  const el=document.getElementById('f13-results-area');
+  if (!Object.keys(f13AllData).length) { el.innerHTML='<div class="f13-empty">Load data first</div>'; return; }
+  const allRows=[];
+  for (const d of Object.values(f13AllData)) d.curH.forEach(h=>allRows.push({...h,fundName:d.fund.name}));
+  allRows.sort((a,b)=>b.value-a.value);
+  let html=`<div style="overflow-x:auto"><table class="st-table"><thead><tr>
+    <th>#</th><th>Company</th><th>Fund</th><th style="text-align:right">Value</th><th style="text-align:right">Shares</th>
+    </tr></thead><tbody>`;
+  allRows.slice(0,500).forEach((r,i)=>{
+    html+=`<tr>
+      <td style="color:var(--text3);font-family:var(--mono)">${i+1}</td>
+      <td>${r.name}</td>
+      <td style="color:var(--text2);font-size:10px;font-family:var(--mono)">${r.fundName}</td>
+      <td style="text-align:right;font-family:var(--mono)">$${f13Fmt(r.value)}</td>
+      <td style="text-align:right;font-family:var(--mono);color:var(--text2)">${r.shares.toLocaleString()}</td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
 }
 </script>
 </body>
