@@ -9193,7 +9193,7 @@ function f13RenderSingleFund(cik) {
     const lblClr = active ? 'var(--blue)' : 'var(--text3)';
     const lblOp  = active ? '1' : '0.55';
     return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;cursor:default" title="${x.q}: $${f13Fmt(x.aum)}">
-      <div style="writing-mode:vertical-lr;transform:rotate(180deg);font-size:9px;font-family:var(--mono);color:${lblClr};opacity:${lblOp};white-space:nowrap;line-height:1;margin-bottom:4px;font-weight:${active ? 600 : 400}">${f13Fmt(x.aum)}</div>
+      <div style="font-size:10px;font-family:var(--mono);color:${lblClr};opacity:${lblOp};white-space:nowrap;line-height:1;margin-bottom:4px;font-weight:${active ? 600 : 400};overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center">${x.aum>=1e9?(x.aum/1e9).toFixed(1)+'B':x.aum>=1e6?(x.aum/1e6).toFixed(1)+'M':(x.aum/1e3).toFixed(1)+'K'}</div>
       <div style="width:100%;height:${pct}%;background:${barBg};border-radius:2px 2px 0 0;min-height:4px"></div>
     </div>`;
   }).join('');
