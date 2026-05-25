@@ -954,9 +954,7 @@ a      { color: inherit; text-decoration: none; }
 .f13-sum-kpi-val { font-size:20px; font-weight:300; color:var(--text); font-variant-numeric:tabular-nums; line-height:1.1; }
 .f13-sum-section { margin-bottom:18px; }
 .f13-sum-section-title { font-size:9px; font-weight:500; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); font-family:var(--mono); margin-bottom:10px; }
-.f13-sparkbar { display:flex; align-items:flex-end; gap:3px; height:44px; }
-.f13-sparkbar-col { flex:1; border-radius:2px 2px 0 0; min-width:6px; transition:opacity .12s; cursor:default; }
-.f13-sparkbar-col:hover { opacity:.7; }
+.f13-sparkbar { display:flex; align-items:flex-end; gap:4px; flex:1; border-bottom:1px solid var(--border); min-height:60px; }
 
 /* ── Stress Tester ────────────────────────────────────────────────────── */
 .st-layout { display:grid; grid-template-columns:300px 1fr; flex:1; min-height:0; overflow:hidden; }
@@ -9179,18 +9177,23 @@ function f13RenderSingleFund(cik) {
   });
   closeCnt = prevH.filter(h => !curCusips.has(h.cusip)).length;
 
-  // AUM sparkline (oldest → newest)
+  // AUM sparkline (oldest → newest) — bars sized as % of container height
   const aumByQ = f13Data.meta.quarters.slice().reverse()
     .map(q => ({ q, aum: (fd.quarters[q] || []).filter(h => h.name && h.cusip).reduce((s, h) => s + h.value, 0) }))
     .filter(x => x.aum > 0);
   const maxAUM = Math.max(...aumByQ.map(x => x.aum), 1);
   const sparkBars = aumByQ.map(x => {
-    const h = Math.max(4, Math.round(x.aum / maxAUM * 44));
-    return `<div class="f13-sparkbar-col" title="${x.q}: $${f13Fmt(x.aum)}"
-      style="height:${h}px;background:${x.q === curQ ? 'var(--blue)' : 'var(--bg4)'}"></div>`;
+    const pct     = Math.max(5, Math.round(x.aum / maxAUM * 100));
+    const active  = x.q === curQ;
+    const barBg   = active ? 'var(--blue)' : 'rgba(255,255,255,0.14)';
+    const lblClr  = active ? 'var(--blue)' : 'var(--text3)';
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;cursor:default" title="${x.q}: $${f13Fmt(x.aum)}">
+      <div style="writing-mode:vertical-lr;transform:rotate(180deg);font-size:7px;font-family:var(--mono);color:${lblClr};white-space:nowrap;line-height:1;margin-bottom:3px">${f13Fmt(x.aum)}</div>
+      <div style="width:100%;height:${pct}%;background:${barBg};border-radius:2px 2px 0 0;min-height:4px"></div>
+    </div>`;
   }).join('');
   const sparkLabels = aumByQ.map(x =>
-    `<div style="flex:1;font-size:8px;color:var(--text3);font-family:var(--mono);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.q}</div>`
+    `<div style="flex:1;font-size:8px;color:${x.q === curQ ? 'var(--blue)' : 'var(--text3)'};font-family:var(--mono);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.q}</div>`
   ).join('');
 
   // Top 5
@@ -9311,11 +9314,13 @@ function f13RenderSingleFund(cik) {
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
-      <div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;align-items:stretch">
+      <div style="display:flex;flex-direction:column;">
         <div class="f13-sum-section-title">AUM Trend</div>
-        <div class="f13-sparkbar">${sparkBars}</div>
-        <div style="display:flex;gap:3px;margin-top:5px">${sparkLabels}</div>
+        <div style="flex:1;display:flex;flex-direction:column;">
+          <div class="f13-sparkbar">${sparkBars}</div>
+          <div style="display:flex;gap:4px;margin-top:5px">${sparkLabels}</div>
+        </div>
       </div>
       <div>
         <div class="f13-sum-section-title">Top 5 Holdings — ${curQ}</div>
