@@ -9172,7 +9172,7 @@ async function f13Boot() {
   f13Booted = true;
   f13SetStatus('Loading holdings data…', true);
   try {
-    const r = await fetch('13f-data.json');
+    const r = await fetch('13f-data.json?v=' + Date.now());
     if (!r.ok) throw new Error(`HTTP ${r.status} — run scrape_13f.py first`);
     f13Data = await r.json();
     f13BuildQuarterSelects();
