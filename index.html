@@ -1181,10 +1181,11 @@ a      { color: inherit; text-decoration: none; }
       <div class="login-dot lit"></div><div class="login-dot lit"></div>
       <div class="login-dot lit"></div><div class="login-dot"></div><div class="login-dot"></div>
     </div>
-    <div class="login-label">Email</div>
-    <input class="login-input" type="email" placeholder="you@firm.com" id="login-email">
+    <div class="login-label">Username</div>
+    <input class="login-input" type="text" placeholder="username" id="login-user" autocomplete="username">
     <div class="login-label">Password</div>
-    <input class="login-input" type="password" placeholder="••••••••••••" id="login-pass">
+    <input class="login-input" type="password" placeholder="••••••••••••" id="login-pass" autocomplete="current-password">
+    <div id="login-error" style="font-size:10px;font-family:var(--mono);color:#fca5a5;min-height:14px;margin-bottom:2px;"></div>
     <button class="login-btn" onclick="doLogin()">Sign In →</button>
     <div class="login-footer">Access restricted to authorized users</div>
   </div>
@@ -3112,9 +3113,18 @@ a      { color: inherit; text-decoration: none; }
    SHELL CONTROLS
 ══════════════════════════════════════════════════════════════════════ */
 function doLogin() {
-  const email = document.getElementById('login-email').value;
+  const user  = document.getElementById('login-user').value.trim().toLowerCase();
   const pass  = document.getElementById('login-pass').value;
-  if (!email || !pass) return;
+  const err   = document.getElementById('login-error');
+  if (!user || !pass) { err.textContent = 'Enter username and password.'; return; }
+  if (user !== 'excess' || pass !== 'returns') {
+    err.textContent = 'Invalid credentials.';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+    return;
+  }
+  err.textContent = '';
+  sessionStorage.setItem('pm_auth', '1');
   document.getElementById('login-overlay').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
   updateTimestamp();
@@ -3126,14 +3136,24 @@ function doLogin() {
   try { cmaRender(); } catch(e) { console.error('cmaRender:', e); }
 }
 function doLogout() {
+  sessionStorage.removeItem('pm_auth');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-overlay').style.display = 'flex';
-  document.getElementById('login-email').value = '';
+  document.getElementById('login-user').value = '';
   document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').textContent = '';
 }
 document.getElementById('login-pass').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') doLogin();
 });
+document.getElementById('login-user').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('login-pass').focus();
+});
+// Skip login screen if already authenticated this session
+if (sessionStorage.getItem('pm_auth') === '1') {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+}
 
 function showPage(id) {
   document.querySelectorAll('.section-page').forEach(p => p.classList.remove('active'));
