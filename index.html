@@ -9181,14 +9181,19 @@ function f13RenderSingleFund(cik) {
   const aumByQ = f13Data.meta.quarters.slice().reverse()
     .map(q => ({ q, aum: (fd.quarters[q] || []).filter(h => h.name && h.cusip).reduce((s, h) => s + h.value, 0) }))
     .filter(x => x.aum > 0);
-  const maxAUM = Math.max(...aumByQ.map(x => x.aum), 1);
+  const maxAUM  = Math.max(...aumByQ.map(x => x.aum), 1);
+  const minAUM  = Math.min(...aumByQ.map(x => x.aum));
+  // Scale from min→max so quarter-over-quarter movement is fully visible.
+  // Smallest bar = 12%, largest = 96%. When only one data point, use 80%.
+  const aumRange = maxAUM - minAUM || maxAUM * 0.25;
   const sparkBars = aumByQ.map(x => {
-    const pct     = Math.max(5, Math.round(x.aum / maxAUM * 100));
-    const active  = x.q === curQ;
-    const barBg   = active ? 'var(--blue)' : 'rgba(255,255,255,0.14)';
-    const lblClr  = active ? 'var(--blue)' : 'var(--text3)';
+    const pct    = aumByQ.length === 1 ? 80 : Math.round((x.aum - minAUM) / aumRange * 84) + 12;
+    const active = x.q === curQ;
+    const barBg  = active ? 'var(--blue)' : 'rgba(255,255,255,0.15)';
+    const lblClr = active ? 'var(--blue)' : 'var(--text3)';
+    const lblOp  = active ? '1' : '0.55';
     return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;cursor:default" title="${x.q}: $${f13Fmt(x.aum)}">
-      <div style="writing-mode:vertical-lr;transform:rotate(180deg);font-size:7px;font-family:var(--mono);color:${lblClr};white-space:nowrap;line-height:1;margin-bottom:3px">${f13Fmt(x.aum)}</div>
+      <div style="writing-mode:vertical-lr;transform:rotate(180deg);font-size:9px;font-family:var(--mono);color:${lblClr};opacity:${lblOp};white-space:nowrap;line-height:1;margin-bottom:4px;font-weight:${active ? 600 : 400}">${f13Fmt(x.aum)}</div>
       <div style="width:100%;height:${pct}%;background:${barBg};border-radius:2px 2px 0 0;min-height:4px"></div>
     </div>`;
   }).join('');
@@ -9317,9 +9322,16 @@ function f13RenderSingleFund(cik) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;align-items:stretch">
       <div style="display:flex;flex-direction:column;">
         <div class="f13-sum-section-title">AUM Trend</div>
-        <div style="flex:1;display:flex;flex-direction:column;">
-          <div class="f13-sparkbar">${sparkBars}</div>
-          <div style="display:flex;gap:4px;margin-top:5px">${sparkLabels}</div>
+        <div style="flex:1;display:flex;flex-direction:column;min-height:130px">
+          <div style="flex:1;display:flex;min-height:0">
+            <!-- Y-axis: fixed 34px wide so quarter labels below stay aligned -->
+            <div style="width:34px;flex-shrink:0;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;padding-right:5px">
+              <span style="font-size:8px;font-family:var(--mono);color:var(--text3);white-space:nowrap">$${f13Fmt(maxAUM)}</span>
+              <span style="font-size:8px;font-family:var(--mono);color:var(--text3);white-space:nowrap">$${f13Fmt(minAUM)}</span>
+            </div>
+            <div class="f13-sparkbar" style="flex:1">${sparkBars}</div>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:5px;margin-left:34px">${sparkLabels}</div>
         </div>
       </div>
       <div>
