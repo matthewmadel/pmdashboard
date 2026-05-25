@@ -3012,9 +3012,15 @@ a      { color: inherit; text-decoration: none; }
         <!-- Funds pane -->
         <div id="f13-pane-funds" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
           <div class="f13-ctrl-bar">
-            <select class="f13-select" id="f13-quarter-sel" aria-label="Current quarter"></select>
-            <select class="f13-select" id="f13-prev-sel" aria-label="Comparison quarter"></select>
-            <button class="f13-run-btn" id="f13-run-btn" onclick="f13RunAnalysis()">Analyze</button>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <span style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.07em;">Current Quarter</span>
+              <select class="f13-select" id="f13-quarter-sel" aria-label="Current quarter"></select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <span style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.07em;">Prior Quarter</span>
+              <select class="f13-select" id="f13-prev-sel" aria-label="Comparison quarter"></select>
+            </div>
+            <button class="f13-run-btn" id="f13-run-btn" onclick="f13RunAnalysis()" style="align-self:flex-end;">Analyze</button>
             <div class="f13-status" id="f13-status"></div>
           </div>
           <div class="f13-error" id="f13-error"></div>
