@@ -948,6 +948,19 @@ a      { color: inherit; text-decoration: none; }
 .f13-conc-high { background:rgba(224,85,85,0.1); border-color:rgba(224,85,85,0.3); color:#fca5a5; }
 .f13-conc-mid  { background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3); color:#fcd34d; }
 .f13-conc-low  { background:rgba(255,255,255,0.04); border-color:var(--border); color:var(--text2); }
+.f13-fund-tab-bar { display:flex; border-bottom:1px solid var(--border); margin-bottom:16px; flex-shrink:0; }
+.f13-fund-tab { padding:7px 14px; font-size:11px; font-family:var(--mono); color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s; user-select:none; }
+.f13-fund-tab:hover { color:var(--text); }
+.f13-fund-tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+.f13-sum-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; }
+.f13-sum-kpi { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:11px 14px; }
+.f13-sum-kpi-label { font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; font-family:var(--mono); margin-bottom:5px; }
+.f13-sum-kpi-val { font-size:20px; font-weight:300; color:var(--text); font-variant-numeric:tabular-nums; line-height:1.1; }
+.f13-sum-section { margin-bottom:18px; }
+.f13-sum-section-title { font-size:9px; font-weight:500; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); font-family:var(--mono); margin-bottom:10px; }
+.f13-sparkbar { display:flex; align-items:flex-end; gap:3px; height:44px; }
+.f13-sparkbar-col { flex:1; border-radius:2px 2px 0 0; min-width:6px; transition:opacity .12s; cursor:default; }
+.f13-sparkbar-col:hover { opacity:.7; }
 
 /* ── Stress Tester ────────────────────────────────────────────────────── */
 .st-layout { display:grid; grid-template-columns:300px 1fr; flex:1; min-height:0; overflow:hidden; }
@@ -9026,6 +9039,7 @@ async function newsBoot() {
 let f13Data          = null;
 let f13PageTab       = 'funds';
 let f13ActiveFundCik = null;
+let f13ActiveFundTab = 'summary';
 let f13CurQ          = null;
 let f13PrevQ         = null;
 let f13Booted        = false;
@@ -9127,34 +9141,208 @@ function f13RunAnalysis() {
   if (f13ActiveFundCik) f13RenderSingleFund(f13ActiveFundCik);
 }
 
-// ── Render single fund holdings ───────────────────────────────────────
+// ── Fund-level sub-tab switcher ───────────────────────────────────────
+function f13SetFundTab(tab) {
+  f13ActiveFundTab = tab;
+  document.querySelectorAll('.f13-fund-tab').forEach(el => el.classList.remove('active'));
+  const tabEl = document.getElementById('f13-ftab-' + tab);
+  if (tabEl) tabEl.classList.add('active');
+  if (!f13ActiveFundCik || !f13Data) return;
+  const fd    = f13Data.funds[f13ActiveFundCik];
+  const curQ  = document.getElementById('f13-quarter-sel')?.value  || f13CurQ;
+  const prevQ = document.getElementById('f13-prev-sel')?.value     || f13PrevQ;
+  if (tab === 'summary') f13RenderFundSummaryContent(f13ActiveFundCik, curQ, prevQ, fd);
+  else                   f13RenderHoldingsContent(f13ActiveFundCik, curQ, prevQ, fd);
+}
+
+// ── Render single fund (tab shell + content) ──────────────────────────
 function f13RenderSingleFund(cik) {
   if (!f13Data) return;
   const fd = f13Data.funds[cik];
   if (!fd) return;
-  // Read quarter state directly from dropdowns — never trust stale module-level vars
   const curQ  = document.getElementById('f13-quarter-sel')?.value  || f13CurQ;
   const prevQ = document.getElementById('f13-prev-sel')?.value     || f13PrevQ;
-  f13CurQ  = curQ;
-  f13PrevQ = prevQ;
+  f13CurQ = curQ; f13PrevQ = prevQ;
   const el       = document.getElementById('f13-right-content');
+  const holdings = (fd.quarters[curQ] || []).filter(h => h.name && h.cusip);
+
+  if (!holdings.length) {
+    el.innerHTML = `
+      <div class="f13-fund-tab-bar">
+        <div class="f13-fund-tab active" id="f13-ftab-summary"  onclick="f13SetFundTab('summary')">Summary</div>
+        <div class="f13-fund-tab"        id="f13-ftab-holdings" onclick="f13SetFundTab('holdings')">Holdings</div>
+      </div>
+      <div class="f13-empty">No holdings data for ${curQ}</div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="f13-fund-tab-bar">
+      <div class="f13-fund-tab${f13ActiveFundTab === 'summary'  ? ' active' : ''}" id="f13-ftab-summary"  onclick="f13SetFundTab('summary')">Summary</div>
+      <div class="f13-fund-tab${f13ActiveFundTab === 'holdings' ? ' active' : ''}" id="f13-ftab-holdings" onclick="f13SetFundTab('holdings')">Holdings</div>
+    </div>
+    <div id="f13-fund-tab-content"></div>`;
+
+  if (f13ActiveFundTab === 'summary') f13RenderFundSummaryContent(cik, curQ, prevQ, fd);
+  else                                f13RenderHoldingsContent(cik, curQ, prevQ, fd);
+}
+
+// ── Summary tab ───────────────────────────────────────────────────────
+function f13RenderFundSummaryContent(cik, curQ, prevQ, fd) {
+  const el = document.getElementById('f13-fund-tab-content');
+  if (!el) return;
   const holdings = (fd.quarters[curQ]  || []).filter(h => h.name && h.cusip);
   const prevH    = (fd.quarters[prevQ] || []).filter(h => h.name && h.cusip);
+  const totalAUM = holdings.reduce((s, h) => s + h.value, 0);
+  const prevAUM  = prevH.reduce((s, h) => s + h.value, 0);
+  const aumChgPct = prevAUM > 0 ? (totalAUM - prevAUM) / prevAUM * 100 : null;
+
+  // Top-10 concentration
+  const top10Pct = totalAUM > 0
+    ? holdings.slice(0, 10).reduce((s, h) => s + h.value, 0) / totalAUM * 100 : 0;
+
+  // How many positions make up 50% of the book
+  let cum = 0, pos50 = 0;
+  for (const h of holdings) { cum += h.value; pos50++; if (cum >= totalAUM * 0.5) break; }
+
+  // Build prev map + activity counts
+  const prevMap = {};
+  prevH.forEach(h => { prevMap[h.cusip] = h; });
+  const curCusips = new Set(holdings.map(h => h.cusip));
+  let newCnt = 0, addCnt = 0, trimCnt = 0, closeCnt = 0;
+  holdings.forEach(h => {
+    const p = prevMap[h.cusip];
+    if (!p) { newCnt++; return; }
+    if (p.shares > 0) {
+      const d = (h.shares - p.shares) / p.shares * 100;
+      if (d > 5) addCnt++; else if (d < -5) trimCnt++;
+    }
+  });
+  closeCnt = prevH.filter(h => !curCusips.has(h.cusip)).length;
+
+  // AUM sparkline across all quarters (oldest → newest left to right)
+  const allQ   = f13Data.meta.quarters;
+  const aumByQ = allQ.slice().reverse()
+    .map(q => ({ q, aum: (fd.quarters[q] || []).filter(h => h.name && h.cusip).reduce((s, h) => s + h.value, 0) }))
+    .filter(x => x.aum > 0);
+  const maxAUM = Math.max(...aumByQ.map(x => x.aum), 1);
+  const sparkBars = aumByQ.map(x => {
+    const h = Math.max(4, Math.round(x.aum / maxAUM * 44));
+    const active = x.q === curQ;
+    return `<div class="f13-sparkbar-col" title="${x.q}: $${f13Fmt(x.aum)}"
+      style="height:${h}px;background:${active ? 'var(--blue)' : 'var(--bg4)'}"></div>`;
+  }).join('');
+  const sparkLabels = aumByQ.map(x =>
+    `<div style="flex:1;font-size:8px;color:var(--text3);font-family:var(--mono);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.q}</div>`
+  ).join('');
+
+  // Top 5 holdings
+  const top5   = holdings.slice(0, 5);
+  const maxVal = top5[0]?.value || 1;
+  const top5Html = top5.map((h, i) => {
+    const pct  = totalAUM > 0 ? h.value / totalAUM * 100 : 0;
+    const barW = h.value / maxVal * 100;
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-size:9px;color:var(--text3);font-family:var(--mono);width:14px;text-align:right">${i+1}</span>
+      <span style="font-size:11px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.name}</span>
+      <div style="width:90px;background:var(--bg3);border-radius:2px;height:4px;flex-shrink:0">
+        <div style="width:${barW.toFixed(1)}%;height:100%;background:var(--blue);border-radius:2px"></div>
+      </div>
+      <span style="font-size:10px;color:var(--text2);font-family:var(--mono);white-space:nowrap;width:64px;text-align:right">$${f13Fmt(h.value)}</span>
+      <span style="font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap;width:36px;text-align:right">${pct.toFixed(1)}%</span>
+    </div>`;
+  }).join('');
+
+  // Notable moves (top 3 each)
+  const newPos = holdings.filter(h => !prevMap[h.cusip]).slice(0, 3);
+  const bigAdds = holdings
+    .filter(h => prevMap[h.cusip]?.shares > 0)
+    .map(h => ({ ...h, chg: (h.shares - prevMap[h.cusip].shares) / prevMap[h.cusip].shares * 100 }))
+    .filter(h => h.chg > 5).sort((a,b) => b.chg - a.chg).slice(0, 3);
+  const bigTrims = holdings
+    .filter(h => prevMap[h.cusip]?.shares > 0)
+    .map(h => ({ ...h, chg: (h.shares - prevMap[h.cusip].shares) / prevMap[h.cusip].shares * 100 }))
+    .filter(h => h.chg < -5).sort((a,b) => a.chg - b.chg).slice(0, 3);
+
+  const moveRow = (h, badgeHtml) => `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">
+      ${badgeHtml}
+      <span style="font-size:10px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.name}</span>
+      <span style="font-size:10px;color:var(--text2);font-family:var(--mono);white-space:nowrap">$${f13Fmt(h.value)}</span>
+    </div>`;
+  const none = '<div style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 0">None this quarter</div>';
+
+  const aumChgHtml = aumChgPct !== null
+    ? `<div style="margin-top:5px;font-size:11px;font-family:var(--mono);${aumChgPct >= 0 ? 'color:var(--green)' : 'color:var(--red)'}">${aumChgPct >= 0 ? '+' : ''}${aumChgPct.toFixed(1)}% vs ${prevQ}</div>`
+    : '';
+
+  el.innerHTML = `
+    <div class="f13-sum-kpi-row">
+      <div class="f13-sum-kpi">
+        <div class="f13-sum-kpi-label">Disclosed AUM</div>
+        <div class="f13-sum-kpi-val" style="font-size:17px">$${f13Fmt(totalAUM)}</div>
+        ${aumChgHtml}
+      </div>
+      <div class="f13-sum-kpi">
+        <div class="f13-sum-kpi-label">Positions</div>
+        <div class="f13-sum-kpi-val">${holdings.length}</div>
+        <div style="margin-top:5px;font-size:10px;color:var(--text3);font-family:var(--mono)">${pos50} pos → 50% of book</div>
+      </div>
+      <div class="f13-sum-kpi">
+        <div class="f13-sum-kpi-label">Top-10 Concentration</div>
+        <div class="f13-sum-kpi-val">${top10Pct.toFixed(1)}%</div>
+        <div style="margin-top:5px;font-size:10px;color:var(--text3);font-family:var(--mono)">${Math.min(10, holdings.length)} of ${holdings.length} positions</div>
+      </div>
+      <div class="f13-sum-kpi">
+        <div class="f13-sum-kpi-label">QoQ Activity</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
+          ${newCnt   ? `<span class="f13-badge f13-badge-new">${newCnt} NEW</span>`      : ''}
+          ${addCnt   ? `<span class="f13-badge f13-badge-add">${addCnt} ADDED</span>`    : ''}
+          ${trimCnt  ? `<span class="f13-badge f13-badge-trim">${trimCnt} REDUCED</span>` : ''}
+          ${closeCnt ? `<span class="f13-badge f13-badge-close">${closeCnt} CLOSED</span>` : ''}
+          ${!newCnt && !addCnt && !trimCnt && !closeCnt ? '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">No changes</span>' : ''}
+        </div>
+      </div>
+    </div>
+
+    <div class="f13-sum-section">
+      <div class="f13-sum-section-title">AUM Trend — ${aumByQ.length} quarter${aumByQ.length !== 1 ? 's' : ''} of data</div>
+      <div class="f13-sparkbar">${sparkBars}</div>
+      <div style="display:flex;gap:3px;margin-top:5px">${sparkLabels}</div>
+    </div>
+
+    <div class="f13-sum-section">
+      <div class="f13-sum-section-title">Top 5 Holdings — ${curQ}</div>
+      ${top5Html}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+      <div>
+        <div class="f13-sum-section-title">New Positions</div>
+        ${newPos.length ? newPos.map(h => moveRow(h, '<span class="f13-badge f13-badge-new">NEW</span>')).join('') : none}
+      </div>
+      <div>
+        <div class="f13-sum-section-title">Biggest Adds</div>
+        ${bigAdds.length ? bigAdds.map(h => moveRow(h, `<span class="f13-badge f13-badge-add">+${h.chg.toFixed(0)}%</span>`)).join('') : none}
+      </div>
+      <div>
+        <div class="f13-sum-section-title">Biggest Trims</div>
+        ${bigTrims.length ? bigTrims.map(h => moveRow(h, `<span class="f13-badge f13-badge-trim">${h.chg.toFixed(0)}%</span>`)).join('') : none}
+      </div>
+    </div>`;
+}
+
+// ── Holdings tab ──────────────────────────────────────────────────────
+function f13RenderHoldingsContent(cik, curQ, prevQ, fd) {
+  const el = document.getElementById('f13-fund-tab-content');
+  if (!el) return;
+  const holdings   = (fd.quarters[curQ]  || []).filter(h => h.name && h.cusip);
+  const prevH      = (fd.quarters[prevQ] || []).filter(h => h.name && h.cusip);
   const totalValue = holdings.reduce((s, h) => s + h.value, 0);
   const maxValue   = holdings.length ? holdings[0].value : 1;
 
   const prevMap = {};
   prevH.forEach(h => { prevMap[h.cusip] = h; });
-
-  if (!holdings.length) {
-    el.innerHTML = `
-      <div class="f13-fund-summary">
-        <span class="f13-fund-summary-name">${fd.name}</span>
-        <span class="f13-fund-summary-meta">No holdings data for ${curQ}</span>
-      </div>
-      <div class="f13-empty">No holdings found for this quarter</div>`;
-    return;
-  }
 
   const rows = holdings.map((h, i) => {
     const pct  = totalValue > 0 ? h.value / totalValue * 100 : 0;
@@ -9181,7 +9369,7 @@ function f13RenderSingleFund(cik) {
       <td style="color:var(--text3);font-size:9px;font-family:var(--mono)">${h.class}</td>
       <td style="text-align:right;font-family:var(--mono)">${h.shares.toLocaleString()}</td>
       <td style="text-align:right;font-family:var(--mono)">$${f13Fmt(h.value)}</td>
-      <td style="min-width:130px">
+      <td style="min-width:120px">
         <div style="display:flex;align-items:center;gap:7px">
           <div class="f13-pct-bar-inline"><div class="f13-pct-fill-inline" style="width:${barW.toFixed(1)}%"></div></div>
           <span style="font-family:var(--mono);font-size:10px;color:var(--text2);white-space:nowrap">${pct.toFixed(1)}%</span>
@@ -9191,11 +9379,8 @@ function f13RenderSingleFund(cik) {
     </tr>`;
   }).join('');
 
-  // Positions closed since prev quarter (in prevH but not in current holdings)
-  const curCusips = new Set(holdings.map(h => h.cusip));
-  const closedRows = prevH
-    .filter(h => !curCusips.has(h.cusip))
-    .map(h => `<tr style="opacity:0.45">
+  const curCusips  = new Set(holdings.map(h => h.cusip));
+  const closedRows = prevH.filter(h => !curCusips.has(h.cusip)).map(h => `<tr style="opacity:0.45">
       <td style="color:var(--text3);font-family:var(--mono)">—</td>
       <td>${h.name}</td>
       <td style="color:var(--text3);font-size:9px;font-family:var(--mono)">${h.cusip}</td>
@@ -9207,12 +9392,11 @@ function f13RenderSingleFund(cik) {
     </tr>`).join('');
 
   const closedCount = prevH.filter(h => !curCusips.has(h.cusip)).length;
-  const summaryExtra = closedCount ? ` &nbsp;·&nbsp; ${closedCount} closed` : '';
+  const extra = closedCount ? ` · ${closedCount} closed` : '';
 
   el.innerHTML = `
-    <div class="f13-fund-summary">
-      <span class="f13-fund-summary-name">${fd.name}</span>
-      <span class="f13-fund-summary-meta">${holdings.length} positions &nbsp;·&nbsp; $${f13Fmt(totalValue)} disclosed &nbsp;·&nbsp; ${curQ} vs ${prevQ}${summaryExtra}</span>
+    <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:12px">
+      ${holdings.length} positions · $${f13Fmt(totalValue)} disclosed · ${curQ} vs ${prevQ}${extra}
     </div>
     <div style="overflow-x:auto">
       <table class="st-table">
