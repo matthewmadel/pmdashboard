@@ -59,7 +59,7 @@ FUNDS = [
     {"name": "Himalaya Capital",           "cik": "0001709323"},
     {"name": "Gates Foundation Trust",     "cik": "0001166559"},
     {"name": "Scion Asset Management",     "cik": "0001649339"},
-    {"name": "Greenlight Capital",         "cik": "0001079114"},
+    {"name": "DME Capital",                 "cik": "0001489933"},
 ]
 
 N_QUARTERS = 8   # quarters of history to fetch
