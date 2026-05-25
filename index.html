@@ -948,6 +948,10 @@ a      { color: inherit; text-decoration: none; }
 .f13-conc-high { background:rgba(224,85,85,0.1); border-color:rgba(224,85,85,0.3); color:#fca5a5; }
 .f13-conc-mid  { background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3); color:#fcd34d; }
 .f13-conc-low  { background:rgba(255,255,255,0.04); border-color:var(--border); color:var(--text2); }
+.f13-conv-score { display:inline-flex; align-items:center; justify-content:center; width:38px; height:20px; border-radius:4px; font-size:10px; font-weight:700; font-family:var(--mono); border:1px solid; }
+.f13-conv-high  { background:rgba(76,175,130,0.15);  border-color:rgba(76,175,130,0.4);  color:#86efac; }
+.f13-conv-mid   { background:rgba(245,158,11,0.15);  border-color:rgba(245,158,11,0.4);  color:#fcd34d; }
+.f13-conv-low   { background:rgba(224,85,85,0.15);   border-color:rgba(224,85,85,0.4);   color:#fca5a5; }
 .f13-sum-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; }
 .f13-sum-kpi { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:11px 14px; }
 .f13-sum-kpi-label { font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; font-family:var(--mono); margin-bottom:5px; }
@@ -3036,8 +3040,15 @@ a      { color: inherit; text-decoration: none; }
         <!-- Cross-Fund pane -->
         <div id="f13-pane-crossfund" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
           <div class="f13-ctrl-bar">
-            <select class="f13-select" id="f13-cf-quarter-sel" aria-label="Quarter"></select>
-            <button class="f13-run-btn" onclick="f13RunCrossFund()">Analyze</button>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <span style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.07em;">Current Quarter</span>
+              <select class="f13-select" id="f13-cf-quarter-sel" aria-label="Current quarter"></select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <span style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.07em;">Prior Quarter</span>
+              <select class="f13-select" id="f13-cf-prev-sel" aria-label="Prior quarter"></select>
+            </div>
+            <button class="f13-run-btn" onclick="f13RunCrossFund()" style="align-self:flex-end;">Analyze</button>
             <div class="f13-status" id="f13-cf-status"></div>
           </div>
           <div class="f13-right-content" id="f13-cf-content">
@@ -9186,6 +9197,7 @@ function f13BuildQuarterSelects() {
   document.getElementById('f13-quarter-sel').innerHTML    = opts;
   document.getElementById('f13-prev-sel').innerHTML       = prevOpts;
   document.getElementById('f13-cf-quarter-sel').innerHTML = opts;
+  document.getElementById('f13-cf-prev-sel').innerHTML    = prevOpts;
 
   // Changing either dropdown immediately refreshes the active fund and rail
   document.getElementById('f13-quarter-sel').onchange = () => {
@@ -9474,18 +9486,26 @@ function f13RenderSingleFund(cik) {
 // ── Cross-Fund analysis ───────────────────────────────────────────────
 function f13RunCrossFund() {
   if (!f13Data) { f13SetCfStatus('Data not loaded'); return; }
-  const q = document.getElementById('f13-cf-quarter-sel').value;
+  const q     = document.getElementById('f13-cf-quarter-sel').value;
+  const prevQ = document.getElementById('f13-cf-prev-sel').value;
   if (!q) return;
   f13SetCfStatus(`Scanning ${Object.keys(f13Data.funds).length} funds…`);
 
-  const holdingMap = {};
-  const fundTotals = {};
+  const holdingMap   = {};
+  const fundTotals   = {};
+  const fundPrevMaps = {}; // cik → { cusip → shares }
 
   for (const [cik, fd] of Object.entries(f13Data.funds)) {
     const holdings = (fd.quarters[q] || []).filter(h => h.name && h.cusip);
     if (!holdings.length) continue;
     const total = holdings.reduce((s, h) => s + h.value, 0);
     fundTotals[cik] = total;
+
+    // prev quarter share map for this fund
+    const prevMap = {};
+    (fd.quarters[prevQ] || []).filter(h => h.cusip).forEach(h => { prevMap[h.cusip] = h.shares; });
+    fundPrevMaps[cik] = prevMap;
+
     const seen = new Set();
     holdings.forEach(h => {
       if (seen.has(h.cusip)) return;
@@ -9497,12 +9517,45 @@ function f13RunCrossFund() {
   }
 
   const totalFunds = Object.keys(fundTotals).length;
+
+  function convictionScore(h) {
+    // 1. Breadth — how widely held vs. all active funds (30 pts)
+    const breadth = (h.funds.length / totalFunds) * 30;
+
+    // 2. Net activity direction (40 pts)
+    // Score each fund's action: NEW/ADD = +1, TRIM = -1, FLAT = 0; closed positions = -1
+    let netSignal = 0, opinionCount = 0;
+    h.funds.forEach(f => {
+      const prevShares = fundPrevMaps[f.cik]?.[h.cusip];
+      opinionCount++;
+      if (prevShares === undefined) {
+        netSignal += 1; // NEW position
+      } else {
+        const chg = prevShares > 0 ? (f.shares - prevShares) / prevShares * 100 : 0;
+        if (chg > 5)       netSignal += 1;  // ADD
+        else if (chg < -5) netSignal -= 1;  // TRIM
+        // else FLAT → 0
+      }
+    });
+    // Funds that owned it last quarter but not this quarter (CLOSED)
+    for (const [cik, prevMap] of Object.entries(fundPrevMaps)) {
+      if (prevMap[h.cusip] && !h.funds.find(f => f.cik === cik)) {
+        netSignal -= 1; opinionCount++;
+      }
+    }
+    const activityScore = opinionCount > 0 ? ((netSignal / opinionCount) + 1) / 2 * 40 : 20;
+
+    // 3. Conviction weight — avg portfolio concentration across owning funds, capped at 10% (30 pts)
+    const avgConc    = h.funds.reduce((s, f) => s + f.conc, 0) / h.funds.length;
+    const weightScore = Math.min(avgConc / 10, 1) * 30;
+
+    return Math.round(breadth + activityScore + weightScore);
+  }
+
   const commons = Object.values(holdingMap)
     .filter(h => h.funds.length >= 2)
-    .sort((a, b) => {
-      if (b.funds.length !== a.funds.length) return b.funds.length - a.funds.length;
-      return b.funds.reduce((s,f)=>s+f.value,0) - a.funds.reduce((s,f)=>s+f.value,0);
-    });
+    .map(h => ({ ...h, score: convictionScore(h) }))
+    .sort((a, b) => b.score - a.score);
 
   const el = document.getElementById('f13-cf-content');
   if (!commons.length) {
@@ -9511,16 +9564,17 @@ function f13RunCrossFund() {
     return;
   }
 
-  const maxOwners = commons[0].funds.length;
+  const maxOwners = Math.max(...commons.map(h => h.funds.length));
 
   const rows = commons.map((h, idx) => {
-    const totalVal = h.funds.reduce((s, f) => s + f.value, 0);
-    const peakConc = Math.max(...h.funds.map(f => f.conc));
-    const barW     = Math.round(h.funds.length / maxOwners * 100);
-    const badges   = h.funds.slice().sort((a,b) => b.value - a.value).map(f => {
+    const totalVal  = h.funds.reduce((s, f) => s + f.value, 0);
+    const peakConc  = Math.max(...h.funds.map(f => f.conc));
+    const barW      = Math.round(h.funds.length / maxOwners * 100);
+    const badges    = h.funds.slice().sort((a,b) => b.value - a.value).map(f => {
       const cls = f.conc >= 10 ? 'f13-conc-high' : f.conc >= 5 ? 'f13-conc-mid' : 'f13-conc-low';
       return `<span class="f13-conc-badge ${cls}" title="${f.fundName}">${f13ShortName(f.fundName)} ${f.conc.toFixed(1)}%</span>`;
     }).join(' ');
+    const scoreCls  = h.score >= 70 ? 'f13-conv-high' : h.score >= 40 ? 'f13-conv-mid' : 'f13-conv-low';
     return `<tr>
       <td style="color:var(--text3);font-family:var(--mono);width:28px">${idx + 1}</td>
       <td>${h.name}</td>
@@ -9533,12 +9587,13 @@ function f13RunCrossFund() {
       <td><div style="display:flex;flex-wrap:wrap;gap:4px">${badges}</div></td>
       <td style="text-align:right;font-family:var(--mono);white-space:nowrap">${peakConc.toFixed(1)}%</td>
       <td style="text-align:right;font-family:var(--mono)">$${f13Fmt(totalVal)}</td>
+      <td style="text-align:center"><span class="f13-conv-score ${scoreCls}" title="Breadth + Activity + Weight">${h.score}</span></td>
     </tr>`;
   }).join('');
 
   el.innerHTML = `
     <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:12px">
-      ${commons.length} position${commons.length !== 1 ? 's' : ''} held by 2+ of ${totalFunds} funds with holdings in ${q}
+      ${commons.length} position${commons.length !== 1 ? 's' : ''} held by 2+ of ${totalFunds} funds · ${q} vs ${prevQ} · sorted by conviction score
     </div>
     <div style="overflow-x:auto">
       <table class="st-table">
@@ -9548,6 +9603,7 @@ function f13RunCrossFund() {
           <th>Fund Concentration</th>
           <th style="text-align:right">Peak Conc.</th>
           <th style="text-align:right">Combined Value</th>
+          <th style="text-align:center">Conviction</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
