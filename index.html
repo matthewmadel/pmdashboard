@@ -2451,6 +2451,39 @@ a      { color: inherit; text-decoration: none; }
             -->
 
             <div class="cl-entry">
+              <div class="cl-version">May 24, 2026 — 13F Tracker: Fund Summary &amp; AUM Chart</div>
+              <ul class="cl-list">
+                <li><strong>Fund summary view:</strong> each fund now opens with a summary section above the holdings table — KPI strip (AUM, positions, top-10 concentration, activity badges), AUM trend sparkline, top-5 holdings bar chart, and notable moves grid</li>
+                <li><strong>AUM trend chart:</strong> min-baseline y-axis scaling makes quarter-over-quarter movement visible even when total AUM variance is small; max/min labels provide scale context; active quarter bar highlighted in blue at full opacity</li>
+                <li><strong>CUSIP column:</strong> security identifier (CUSIP) added to all holdings tables</li>
+                <li><strong>Change badges:</strong> explicit ADD / REDUCED / CLOSED badges on each position showing direction of change vs. the prior quarter; closed positions (held last quarter, absent this quarter) appear as dimmed rows at the bottom of the table</li>
+                <li><strong>Live quarter selects:</strong> changing the current or prior quarter dropdowns immediately re-renders the fund view and left-rail AUM figures — no Analyze button required</li>
+              </ul>
+            </div>
+
+            <div class="cl-entry">
+              <div class="cl-version">May 23, 2026 — 13F Tracker: Initial Build</div>
+              <ul class="cl-list">
+                <li><strong>13F Tracker section added:</strong> new dedicated section pulling institutional holdings from SEC EDGAR 13F-HR filings for 21 top-performing hedge funds across 8 quarters of history (Q2 2024–Q1 2026)</li>
+                <li><strong>Funds tab:</strong> left-rail navigator lists all funds with position count and AUM; clicking any fund loads its full holdings table with current and prior-quarter comparison</li>
+                <li><strong>Cross-Fund tab:</strong> surfaces any position held by 2+ managers simultaneously — shows ownership count, which funds hold it, per-fund portfolio concentration badges (≥10% high, ≥5% mid), peak concentration %, and combined reported market value</li>
+                <li><strong>Data pipeline:</strong> <code>scrape_13f.py</code> fetches holdings directly from EDGAR for all 21 funds, parses infotable XML, resolves namespace variants, and writes <code>13f-data.json</code> — intended to run quarterly ~45 days after quarter end</li>
+              </ul>
+            </div>
+
+            <div class="cl-entry" style="border-left:3px solid var(--green);padding-left:16px;background:rgba(76,175,130,0.04);border-radius:0 6px 6px 0;">
+              <div class="cl-version" style="color:var(--green);font-size:12px;display:flex;align-items:center;gap:10px;">
+                May 22, 2026 — New Section: Index Returns
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:rgba(76,175,130,0.18);border:1px solid rgba(76,175,130,0.45);border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.09em;color:#86efac;">★ NEW SECTION</span>
+              </div>
+              <ul class="cl-list">
+                <li><strong>Index Returns page added:</strong> dedicated section with monthly total return history for 26 global benchmarks across equities, fixed income, commodities, and alternatives — full time-series tables with YTD, 1Y, 3Y, 5Y, and 10Y cumulative statistics</li>
+                <li>Benchmarks include MSCI ACWI, World, EM, EAFE; US large/mid/small cap; Bloomberg US Agg, HY, EM Debt, TIPS; Gold, Oil, REITs, and key macro indicators</li>
+                <li>Index return data feeds directly into the Stress Tester, replacing ETF price history as the underlying return series — longer history, true index data, and broader benchmark coverage</li>
+              </ul>
+            </div>
+
+            <div class="cl-entry">
               <div class="cl-version">May 22, 2026 — Stress Tester overhaul</div>
               <ul class="cl-list">
                 <li><strong>Index Returns data underlying:</strong> Stress Tester now runs on monthly index returns from the Index Returns dataset (26 benchmarks) instead of ETF price history — longer history, true index data, broader coverage</li>
@@ -2677,6 +2710,44 @@ a      { color: inherit; text-decoration: none; }
                 </div>
               </div>
               <div class="ds-note">All data is committed as JSON files in the repository root and served directly via GitHub Pages CDN. No server-side computation — the browser handles all charting and analytics.</div>
+            </div>
+
+            <!-- SEC EDGAR 13F -->
+            <div class="ds-card">
+              <div class="ds-card-header">
+                <div class="ds-icon" style="background:var(--amber-dim);color:var(--amber)">📋</div>
+                <div>
+                  <div class="ds-card-title">SEC EDGAR — 13F Institutional Holdings</div>
+                  <div class="ds-card-url">sec.gov · data.sec.gov API · EDGAR Full-Text Search</div>
+                </div>
+              </div>
+              <div class="ds-card-body">
+                <div class="ds-row">
+                  <span class="ds-row-label">Provides</span>
+                  <span class="ds-row-val">Quarterly 13F-HR institutional holdings disclosures — position names, CUSIP identifiers, share counts, and reported market values for 21 top-tier hedge funds and family offices</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Coverage</span>
+                  <span class="ds-row-val">
+                    <span class="ds-badge" style="background:var(--amber-dim);color:var(--amber)">21 funds</span>
+                    <span class="ds-badge" style="background:var(--amber-dim);color:var(--amber)">8 quarters</span>
+                    <span class="ds-badge" style="background:var(--amber-dim);color:var(--amber)">Q2 2024 – Q1 2026</span>
+                  </span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Cadence</span>
+                  <span class="ds-row-val">Run quarterly via <code>scrape_13f.py</code> approximately 45 days after quarter end when EDGAR filings become available. Output committed as <code>13f-data.json</code>.</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Funds</span>
+                  <span class="ds-row-val">Pershing Square, Altimeter, Atreides, Appaloosa, Duquesne Family Office, Lone Pine, Coatue, Viking Global, TCI, Baupost, Third Point, Durable Capital, D1 Capital, Maverick, ValueAct, Jericho, Kensico, Par Capital, Whalerock, Firstwave, Situational Awareness</span>
+                </div>
+                <div class="ds-row">
+                  <span class="ds-row-label">Used in</span>
+                  <span class="ds-row-val">13F Tracker — Funds tab (per-fund holdings with quarter-over-quarter comparison) and Cross-Fund tab (positions held across multiple managers)</span>
+                </div>
+              </div>
+              <div class="ds-note">13F filings are required for institutions managing ≥$100M in qualifying US securities. Data reflects end-of-quarter snapshots filed ~45 days after period end — positions may have changed since the filing date. All values in USD as reported to the SEC.</div>
             </div>
 
           </div><!-- /ds-grid -->
