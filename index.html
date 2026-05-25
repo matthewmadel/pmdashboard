@@ -9079,14 +9079,22 @@ function f13BuildQuarterSelects() {
   document.getElementById('f13-quarter-sel').innerHTML    = opts;
   document.getElementById('f13-prev-sel').innerHTML       = prevOpts;
   document.getElementById('f13-cf-quarter-sel').innerHTML = opts;
+
+  // Changing either dropdown immediately refreshes the active fund and rail
+  document.getElementById('f13-quarter-sel').onchange = () => {
+    f13CurQ = document.getElementById('f13-quarter-sel').value;
+    f13BuildLeftRail();
+    if (f13ActiveFundCik) f13RenderSingleFund(f13ActiveFundCik);
+  };
+  document.getElementById('f13-prev-sel').onchange = () => {
+    f13PrevQ = document.getElementById('f13-prev-sel').value;
+    if (f13ActiveFundCik) f13RenderSingleFund(f13ActiveFundCik);
+  };
 }
 
 // ── Left rail ─────────────────────────────────────────────────────────
 function f13BuildLeftRail() {
   if (!f13Data) return;
-  // Always sync from dropdowns so the rail reflects the current selection
-  const selEl = document.getElementById('f13-quarter-sel');
-  if (selEl && selEl.value) f13CurQ = selEl.value;
   const q = f13CurQ;
   document.getElementById('f13-left-rail').innerHTML =
     Object.entries(f13Data.funds).map(([cik, fd]) => {
@@ -9103,11 +9111,6 @@ function f13BuildLeftRail() {
 }
 
 function f13SelectFundRail(cik) {
-  // Sync quarters from dropdowns so clicking a fund always reflects the current dropdown state
-  const selEl  = document.getElementById('f13-quarter-sel');
-  const prevEl = document.getElementById('f13-prev-sel');
-  if (selEl  && selEl.value)  f13CurQ  = selEl.value;
-  if (prevEl && prevEl.value) f13PrevQ = prevEl.value;
   f13ActiveFundCik = cik;
   document.querySelectorAll('.f13-fund-row').forEach(el => el.classList.remove('active'));
   const rowEl = document.getElementById('f13-fr-' + cik.replace(/\D/g,''));
@@ -9129,9 +9132,14 @@ function f13RenderSingleFund(cik) {
   if (!f13Data) return;
   const fd = f13Data.funds[cik];
   if (!fd) return;
+  // Read quarter state directly from dropdowns — never trust stale module-level vars
+  const curQ  = document.getElementById('f13-quarter-sel')?.value  || f13CurQ;
+  const prevQ = document.getElementById('f13-prev-sel')?.value     || f13PrevQ;
+  f13CurQ  = curQ;
+  f13PrevQ = prevQ;
   const el       = document.getElementById('f13-right-content');
-  const holdings = (fd.quarters[f13CurQ]  || []).filter(h => h.name && h.cusip);
-  const prevH    = (fd.quarters[f13PrevQ] || []).filter(h => h.name && h.cusip);
+  const holdings = (fd.quarters[curQ]  || []).filter(h => h.name && h.cusip);
+  const prevH    = (fd.quarters[prevQ] || []).filter(h => h.name && h.cusip);
   const totalValue = holdings.reduce((s, h) => s + h.value, 0);
   const maxValue   = holdings.length ? holdings[0].value : 1;
 
@@ -9142,7 +9150,7 @@ function f13RenderSingleFund(cik) {
     el.innerHTML = `
       <div class="f13-fund-summary">
         <span class="f13-fund-summary-name">${fd.name}</span>
-        <span class="f13-fund-summary-meta">No holdings data for ${f13CurQ}</span>
+        <span class="f13-fund-summary-meta">No holdings data for ${curQ}</span>
       </div>
       <div class="f13-empty">No holdings found for this quarter</div>`;
     return;
@@ -9204,7 +9212,7 @@ function f13RenderSingleFund(cik) {
   el.innerHTML = `
     <div class="f13-fund-summary">
       <span class="f13-fund-summary-name">${fd.name}</span>
-      <span class="f13-fund-summary-meta">${holdings.length} positions &nbsp;·&nbsp; $${f13Fmt(totalValue)} disclosed &nbsp;·&nbsp; ${f13CurQ} vs ${f13PrevQ}${summaryExtra}</span>
+      <span class="f13-fund-summary-meta">${holdings.length} positions &nbsp;·&nbsp; $${f13Fmt(totalValue)} disclosed &nbsp;·&nbsp; ${curQ} vs ${prevQ}${summaryExtra}</span>
     </div>
     <div style="overflow-x:auto">
       <table class="st-table">
