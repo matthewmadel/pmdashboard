@@ -9569,6 +9569,7 @@ function f13RunCrossFund() {
   const rows = commons.map((h, idx) => {
     const totalVal  = h.funds.reduce((s, f) => s + f.value, 0);
     const peakConc  = Math.max(...h.funds.map(f => f.conc));
+    const avgConc   = h.funds.reduce((s, f) => s + f.conc, 0) / h.funds.length;
     const barW      = Math.round(h.funds.length / maxOwners * 100);
     const badges    = h.funds.slice().sort((a,b) => b.value - a.value).map(f => {
       const cls = f.conc >= 10 ? 'f13-conc-high' : f.conc >= 5 ? 'f13-conc-mid' : 'f13-conc-low';
@@ -9585,7 +9586,10 @@ function f13RunCrossFund() {
         </div>
       </td>
       <td><div style="display:flex;flex-wrap:wrap;gap:4px">${badges}</div></td>
-      <td style="text-align:right;font-family:var(--mono);white-space:nowrap">${peakConc.toFixed(1)}%</td>
+      <td style="text-align:right;font-family:var(--mono);white-space:nowrap">
+        <span style="color:var(--text)">${peakConc.toFixed(1)}%</span>
+        <span style="color:var(--text3);font-size:9px;margin-left:4px">avg ${avgConc.toFixed(1)}%</span>
+      </td>
       <td style="text-align:right;font-family:var(--mono)">$${f13Fmt(totalVal)}</td>
       <td style="text-align:center"><span class="f13-conv-score ${scoreCls}" title="Breadth + Activity + Weight">${h.score}</span></td>
     </tr>`;
@@ -9601,7 +9605,7 @@ function f13RunCrossFund() {
           <th>#</th><th>Company</th>
           <th>Ownership</th>
           <th>Fund Concentration</th>
-          <th style="text-align:right">Peak Conc.</th>
+          <th style="text-align:right">Peak / Avg Conc.</th>
           <th style="text-align:right">Combined Value</th>
           <th style="text-align:center">Conviction</th>
         </tr></thead>
