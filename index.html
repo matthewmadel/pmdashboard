@@ -9084,6 +9084,9 @@ function f13BuildQuarterSelects() {
 // ── Left rail ─────────────────────────────────────────────────────────
 function f13BuildLeftRail() {
   if (!f13Data) return;
+  // Always sync from dropdowns so the rail reflects the current selection
+  const selEl = document.getElementById('f13-quarter-sel');
+  if (selEl && selEl.value) f13CurQ = selEl.value;
   const q = f13CurQ;
   document.getElementById('f13-left-rail').innerHTML =
     Object.entries(f13Data.funds).map(([cik, fd]) => {
@@ -9100,6 +9103,11 @@ function f13BuildLeftRail() {
 }
 
 function f13SelectFundRail(cik) {
+  // Sync quarters from dropdowns so clicking a fund always reflects the current dropdown state
+  const selEl  = document.getElementById('f13-quarter-sel');
+  const prevEl = document.getElementById('f13-prev-sel');
+  if (selEl  && selEl.value)  f13CurQ  = selEl.value;
+  if (prevEl && prevEl.value) f13PrevQ = prevEl.value;
   f13ActiveFundCik = cik;
   document.querySelectorAll('.f13-fund-row').forEach(el => el.classList.remove('active'));
   const rowEl = document.getElementById('f13-fr-' + cik.replace(/\D/g,''));
@@ -9144,17 +9152,24 @@ function f13RenderSingleFund(cik) {
     const pct  = totalValue > 0 ? h.value / totalValue * 100 : 0;
     const barW = maxValue   > 0 ? h.value / maxValue   * 100 : 0;
     const prev = prevMap[h.cusip];
-    let chgHtml = '<span class="f13-pct-neu">—</span>';
+    let chgHtml;
     if (!prev) {
       chgHtml = '<span class="f13-badge f13-badge-new">NEW</span>';
     } else if (prev.shares > 0) {
       const chg = (h.shares - prev.shares) / prev.shares * 100;
-      if (Math.abs(chg) >= 0.5)
-        chgHtml = `<span class="${chg > 0 ? 'f13-pct-pos' : 'f13-pct-neg'}">${chg > 0 ? '+' : ''}${chg.toFixed(1)}%</span>`;
+      if (chg > 5)
+        chgHtml = `<span class="f13-badge f13-badge-add">ADDED</span> <span class="f13-pct-pos">+${chg.toFixed(1)}%</span>`;
+      else if (chg < -5)
+        chgHtml = `<span class="f13-badge f13-badge-trim">REDUCED</span> <span class="f13-pct-neg">${chg.toFixed(1)}%</span>`;
+      else
+        chgHtml = `<span class="f13-pct-neu">${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%</span>`;
+    } else {
+      chgHtml = '<span class="f13-pct-neu">—</span>';
     }
     return `<tr>
       <td style="color:var(--text3);font-family:var(--mono);width:28px">${i + 1}</td>
       <td>${h.name}</td>
+      <td style="color:var(--text3);font-size:9px;font-family:var(--mono)">${h.cusip}</td>
       <td style="color:var(--text3);font-size:9px;font-family:var(--mono)">${h.class}</td>
       <td style="text-align:right;font-family:var(--mono)">${h.shares.toLocaleString()}</td>
       <td style="text-align:right;font-family:var(--mono)">$${f13Fmt(h.value)}</td>
@@ -9164,25 +9179,43 @@ function f13RenderSingleFund(cik) {
           <span style="font-family:var(--mono);font-size:10px;color:var(--text2);white-space:nowrap">${pct.toFixed(1)}%</span>
         </div>
       </td>
-      <td style="text-align:right">${chgHtml}</td>
+      <td>${chgHtml}</td>
     </tr>`;
   }).join('');
+
+  // Positions closed since prev quarter (in prevH but not in current holdings)
+  const curCusips = new Set(holdings.map(h => h.cusip));
+  const closedRows = prevH
+    .filter(h => !curCusips.has(h.cusip))
+    .map(h => `<tr style="opacity:0.45">
+      <td style="color:var(--text3);font-family:var(--mono)">—</td>
+      <td>${h.name}</td>
+      <td style="color:var(--text3);font-size:9px;font-family:var(--mono)">${h.cusip}</td>
+      <td style="color:var(--text3);font-size:9px;font-family:var(--mono)">${h.class}</td>
+      <td style="text-align:right;font-family:var(--mono)">—</td>
+      <td style="text-align:right;font-family:var(--mono)">—</td>
+      <td></td>
+      <td><span class="f13-badge f13-badge-close">CLOSED</span></td>
+    </tr>`).join('');
+
+  const closedCount = prevH.filter(h => !curCusips.has(h.cusip)).length;
+  const summaryExtra = closedCount ? ` &nbsp;·&nbsp; ${closedCount} closed` : '';
 
   el.innerHTML = `
     <div class="f13-fund-summary">
       <span class="f13-fund-summary-name">${fd.name}</span>
-      <span class="f13-fund-summary-meta">${holdings.length} positions &nbsp;·&nbsp; $${f13Fmt(totalValue)} disclosed &nbsp;·&nbsp; ${f13CurQ} vs ${f13PrevQ}</span>
+      <span class="f13-fund-summary-meta">${holdings.length} positions &nbsp;·&nbsp; $${f13Fmt(totalValue)} disclosed &nbsp;·&nbsp; ${f13CurQ} vs ${f13PrevQ}${summaryExtra}</span>
     </div>
     <div style="overflow-x:auto">
       <table class="st-table">
         <thead><tr>
-          <th>#</th><th>Company</th><th>Class</th>
+          <th>#</th><th>Company</th><th>CUSIP</th><th>Class</th>
           <th style="text-align:right">Shares</th>
           <th style="text-align:right">Market Value</th>
           <th>% of Portfolio</th>
-          <th style="text-align:right">QoQ Shares Δ</th>
+          <th>Change</th>
         </tr></thead>
-        <tbody>${rows}</tbody>
+        <tbody>${rows}${closedRows}</tbody>
       </table>
     </div>`;
 }
