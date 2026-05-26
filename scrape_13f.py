@@ -228,11 +228,12 @@ def parse_holdings_xml(content):
             value = 0
 
         holdings.append({
-            'name':   text(node, 'nameOfIssuer'),
-            'cusip':  text(node, 'cusip'),
-            'class':  text(node, 'titleOfClass'),
-            'shares': shares,
-            'value':  value,
+            'name':    text(node, 'nameOfIssuer'),
+            'cusip':   text(node, 'cusip'),
+            'class':   text(node, 'titleOfClass'),
+            'shares':  shares,
+            'value':   value,
+            'putCall': text(node, 'putCall').capitalize(),  # 'Put', 'Call', or ''
         })
 
     holdings.sort(key=lambda h: h['value'], reverse=True)
