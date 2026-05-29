@@ -5419,35 +5419,36 @@ function hmPctPosSty(pct) {
 function hmFmt(r) { return (r > 0 ? '+' : '') + r.toFixed(1) + '%'; }
 
 // Fetch 20Y of monthly adjclose and compute calendar-year returns for one ticker
-async function hmFetchTicker(ticker) {
-  const data = await window.mkFetch(ticker, {range:'20y', interval:'1mo'});
+// Fetch 1Y monthly data; return 2026 YTD return as a single number (or null)
+async function hmFetchYTD(ticker) {
+  const data = await window.mkFetch(ticker, {range:'1y', interval:'1mo'});
   const result = data?.chart?.result?.[0];
   if (!result) return null;
-  const ts  = result.timestamp ?? [];
-  const ac  = result.indicators?.adjclose?.[0]?.adjclose
-           ?? result.indicators?.quote?.[0]?.close
-           ?? [];
-
-  // Build year → last-available adjclose map (last monthly bar in each calendar year)
-  const yearEnd = {};
+  const ts = result.timestamp ?? [];
+  const ac = result.indicators?.adjclose?.[0]?.adjclose
+          ?? result.indicators?.quote?.[0]?.close
+          ?? [];
+  let dec2025 = null, latest2026 = null;
   for (let i = 0; i < ts.length; i++) {
     if (ac[i] == null) continue;
-    yearEnd[new Date(ts[i] * 1000).getFullYear()] = ac[i];
+    const d = new Date(ts[i] * 1000);
+    if (d.getFullYear() === 2025 && d.getMonth() === 11) dec2025 = ac[i];
+    if (d.getFullYear() === 2026) latest2026 = ac[i];
   }
-
-  const years = AC_HM_BASELINE.years;
-  return years.map(y => {
-    const cur  = yearEnd[y];
-    const prev = yearEnd[y - 1];
-    if (cur == null || prev == null) return null;
-    return Math.round(((cur / prev) - 1) * 1000) / 10; // one decimal, percent
-  });
+  // Fallback: last available 2025 bar if December not yet in window
+  if (dec2025 == null) {
+    for (let i = ts.length - 1; i >= 0; i--) {
+      if (ac[i] != null && new Date(ts[i] * 1000).getFullYear() === 2025) { dec2025 = ac[i]; break; }
+    }
+  }
+  if (dec2025 == null || latest2026 == null) return null;
+  return Math.round(((latest2026 / dec2025) - 1) * 1000) / 10;
 }
 
-// Fetch all tickers in parallel; returns map ticker→returnsArray
+// Returns map: ticker → 2026 YTD return (single number or null)
 async function hmFetchAll() {
   const rows = AC_HM_BASELINE.rows;
-  const settled = await Promise.allSettled(rows.map(row => hmFetchTicker(row.ticker)));
+  const settled = await Promise.allSettled(rows.map(row => hmFetchYTD(row.ticker)));
   const map = {};
   rows.forEach((row, i) => {
     map[row.ticker] = settled[i].status === 'fulfilled' ? settled[i].value : null;
@@ -5455,45 +5456,39 @@ async function hmFetchAll() {
   return map;
 }
 
-// Build the table HTML from live data + validation against baseline
+// Build table: 2011-2025 hardcoded, 2026 live-fetched with validation
 function hmBuildTable(liveMap) {
   const { years, ytdYear, rows } = AC_HM_BASELINE;
+  const ytdIdx = years.indexOf(ytdYear);
 
-  // Per-year stats computed from live data
-  const yearStats = years.map((_, yi) => {
-    const vals = rows.map(row => {
-      const live = liveMap[row.ticker];
-      return (live && live[yi] != null) ? live[yi] : row.r[yi];
-    });
-    const vv = vals.filter(v => v != null);
-    if (!vv.length) return { highest:'—', lowest:'—', pctPos: 0 };
-    const maxVal = Math.max(...vv), minVal = Math.min(...vv);
-    const bestRow  = rows[vals.indexOf(maxVal)];
-    const worstRow = rows[vals.indexOf(minVal)];
-    const pctPos = (vv.filter(v => v > 0).length / vv.length) * 100;
-    return { highest: bestRow?.ticker ?? '—', lowest: worstRow?.ticker ?? '—', pctPos };
+  // Per-year stats (hardcoded for 2011-2025, live for 2026)
+  const yearStats = years.map((y, yi) => {
+    const vals = rows.map(row =>
+      yi === ytdIdx ? (liveMap[row.ticker] ?? row.r[yi]) : row.r[yi]
+    ).filter(v => v != null);
+    if (!vals.length) return { highest:'—', lowest:'—', pctPos:0 };
+    const maxV = Math.max(...vals), minV = Math.min(...vals);
+    const getV = row => yi === ytdIdx ? (liveMap[row.ticker] ?? row.r[yi]) : row.r[yi];
+    const bestRow  = rows[rows.map(getV).indexOf(maxV)];
+    const worstRow = rows[rows.map(getV).indexOf(minV)];
+    return { highest: bestRow?.ticker ?? '—', lowest: worstRow?.ticker ?? '—',
+             pctPos: (vals.filter(v => v > 0).length / vals.length) * 100 };
   });
 
-  // Validation summary
+  // Validation: 2026 YTD only
   let flagCount = 0, liveCount = 0;
   rows.forEach(row => {
     const live = liveMap[row.ticker];
-    if (!live) return;
-    row.r.forEach((baseline, yi) => {
-      if (live[yi] == null) return;
-      liveCount++;
-      if (Math.abs(live[yi] - baseline) > HM_DIFF_THRESHOLD) flagCount++;
-    });
+    if (live == null) return;
+    liveCount++;
+    const base = row.r[ytdIdx];
+    if (base != null && Math.abs(live - base) > HM_DIFF_THRESHOLD) flagCount++;
   });
 
   let html = '<colgroup>';
-  html += `<col style="width:172px;min-width:172px;">`;
-  html += `<col style="width:46px;min-width:46px;">`;
+  html += `<col style="width:172px;min-width:172px;"><col style="width:46px;min-width:46px;">`;
   years.forEach(() => { html += `<col style="width:62px;min-width:58px;">`; });
-  html += '</colgroup>';
-
-  // Header row
-  html += '<thead><tr style="background:var(--bg3);border-bottom:1px solid var(--border);">';
+  html += '</colgroup><thead><tr style="background:var(--bg3);border-bottom:1px solid var(--border);">';
   html += `<th style="text-align:left;padding:7px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:2;">Asset Class</th>`;
   html += `<th style="text-align:center;padding:7px 4px;font-size:10px;font-weight:600;color:var(--text2);">ETF</th>`;
   years.forEach(y => {
@@ -5504,66 +5499,42 @@ function hmBuildTable(liveMap) {
   });
   html += '</tr></thead><tbody>';
 
-  // Data rows
   rows.forEach((row, ri) => {
     const stripe = ri % 2 === 1 ? 'var(--bg2)' : 'var(--bg1)';
-    const liveRow = liveMap[row.ticker];
     html += `<tr>`;
     html += `<td style="text-align:left;padding:5px 10px;color:var(--text);border-bottom:1px solid var(--border);position:sticky;left:0;background:${stripe};z-index:1;">${row.name}</td>`;
     html += `<td style="text-align:center;padding:5px 4px;color:var(--text3);border-bottom:1px solid var(--border);font-size:10px;">${row.ticker}</td>`;
     row.r.forEach((baseline, yi) => {
-      const live    = liveRow ? liveRow[yi] : null;
-      const val     = live ?? baseline;
-      const isLive  = live != null;
-      const differs = isLive && Math.abs(live - baseline) > HM_DIFF_THRESHOLD;
-      const sty     = hmCellStyle(val);
-      const display = val === 0 ? '0.0%' : hmFmt(val);
-      const outline = differs ? 'box-shadow:inset 0 0 0 2px #fbbf24;' : '';
-      const title   = differs
-        ? ` title="⚠ Baseline: ${hmFmt(baseline)} | Live: ${hmFmt(live)}"`
-        : (isLive ? ` title="Live: ${hmFmt(live)}"` : ' title="Baseline (no live data)"');
-      const dot = differs
-        ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#fbbf24;vertical-align:super;font-size:6px;margin-left:1px;"></span>`
-        : '';
-      html += `<td style="text-align:center;padding:5px 3px;${sty}${outline}border-bottom:1px solid rgba(0,0,0,.07);font-weight:500;"${title}>${display}${dot}</td>`;
+      if (yi === ytdIdx) {
+        const live    = liveMap[row.ticker];
+        const val     = live ?? baseline;
+        const differs = live != null && baseline != null && Math.abs(live - baseline) > HM_DIFF_THRESHOLD;
+        const sty     = hmCellStyle(val);
+        const outline = differs ? 'box-shadow:inset 0 0 0 2px #fbbf24;' : '';
+        const title   = differs ? ` title="⚠ Ref: ${hmFmt(baseline)} | Live: ${hmFmt(live)}"` : (live != null ? ` title="Live YTD: ${hmFmt(live)}"` : '');
+        const dot     = differs ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#fbbf24;vertical-align:super;font-size:6px;margin-left:1px;"></span>` : '';
+        html += `<td style="text-align:center;padding:5px 3px;${sty}${outline}border-bottom:1px solid rgba(0,0,0,.07);font-weight:500;"${title}>${val===0?'0.0%':hmFmt(val)}${dot}</td>`;
+      } else {
+        const sty = hmCellStyle(baseline);
+        html += `<td style="text-align:center;padding:5px 3px;${sty}border-bottom:1px solid rgba(0,0,0,.07);font-weight:500;">${baseline===0?'0.0%':hmFmt(baseline)}</td>`;
+      }
     });
     html += `</tr>`;
   });
 
-  // Separator
-  html += `<tr><td colspan="${2 + years.length}" style="height:5px;background:var(--bg3);border-top:2px solid var(--border);border-bottom:1px solid var(--border);padding:0;"></td></tr>`;
-
-  // Highest return (live)
-  html += `<tr style="background:var(--bg3);">`;
-  html += `<td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">Highest Return</td>`;
-  html += `<td></td>`;
+  html += `<tr><td colspan="${2+years.length}" style="height:5px;background:var(--bg3);border-top:2px solid var(--border);border-bottom:1px solid var(--border);padding:0;"></td></tr>`;
+  html += `<tr style="background:var(--bg3);"><td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">Highest Return</td><td></td>`;
   yearStats.forEach(s => { html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:700;color:#4ade80;">${s.highest}</td>`; });
-  html += `</tr>`;
-
-  // Lowest return (live)
-  html += `<tr style="background:var(--bg3);">`;
-  html += `<td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">Lowest Return</td>`;
-  html += `<td></td>`;
+  html += `</tr><tr style="background:var(--bg3);"><td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">Lowest Return</td><td></td>`;
   yearStats.forEach(s => { html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:700;color:#f87171;">${s.lowest}</td>`; });
-  html += `</tr>`;
+  html += `</tr><tr style="background:var(--bg3);"><td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">% Classes Positive</td><td></td>`;
+  yearStats.forEach(s => { html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:600;${hmPctPosSty(s.pctPos)}">${s.pctPos.toFixed(0)}%</td>`; });
+  html += `</tr></tbody>`;
 
-  // % Classes Positive (live)
-  html += `<tr style="background:var(--bg3);">`;
-  html += `<td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">% Classes Positive</td>`;
-  html += `<td></td>`;
-  yearStats.forEach(s => {
-    html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:600;${hmPctPosSty(s.pctPos)}">${s.pctPos.toFixed(0)}%</td>`;
-  });
-  html += `</tr>`;
-
-  html += '</tbody>';
-
-  // Validation footer
   const valLine = flagCount > 0
-    ? `<span style="color:#fbbf24;">⚠ ${flagCount} cell${flagCount>1?'s':''} differ from baseline by >${HM_DIFF_THRESHOLD}pp — hover to compare</span>`
-    : `<span style="color:#4ade80;">✓ All ${liveCount} live values match baseline within ${HM_DIFF_THRESHOLD}pp</span>`;
-  html += `<tfoot><tr><td colspan="${2 + years.length}" style="padding:8px 10px;font-size:9px;font-family:var(--mono);color:var(--text3);border-top:1px solid var(--border);">Live data via Yahoo Finance (adj. close, monthly) · ${valLine}</td></tr></tfoot>`;
-
+    ? `<span style="color:#fbbf24;">⚠ ${flagCount} 2026 YTD value${flagCount>1?'s':''} differ from reference by >${HM_DIFF_THRESHOLD}pp — hover to compare</span>`
+    : `<span style="color:#4ade80;">✓ ${liveCount} 2026 YTD values fetched live · 2011–2025 hardcoded</span>`;
+  html += `<tfoot><tr><td colspan="${2+years.length}" style="padding:8px 10px;font-size:9px;font-family:var(--mono);color:var(--text3);border-top:1px solid var(--border);">2026 YTD via Yahoo Finance (adj. close) · 2011–2025 hardcoded · ${valLine}</td></tr></tfoot>`;
   return html;
 }
 
@@ -5665,9 +5636,10 @@ function chCellStyle(r) {
   return `background:#3a3a42;color:#888;`;
 }
 
+// Returns map: ticker → 2026 YTD return (single number or null)
 async function chFetchAll() {
   const allRows = CH_BASELINE.groups.flatMap(g => g.rows);
-  const settled = await Promise.allSettled(allRows.map(row => hmFetchTicker(row.ticker)));
+  const settled = await Promise.allSettled(allRows.map(row => hmFetchYTD(row.ticker)));
   const map = {};
   allRows.forEach((row, i) => {
     map[row.ticker] = settled[i].status === 'fulfilled' ? settled[i].value : null;
@@ -5675,49 +5647,39 @@ async function chFetchAll() {
   return map;
 }
 
+// Build table: 2011-2025 hardcoded, 2026 live-fetched with validation
 function chBuildTable(liveMap) {
   const { years, ytdYear, groups } = CH_BASELINE;
   const allRows = groups.flatMap(g => g.rows);
   const numCols = 2 + years.length;
+  const ytdIdx  = years.indexOf(ytdYear);
 
-  // Per-year stats across all rows
-  const yearStats = years.map((_, yi) => {
-    const vals = allRows.map(row => {
-      const live = liveMap[row.ticker];
-      const v = (live && live[yi] != null) ? live[yi] : row.r[yi];
-      return v;
-    }).filter(v => v != null);
+  // Per-year stats (hardcoded for 2011-2025, live for 2026)
+  const yearStats = years.map((y, yi) => {
+    const getV = row => yi === ytdIdx ? (liveMap[row.ticker] ?? row.r[yi]) : row.r[yi];
+    const vals = allRows.map(getV).filter(v => v != null);
     if (!vals.length) return { highest:'—', lowest:'—', pctPos:0 };
     const maxV = Math.max(...vals), minV = Math.min(...vals);
-    const bestRow  = allRows[allRows.map((r,i) => ((liveMap[r.ticker]?.[yi] ?? r.r[yi]))).indexOf(maxV)];
-    const worstRow = allRows[allRows.map((r,i) => ((liveMap[r.ticker]?.[yi] ?? r.r[yi]))).indexOf(minV)];
-    return {
-      highest: bestRow?.ticker  ?? '—',
-      lowest:  worstRow?.ticker ?? '—',
-      pctPos:  (vals.filter(v => v > 0).length / vals.length) * 100,
-    };
+    const bestRow  = allRows[allRows.map(getV).indexOf(maxV)];
+    const worstRow = allRows[allRows.map(getV).indexOf(minV)];
+    return { highest: bestRow?.ticker ?? '—', lowest: worstRow?.ticker ?? '—',
+             pctPos: (vals.filter(v => v > 0).length / vals.length) * 100 };
   });
 
-  // Validation counts
+  // Validation: 2026 YTD only
   let flagCount = 0, liveCount = 0;
   allRows.forEach(row => {
     const live = liveMap[row.ticker];
-    if (!live) return;
-    row.r.forEach((baseline, yi) => {
-      if (baseline == null || live[yi] == null) return;
-      liveCount++;
-      if (Math.abs(live[yi] - baseline) > CH_DIFF_THRESHOLD) flagCount++;
-    });
+    if (live == null) return;
+    liveCount++;
+    const base = row.r[ytdIdx];
+    if (base != null && Math.abs(live - base) > CH_DIFF_THRESHOLD) flagCount++;
   });
 
   let html = '<colgroup>';
-  html += `<col style="width:172px;min-width:172px;">`;
-  html += `<col style="width:50px;min-width:50px;">`;
+  html += `<col style="width:172px;min-width:172px;"><col style="width:50px;min-width:50px;">`;
   years.forEach(() => { html += `<col style="width:62px;min-width:58px;">`; });
-  html += '</colgroup>';
-
-  // Header
-  html += '<thead><tr style="background:var(--bg3);border-bottom:1px solid var(--border);">';
+  html += '</colgroup><thead><tr style="background:var(--bg3);border-bottom:1px solid var(--border);">';
   html += `<th style="text-align:left;padding:7px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:2;">Country</th>`;
   html += `<th style="text-align:center;padding:7px 4px;font-size:10px;font-weight:600;color:var(--text2);">ETF</th>`;
   years.forEach(y => {
@@ -5728,70 +5690,55 @@ function chBuildTable(liveMap) {
   });
   html += '</tr></thead><tbody>';
 
-  // Groups
   groups.forEach(group => {
-    // Group header
     html += `<tr class="mk-group-hdr"><td colspan="${numCols}" style="position:sticky;left:0;">${group.label}</td></tr>`;
-
     group.rows.forEach((row, ri) => {
       const stripe = ri % 2 === 1 ? 'var(--bg2)' : 'var(--bg1)';
-      const liveRow = liveMap[row.ticker];
       html += `<tr>`;
       html += `<td style="text-align:left;padding:5px 10px;color:var(--text);border-bottom:1px solid var(--border);position:sticky;left:0;background:${stripe};z-index:1;">${row.name}</td>`;
       html += `<td style="text-align:center;padding:5px 4px;color:var(--text3);border-bottom:1px solid var(--border);font-size:10px;">${row.ticker}</td>`;
-
       row.r.forEach((baseline, yi) => {
-        const live    = liveRow ? liveRow[yi] : null;
-        const val     = live ?? baseline;        // prefer live
-        const isLive  = live != null;
-        const hasBase = baseline != null;
-
-        if (val == null) {
-          // No data at all
-          html += `<td style="text-align:center;padding:5px 3px;background:var(--bg3);color:var(--text3);border-bottom:1px solid rgba(0,0,0,.07);font-size:9px;">NA</td>`;
-          return;
+        if (yi === ytdIdx) {
+          // 2026 YTD: live data
+          const live    = liveMap[row.ticker];
+          const val     = live ?? baseline;
+          if (val == null) {
+            html += `<td style="text-align:center;padding:5px 3px;background:var(--bg3);color:var(--text3);border-bottom:1px solid rgba(0,0,0,.07);font-size:9px;">NA</td>`;
+            return;
+          }
+          const differs = live != null && baseline != null && Math.abs(live - baseline) > CH_DIFF_THRESHOLD;
+          const sty     = chCellStyle(val);
+          const outline = differs ? 'box-shadow:inset 0 0 0 2px #fbbf24;' : '';
+          const title   = differs ? ` title="⚠ Ref: ${hmFmt(baseline)} | Live: ${hmFmt(live)}"` : (live != null ? ` title="Live YTD: ${hmFmt(live)}"` : '');
+          const dot     = differs ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#fbbf24;vertical-align:super;font-size:6px;margin-left:1px;"></span>` : '';
+          html += `<td style="text-align:center;padding:5px 3px;${sty}${outline}border-bottom:1px solid rgba(0,0,0,.07);font-weight:500;"${title}>${val===0?'0.0%':hmFmt(val)}${dot}</td>`;
+        } else {
+          // 2011-2025: hardcoded
+          if (baseline == null) {
+            html += `<td style="text-align:center;padding:5px 3px;background:var(--bg3);color:var(--text3);border-bottom:1px solid rgba(0,0,0,.07);font-size:9px;">NA</td>`;
+            return;
+          }
+          const sty = chCellStyle(baseline);
+          html += `<td style="text-align:center;padding:5px 3px;${sty}border-bottom:1px solid rgba(0,0,0,.07);font-weight:500;">${baseline===0?'0.0%':hmFmt(baseline)}</td>`;
         }
-
-        const differs = isLive && hasBase && Math.abs(live - baseline) > CH_DIFF_THRESHOLD;
-        const sty     = chCellStyle(val);
-        const display = val === 0 ? '0.0%' : hmFmt(val);
-        const outline = differs ? 'box-shadow:inset 0 0 0 2px #fbbf24;' : '';
-        const title   = differs
-          ? ` title="⚠ Baseline: ${hmFmt(baseline)} | Live: ${hmFmt(live)}"`
-          : (isLive ? ` title="Live: ${hmFmt(live)}"` : ' title="Baseline (no live data)"');
-        const dot = differs
-          ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#fbbf24;vertical-align:super;font-size:6px;margin-left:1px;"></span>`
-          : '';
-        html += `<td style="text-align:center;padding:5px 3px;${sty}${outline}border-bottom:1px solid rgba(0,0,0,.07);font-weight:500;"${title}>${display}${dot}</td>`;
       });
       html += `</tr>`;
     });
   });
 
-  // Separator
   html += `<tr><td colspan="${numCols}" style="height:5px;background:var(--bg3);border-top:2px solid var(--border);border-bottom:1px solid var(--border);padding:0;"></td></tr>`;
-
-  // Summary rows
-  html += `<tr style="background:var(--bg3);">`;
-  html += `<td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">Highest Return</td><td></td>`;
+  html += `<tr style="background:var(--bg3);"><td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">Highest Return</td><td></td>`;
   yearStats.forEach(s => { html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:700;color:#4ade80;">${s.highest}</td>`; });
-  html += `</tr><tr style="background:var(--bg3);">`;
-  html += `<td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">Lowest Return</td><td></td>`;
+  html += `</tr><tr style="background:var(--bg3);"><td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">Lowest Return</td><td></td>`;
   yearStats.forEach(s => { html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:700;color:#f87171;">${s.lowest}</td>`; });
-  html += `</tr><tr style="background:var(--bg3);">`;
-  html += `<td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">% Countries Positive</td><td></td>`;
-  yearStats.forEach(s => {
-    html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:600;${hmPctPosSty(s.pctPos)}">${s.pctPos.toFixed(0)}%</td>`;
-  });
-  html += `</tr>`;
-  html += `</tbody>`;
+  html += `</tr><tr style="background:var(--bg3);"><td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">% Countries Positive</td><td></td>`;
+  yearStats.forEach(s => { html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:600;${hmPctPosSty(s.pctPos)}">${s.pctPos.toFixed(0)}%</td>`; });
+  html += `</tr></tbody>`;
 
-  // Validation footer
   const valLine = flagCount > 0
-    ? `<span style="color:#fbbf24;">⚠ ${flagCount} cell${flagCount>1?'s':''} differ from baseline by >${CH_DIFF_THRESHOLD}pp — hover to compare</span>`
-    : `<span style="color:#4ade80;">✓ All ${liveCount} validated live values match baseline within ${CH_DIFF_THRESHOLD}pp</span>`;
-  html += `<tfoot><tr><td colspan="${numCols}" style="padding:8px 10px;font-size:9px;font-family:var(--mono);color:var(--text3);border-top:1px solid var(--border);">Live data via Yahoo Finance (adj. close, monthly) · ${valLine}</td></tr></tfoot>`;
-
+    ? `<span style="color:#fbbf24;">⚠ ${flagCount} 2026 YTD value${flagCount>1?'s':''} differ from reference by >${CH_DIFF_THRESHOLD}pp — hover to compare</span>`
+    : `<span style="color:#4ade80;">✓ ${liveCount} 2026 YTD values fetched live · 2011–2025 hardcoded</span>`;
+  html += `<tfoot><tr><td colspan="${numCols}" style="padding:8px 10px;font-size:9px;font-family:var(--mono);color:var(--text3);border-top:1px solid var(--border);">2026 YTD via Yahoo Finance (adj. close) · 2011–2025 hardcoded · ${valLine}</td></tr></tfoot>`;
   return html;
 }
 
