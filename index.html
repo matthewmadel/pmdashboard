@@ -2845,7 +2845,8 @@ a      { color: inherit; text-decoration: none; }
             <div class="page-title">Index Returns <span class="page-title-badge">Monthly</span></div>
             <div class="page-subtitle" id="br-subtitle">26 benchmarks · loading…</div>
           </div>
-          <div class="page-controls">
+          <div class="page-controls" style="display:flex;align-items:center;gap:12px;">
+            <button class="fred-export-btn" onclick="brExportAllCSV()" style="white-space:nowrap;">Export All Series ↓</button>
             <div class="pill-group" id="br-tab-pills">
               <div class="pill active" onclick="brTab('trailing',this)">Trailing Returns</div>
               <div class="pill" onclick="brTab('calendar',this)">Calendar Year</div>
@@ -3690,6 +3691,7 @@ async function fredRenderChart(seriesId) {
           <span>Recessions</span>
         </label>
         <button class="fred-export-btn" id="fred-btn-csv">CSV ↓</button>
+        <button class="fred-export-btn" id="fred-btn-csv-all">Full History ↓</button>
         <button class="fred-export-btn" id="fred-btn-png">PNG ↓</button>
       </div>
     </div>
@@ -3732,6 +3734,7 @@ async function fredRenderChart(seriesId) {
     fredState.showRecessions = this.checked; fredRenderChart(seriesId);
   });
   document.getElementById('fred-btn-csv').addEventListener('click', () => fredExportCSV(data, seriesId));
+  document.getElementById('fred-btn-csv-all').addEventListener('click', () => fredExportAllCSV(seriesId));
   document.getElementById('fred-btn-png').addEventListener('click', () => fredExportPNG('fred-svg-wrap', seriesId));
 
   fredDrawLineChart(data, seriesId, fredState.showRecessions ? recessions : []);
@@ -4397,6 +4400,55 @@ function fredExportCSV(data, id) {
   const blob = new Blob([rows.join('\n')],{type:'text/csv'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`${id}_${fredState.period}.csv`; a.click();
+}
+
+// Export full inception-to-present history for the active FRED series
+function fredExportAllCSV(id) {
+  const full = fredLocalData[id];
+  if (!full || !full.length) { alert('No data loaded for ' + id); return; }
+  const meta = FRED_SERIES_META[id] || {};
+  const header = `Date,${id}${meta.unit ? ' (' + meta.unit + ')' : ''}`;
+  const rows = [header, ...full.map(d => `${d.date},${d.value}`)];
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `${id}_full_history.csv`; a.click();
+}
+
+// Export all index return monthly series in one CSV (dates as rows, indices as columns)
+function brExportAllCSV() {
+  if (!brData?.benchmarks?.length) { alert('Index returns data not loaded'); return; }
+  const asOf = brData.as_of || '';
+
+  // Collect all unique dates across all benchmarks (sorted oldest → newest)
+  const dateSet = new Set();
+  brData.benchmarks.forEach(bm => bm.data.forEach(pt => dateSet.add(pt.d)));
+  const dates = Array.from(dateSet).sort();
+
+  // Build a lookup: benchmarkName → { date → return }
+  const lookup = {};
+  brData.benchmarks.forEach(bm => {
+    lookup[bm.name] = {};
+    bm.data.forEach(pt => { lookup[bm.name][pt.d] = pt.r; });
+  });
+
+  const names = brData.benchmarks.map(bm => bm.name);
+  // Quote names that contain commas
+  const headers = ['Date', ...names.map(n => n.includes(',') ? `"${n}"` : n)];
+  const rows = [
+    `# Index Returns — Monthly Total Return (%) — As of ${asOf}`,
+    headers.join(','),
+    ...dates.map(d => {
+      const vals = names.map(n => {
+        const v = lookup[n][d];
+        return v !== undefined ? v : '';
+      });
+      return [d, ...vals].join(',');
+    })
+  ];
+
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `index_returns_monthly_${asOf}.csv`; a.click();
 }
 
 function fredExportPNG(wrapperId, name) {
