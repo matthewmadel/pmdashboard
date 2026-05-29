@@ -5334,14 +5334,16 @@ window.mkPeriodStartDate = mkPeriodStartDate;
 window.mkState = mkState;
 window.mkLoadCache = mkLoadCache;
 window.TICKERS_ALL = TICKERS;
+window.mkFetch = mkFetch;
 
 })();
 
 /* ══════════════════════════════════════════════════════════════════════
-   ASSET CLASS HEATMAP
+   ASSET CLASS HEATMAP  (live data · validated against baseline)
 ══════════════════════════════════════════════════════════════════════ */
 
-const AC_HM = {
+// Baseline values from original CSV — used for validation only
+const AC_HM_BASELINE = {
   years:   [2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026],
   ytdYear: 2026,
   rows: [
@@ -5363,13 +5365,14 @@ const AC_HM = {
     {ticker:'IWM', name:'US Small Caps',           r:[-4.2,16.4,38.9,4.9,-4.3,21.4,14.7,-11.0,25.4,19.9,14.6,-20.5,16.8,11.4,12.7,15.0]},
     {ticker:'DBC', name:'Commodities',             r:[-2.7,3.3,-7.6,-28.2,-27.4,18.6,5.1,-12.0,12.2,-8.0,41.3,19.7,-6.2,2.0,8.4,36.6]},
   ],
-  highest: ['TLT','PFF','IWM','VNQ','QQQ','IWM','EEM','BIL','QQQ','CWB','DBC','DBC','QQQ','GLD','GLD','DBC'],
-  lowest:  ['EEM','BIL','GLD','DBC','DBC','BIL','BIL','EEM','BIL','DBC','TLT','QQQ','DBC','TLT','VNQ','TLT'],
-  pctPos:  [58.8,94.1,41.2,70.6,35.3,100,100,5.9,100,88.2,58.8,11.8,94.1,94.1,100,82.4],
 };
 
-let hmRendered = false;
+const HM_DIFF_THRESHOLD = 2.0; // flag if live vs baseline differ by more than 2pp
 
+let hmBooted = false;
+let hmLiveMap = null; // ticker → array of live returns (parallel to years array)
+
+// Colour helpers
 function hmCellStyle(r) {
   const maxPos = 55, maxNeg = 35;
   if (r > 0) {
@@ -5387,14 +5390,82 @@ function hmCellStyle(r) {
   return `background:#3a3a42;color:#888;`;
 }
 
+function hmPctPosSty(pct) {
+  const t = pct / 100;
+  const R = Math.round(200 - t * 173), G = Math.round(230 - t * 136), B = Math.round(201 - t * 169);
+  const light = (0.299*R + 0.587*G + 0.114*B) > 140;
+  return `background:rgb(${R},${G},${B});color:${light ? '#0d2b12' : '#e8f5e9'};`;
+}
+
 function hmFmt(r) { return (r > 0 ? '+' : '') + r.toFixed(1) + '%'; }
 
-function hmRender() {
-  if (hmRendered) return;
-  hmRendered = true;
-  const tbl = document.getElementById('ac-hm-table');
-  if (!tbl) return;
-  const { years, ytdYear, rows, highest, lowest, pctPos } = AC_HM;
+// Fetch 20Y of monthly adjclose and compute calendar-year returns for one ticker
+async function hmFetchTicker(ticker) {
+  const data = await window.mkFetch(ticker, {range:'20y', interval:'1mo'});
+  const result = data?.chart?.result?.[0];
+  if (!result) return null;
+  const ts  = result.timestamp ?? [];
+  const ac  = result.indicators?.adjclose?.[0]?.adjclose
+           ?? result.indicators?.quote?.[0]?.close
+           ?? [];
+
+  // Build year → last-available adjclose map (last monthly bar in each calendar year)
+  const yearEnd = {};
+  for (let i = 0; i < ts.length; i++) {
+    if (ac[i] == null) continue;
+    yearEnd[new Date(ts[i] * 1000).getFullYear()] = ac[i];
+  }
+
+  const years = AC_HM_BASELINE.years;
+  return years.map(y => {
+    const cur  = yearEnd[y];
+    const prev = yearEnd[y - 1];
+    if (cur == null || prev == null) return null;
+    return Math.round(((cur / prev) - 1) * 1000) / 10; // one decimal, percent
+  });
+}
+
+// Fetch all tickers in parallel; returns map ticker→returnsArray
+async function hmFetchAll() {
+  const rows = AC_HM_BASELINE.rows;
+  const settled = await Promise.allSettled(rows.map(row => hmFetchTicker(row.ticker)));
+  const map = {};
+  rows.forEach((row, i) => {
+    map[row.ticker] = settled[i].status === 'fulfilled' ? settled[i].value : null;
+  });
+  return map;
+}
+
+// Build the table HTML from live data + validation against baseline
+function hmBuildTable(liveMap) {
+  const { years, ytdYear, rows } = AC_HM_BASELINE;
+
+  // Per-year stats computed from live data
+  const yearStats = years.map((_, yi) => {
+    const vals = rows.map(row => {
+      const live = liveMap[row.ticker];
+      return (live && live[yi] != null) ? live[yi] : row.r[yi];
+    });
+    const vv = vals.filter(v => v != null);
+    if (!vv.length) return { highest:'—', lowest:'—', pctPos: 0 };
+    const maxVal = Math.max(...vv), minVal = Math.min(...vv);
+    const bestRow  = rows[vals.indexOf(maxVal)];
+    const worstRow = rows[vals.indexOf(minVal)];
+    const pctPos = (vv.filter(v => v > 0).length / vv.length) * 100;
+    return { highest: bestRow?.ticker ?? '—', lowest: worstRow?.ticker ?? '—', pctPos };
+  });
+
+  // Validation summary
+  let flagCount = 0, liveCount = 0;
+  rows.forEach(row => {
+    const live = liveMap[row.ticker];
+    if (!live) return;
+    row.r.forEach((baseline, yi) => {
+      if (live[yi] == null) return;
+      liveCount++;
+      if (Math.abs(live[yi] - baseline) > HM_DIFF_THRESHOLD) flagCount++;
+    });
+  });
 
   let html = '<colgroup>';
   html += `<col style="width:172px;min-width:172px;">`;
@@ -5402,7 +5473,7 @@ function hmRender() {
   years.forEach(() => { html += `<col style="width:62px;min-width:58px;">`; });
   html += '</colgroup>';
 
-  // Header
+  // Header row
   html += '<thead><tr style="background:var(--bg3);border-bottom:1px solid var(--border);">';
   html += `<th style="text-align:left;padding:7px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:2;">Asset Class</th>`;
   html += `<th style="text-align:center;padding:7px 4px;font-size:10px;font-weight:600;color:var(--text2);">ETF</th>`;
@@ -5417,12 +5488,25 @@ function hmRender() {
   // Data rows
   rows.forEach((row, ri) => {
     const stripe = ri % 2 === 1 ? 'var(--bg2)' : 'var(--bg1)';
+    const liveRow = liveMap[row.ticker];
     html += `<tr>`;
     html += `<td style="text-align:left;padding:5px 10px;color:var(--text);border-bottom:1px solid var(--border);position:sticky;left:0;background:${stripe};z-index:1;">${row.name}</td>`;
     html += `<td style="text-align:center;padding:5px 4px;color:var(--text3);border-bottom:1px solid var(--border);font-size:10px;">${row.ticker}</td>`;
-    row.r.forEach(val => {
-      const sty = hmCellStyle(val);
-      html += `<td style="text-align:center;padding:5px 3px;${sty}border-bottom:1px solid rgba(0,0,0,.07);font-weight:500;">${val === 0 ? '0.0%' : hmFmt(val)}</td>`;
+    row.r.forEach((baseline, yi) => {
+      const live    = liveRow ? liveRow[yi] : null;
+      const val     = live ?? baseline;
+      const isLive  = live != null;
+      const differs = isLive && Math.abs(live - baseline) > HM_DIFF_THRESHOLD;
+      const sty     = hmCellStyle(val);
+      const display = val === 0 ? '0.0%' : hmFmt(val);
+      const outline = differs ? 'box-shadow:inset 0 0 0 2px #fbbf24;' : '';
+      const title   = differs
+        ? ` title="⚠ Baseline: ${hmFmt(baseline)} | Live: ${hmFmt(live)}"`
+        : (isLive ? ` title="Live: ${hmFmt(live)}"` : ' title="Baseline (no live data)"');
+      const dot = differs
+        ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#fbbf24;vertical-align:super;font-size:6px;margin-left:1px;"></span>`
+        : '';
+      html += `<td style="text-align:center;padding:5px 3px;${sty}${outline}border-bottom:1px solid rgba(0,0,0,.07);font-weight:500;"${title}>${display}${dot}</td>`;
     });
     html += `</tr>`;
   });
@@ -5430,38 +5514,54 @@ function hmRender() {
   // Separator
   html += `<tr><td colspan="${2 + years.length}" style="height:5px;background:var(--bg3);border-top:2px solid var(--border);border-bottom:1px solid var(--border);padding:0;"></td></tr>`;
 
-  // Highest return
+  // Highest return (live)
   html += `<tr style="background:var(--bg3);">`;
   html += `<td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">Highest Return</td>`;
   html += `<td></td>`;
-  highest.forEach(tkr => {
-    html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:700;color:#4ade80;">${tkr}</td>`;
-  });
+  yearStats.forEach(s => { html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:700;color:#4ade80;">${s.highest}</td>`; });
   html += `</tr>`;
 
-  // Lowest return
+  // Lowest return (live)
   html += `<tr style="background:var(--bg3);">`;
   html += `<td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">Lowest Return</td>`;
   html += `<td></td>`;
-  lowest.forEach(tkr => {
-    html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:700;color:#f87171;">${tkr}</td>`;
-  });
+  yearStats.forEach(s => { html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:700;color:#f87171;">${s.lowest}</td>`; });
   html += `</tr>`;
 
-  // % Classes Positive
+  // % Classes Positive (live)
   html += `<tr style="background:var(--bg3);">`;
   html += `<td style="text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);position:sticky;left:0;background:var(--bg3);z-index:1;">% Classes Positive</td>`;
   html += `<td></td>`;
-  pctPos.forEach(pct => {
-    const t = pct / 100;
-    const R = Math.round(200 - t * 173), G = Math.round(230 - t * 136), B = Math.round(201 - t * 169);
-    const light = (0.299*R + 0.587*G + 0.114*B) > 140;
-    html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:600;background:rgb(${R},${G},${B});color:${light ? '#0d2b12' : '#e8f5e9'};">${pct.toFixed(0)}%</td>`;
+  yearStats.forEach(s => {
+    html += `<td style="text-align:center;padding:6px 3px;font-size:10px;font-weight:600;${hmPctPosSty(s.pctPos)}">${s.pctPos.toFixed(0)}%</td>`;
   });
   html += `</tr>`;
 
   html += '</tbody>';
-  tbl.innerHTML = html;
+
+  // Validation footer
+  const valLine = flagCount > 0
+    ? `<span style="color:#fbbf24;">⚠ ${flagCount} cell${flagCount>1?'s':''} differ from baseline by >${HM_DIFF_THRESHOLD}pp — hover to compare</span>`
+    : `<span style="color:#4ade80;">✓ All ${liveCount} live values match baseline within ${HM_DIFF_THRESHOLD}pp</span>`;
+  html += `<tfoot><tr><td colspan="${2 + years.length}" style="padding:8px 10px;font-size:9px;font-family:var(--mono);color:var(--text3);border-top:1px solid var(--border);">Live data via Yahoo Finance (adj. close, monthly) · ${valLine}</td></tr></tfoot>`;
+
+  return html;
+}
+
+function hmRender() {
+  if (hmBooted) return;
+  hmBooted = true;
+  const tbl = document.getElementById('ac-hm-table');
+  if (!tbl) return;
+
+  tbl.innerHTML = `<tr><td colspan="18" style="text-align:center;padding:48px;font-family:var(--mono);font-size:11px;color:var(--text3);">Fetching live ETF data…</td></tr>`;
+
+  hmFetchAll().then(liveMap => {
+    hmLiveMap = liveMap;
+    tbl.innerHTML = hmBuildTable(liveMap);
+  }).catch(err => {
+    tbl.innerHTML = `<tr><td colspan="18" style="text-align:center;padding:48px;font-family:var(--mono);font-size:11px;color:var(--red);">Failed to load live data: ${err.message}</td></tr>`;
+  });
 }
 
 async function fredBoot() {
