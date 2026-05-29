@@ -7716,13 +7716,13 @@ const ST_SCENARIOS = [
 const ST_TEMPLATES = {
   '6040':       [{ ticker:'SPY',  weight:60, name:'S&P 500' },     { ticker:'AGG', weight:40, name:'US Aggregate' }],
   'rp':         [{ ticker:'SPY',  weight:25, name:'S&P 500' },     { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:25, name:'Gold' }, { ticker:'DJP', weight:25, name:'Bloomberg Cmdty' }],
-  'equity':     [{ ticker:'SPY',  weight:40, name:'S&P 500' },     { ticker:'EFA', weight:30, name:'MSCI EAFE' },   { ticker:'EEM', weight:20, name:'MSCI EM' }, { ticker:'IWM', weight:10, name:'Russell 2000' }],
-  'ma':         [{ ticker:'SPY',  weight:35, name:'S&P 500' },     { ticker:'EFA', weight:15, name:'MSCI EAFE' },   { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:15, name:'Gold' }, { ticker:'HYG', weight:10, name:'US High Yield' }],
-  'acwi_6040':  [{ ticker:'ACWI', weight:60, name:'MSCI ACWI' },   { ticker:'AGG', weight:40, name:'US Aggregate' }],
-  'acwi_6535':  [{ ticker:'ACWI', weight:65, name:'MSCI ACWI' },   { ticker:'AGG', weight:35, name:'US Aggregate' }],
-  'acwi_7030':  [{ ticker:'ACWI', weight:70, name:'MSCI ACWI' },   { ticker:'AGG', weight:30, name:'US Aggregate' }],
-  'acwi_7525':  [{ ticker:'ACWI', weight:75, name:'MSCI ACWI' },   { ticker:'AGG', weight:25, name:'US Aggregate' }],
-  'acwi_8020':  [{ ticker:'ACWI', weight:80, name:'MSCI ACWI' },   { ticker:'AGG', weight:20, name:'US Aggregate' }],
+  'equity':     [{ ticker:'SPY',  weight:40, name:'S&P 500' },         { ticker:'EFA', weight:30, name:'MSCI EAFE (Net)' },   { ticker:'EEM', weight:20, name:'MSCI EM (Net)' }, { ticker:'IWM', weight:10, name:'Russell 2000 (TR)' }],
+  'ma':         [{ ticker:'SPY',  weight:35, name:'S&P 500' },         { ticker:'EFA', weight:15, name:'MSCI EAFE (Net)' },   { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:15, name:'Gold' }, { ticker:'HYG', weight:10, name:'US High Yield' }],
+  'acwi_6040':  [{ ticker:'ACWI', weight:60, name:'MSCI ACWI (Net)' }, { ticker:'AGG', weight:40, name:'US Aggregate' }],
+  'acwi_6535':  [{ ticker:'ACWI', weight:65, name:'MSCI ACWI (Net)' }, { ticker:'AGG', weight:35, name:'US Aggregate' }],
+  'acwi_7030':  [{ ticker:'ACWI', weight:70, name:'MSCI ACWI (Net)' }, { ticker:'AGG', weight:30, name:'US Aggregate' }],
+  'acwi_7525':  [{ ticker:'ACWI', weight:75, name:'MSCI ACWI (Net)' }, { ticker:'AGG', weight:25, name:'US Aggregate' }],
+  'acwi_8020':  [{ ticker:'ACWI', weight:80, name:'MSCI ACWI (Net)' }, { ticker:'AGG', weight:20, name:'US Aggregate' }],
 };
 
 const stState = { positions:[], scenarioId:null, customStart:'', customEnd:'' };
@@ -7738,7 +7738,7 @@ async function stBoot() {
   stPopulateIndexDropdown();
   if (stState.positions.length === 0) {
     stState.positions = [
-      { ticker:'MSCI ACWI',        weight:70, name:'MSCI ACWI' },
+      { ticker:'MSCI ACWI (Net)',   weight:70, name:'MSCI ACWI (Net)' },
       { ticker:'Bloomberg US Agg', weight:30, name:'Bloomberg US Agg' },
     ];
   }
@@ -8537,11 +8537,11 @@ function brRenderCalendar() {
 ══════════════════════════════════════════════════════════════════════ */
 
 const BB_DEFAULTS = [
-  { id:'bb_6040', name:'60/40 ACWI / AGG', components:[{name:'MSCI ACWI',weight:60},{name:'Bloomberg US Agg',weight:40}] },
-  { id:'bb_6535', name:'65/35 ACWI / AGG', components:[{name:'MSCI ACWI',weight:65},{name:'Bloomberg US Agg',weight:35}] },
-  { id:'bb_7030', name:'70/30 ACWI / AGG', components:[{name:'MSCI ACWI',weight:70},{name:'Bloomberg US Agg',weight:30}] },
-  { id:'bb_7525', name:'75/25 ACWI / AGG', components:[{name:'MSCI ACWI',weight:75},{name:'Bloomberg US Agg',weight:25}] },
-  { id:'bb_8020', name:'80/20 ACWI / AGG', components:[{name:'MSCI ACWI',weight:80},{name:'Bloomberg US Agg',weight:20}] },
+  { id:'bb_6040', name:'60/40 ACWI / AGG', components:[{name:'MSCI ACWI (Net)',weight:60},{name:'Bloomberg US Agg',weight:40}] },
+  { id:'bb_6535', name:'65/35 ACWI / AGG', components:[{name:'MSCI ACWI (Net)',weight:65},{name:'Bloomberg US Agg',weight:35}] },
+  { id:'bb_7030', name:'70/30 ACWI / AGG', components:[{name:'MSCI ACWI (Net)',weight:70},{name:'Bloomberg US Agg',weight:30}] },
+  { id:'bb_7525', name:'75/25 ACWI / AGG', components:[{name:'MSCI ACWI (Net)',weight:75},{name:'Bloomberg US Agg',weight:25}] },
+  { id:'bb_8020', name:'80/20 ACWI / AGG', components:[{name:'MSCI ACWI (Net)',weight:80},{name:'Bloomberg US Agg',weight:20}] },
 ];
 
 const BB_LS_KEY = 'bb_custom_benchmarks';
@@ -9014,11 +9014,11 @@ bbBlendSeries = function(bmOrComponents) {
 // ── Push to Stress Tester ─────────────────────────────────────────────────
 
 const BB_TO_TICKER = {
-  'MSCI ACWI':        'ACWI', 'MSCI World':       null,  'MSCI USA':         null,
-  'MSCI EAFE':        'EFA',  'MSCI World ex USA': null,  'MSCI EM':          'EEM',
-  'S&P 500':          'SPY',  'Russell 3000':      null,  'Russell 1000':     'IWB',
-  'R1000 Growth':     'IWF',  'R1000 Value':       'IWD', 'Russell 2000':     'IWM',
-  'DJIA':             null,   'Bloomberg Cmdty':   'DJP', 'DJ US RESI':       null,
+  'MSCI ACWI (Net)':              'ACWI', 'MSCI World (Net)':       null,  'MSCI USA (Gross)':              null,
+  'MSCI EAFE (Net)':              'EFA',  'MSCI World Ex USA (Net)': null,  'MSCI EM (Net)':                 'EEM',
+  'S&P 500':                      'SPY',  'Russell 3000 (TR)':       null,  'Russell 1000 (TR)':             'IWB',
+  'Russell 1000 Growth (TR)':     'IWF',  'Russell 1000 Value (TR)': 'IWD', 'Russell 2000 (TR)':             'IWM',
+  'Dow Jones Industrial Average (TR)': null, 'Bloomberg Cmdty':      'DJP', 'DJ US RESI':                    null,
   'HFRI FoF Composite':null,  'HFRI FoF Conservative':null,'HFRI FoF Strategic':null,
   'Bloomberg US Agg': 'AGG',  'US Government':     'GOVT','US IG Corp':       'LQD',
   'US High Yield':    'HYG',  'US Securitized':    'MBB', 'US TIPS':          null,
