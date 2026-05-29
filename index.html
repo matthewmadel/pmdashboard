@@ -7714,10 +7714,10 @@ const ST_SCENARIOS = [
 ];
 
 const ST_TEMPLATES = {
-  '6040':       [{ ticker:'SPY',  weight:60, name:'S&P 500' },     { ticker:'AGG', weight:40, name:'US Aggregate' }],
-  'rp':         [{ ticker:'SPY',  weight:25, name:'S&P 500' },     { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:25, name:'Gold' }, { ticker:'DJP', weight:25, name:'Bloomberg Cmdty' }],
-  'equity':     [{ ticker:'SPY',  weight:40, name:'S&P 500' },         { ticker:'EFA', weight:30, name:'MSCI EAFE (Net)' },   { ticker:'EEM', weight:20, name:'MSCI EM (Net)' }, { ticker:'IWM', weight:10, name:'Russell 2000 (TR)' }],
-  'ma':         [{ ticker:'SPY',  weight:35, name:'S&P 500' },         { ticker:'EFA', weight:15, name:'MSCI EAFE (Net)' },   { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:15, name:'Gold' }, { ticker:'HYG', weight:10, name:'US High Yield' }],
+  '6040':       [{ ticker:'SPY',  weight:60, name:'S&P500 (TR)' },     { ticker:'AGG', weight:40, name:'US Aggregate' }],
+  'rp':         [{ ticker:'SPY',  weight:25, name:'S&P500 (TR)' },     { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:25, name:'Gold' }, { ticker:'DJP', weight:25, name:'Bloomberg Cmdty' }],
+  'equity':     [{ ticker:'SPY',  weight:40, name:'S&P500 (TR)' },         { ticker:'EFA', weight:30, name:'MSCI EAFE (Net)' },   { ticker:'EEM', weight:20, name:'MSCI EM (Net)' }, { ticker:'IWM', weight:10, name:'Russell 2000 (TR)' }],
+  'ma':         [{ ticker:'SPY',  weight:35, name:'S&P500 (TR)' },         { ticker:'EFA', weight:15, name:'MSCI EAFE (Net)' },   { ticker:'AGG', weight:25, name:'US Aggregate' }, { ticker:'GC=F', weight:15, name:'Gold' }, { ticker:'HYG', weight:10, name:'US High Yield' }],
   'acwi_6040':  [{ ticker:'ACWI', weight:60, name:'MSCI ACWI (Net)' }, { ticker:'AGG', weight:40, name:'US Aggregate' }],
   'acwi_6535':  [{ ticker:'ACWI', weight:65, name:'MSCI ACWI (Net)' }, { ticker:'AGG', weight:35, name:'US Aggregate' }],
   'acwi_7030':  [{ ticker:'ACWI', weight:70, name:'MSCI ACWI (Net)' }, { ticker:'AGG', weight:30, name:'US Aggregate' }],
@@ -9016,7 +9016,7 @@ bbBlendSeries = function(bmOrComponents) {
 const BB_TO_TICKER = {
   'MSCI ACWI (Net)':              'ACWI', 'MSCI World (Net)':       null,  'MSCI USA (Gross)':              null,
   'MSCI EAFE (Net)':              'EFA',  'MSCI World Ex USA (Net)': null,  'MSCI EM (Net)':                 'EEM',
-  'S&P 500':                      'SPY',  'Russell 3000 (TR)':       null,  'Russell 1000 (TR)':             'IWB',
+  'S&P500 (TR)':                  'SPY',  'Russell 3000 (TR)':       null,  'Russell 1000 (TR)':             'IWB',
   'Russell 1000 Growth (TR)':     'IWF',  'Russell 1000 Value (TR)': 'IWD', 'Russell 2000 (TR)':             'IWM',
   'Dow Jones Industrial Average (TR)': null, 'Bloomberg Cmdty':      'DJP', 'DJ US RESI':                    null,
   'HFRI FoF Composite':null,  'HFRI FoF Conservative':null,'HFRI FoF Strategic':null,
