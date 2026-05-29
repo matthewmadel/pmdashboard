@@ -1,0 +1,41 @@
+name: Fetch News
+
+on:
+  schedule:
+    # 6:00 AM ET daily (11:00 UTC; adjust to 10:00 UTC during EDT)
+    - cron: '0 11 * * *'
+  workflow_dispatch:   # allows manual "Run workflow" button in GitHub UI
+
+permissions:
+  contents: write      # needed to commit news-data.json back to the repo
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install requests feedparser
+
+      - name: Run scraper
+        run: python scrape_news.py
+
+      - name: Commit results
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add news-data.json snapshots/
+          git diff --staged --quiet \
+            || git commit -m "Auto: news refresh $(date -u +%Y-%m-%d) [skip ci]"
+          git push

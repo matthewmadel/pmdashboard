@@ -546,6 +546,63 @@ a      { color: inherit; text-decoration: none; }
 .news-headline { font-size: 12px; color: var(--text); line-height: 1.5; }
 .news-source { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 
+/* ── News Hub (nw-*) ─────────────────────────────────────────────────────── */
+.nw-list  { display:flex; flex-direction:column; gap:1px; padding:8px 24px 24px; }
+.nw-empty { padding:48px 24px; text-align:center; font-family:var(--mono); font-size:11px; color:var(--text3); }
+
+.nw-item {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--radius); padding:10px 14px;
+  display:flex; flex-direction:column; gap:4px;
+  transition:border-color 0.15s;
+  border-left:2px solid transparent;
+}
+.nw-item:hover { border-color:var(--border2); }
+.nw-item.nw-is-new { border-left-color:var(--amber); }
+
+@keyframes nw-flash {
+  0%   { background:rgba(212,164,76,0.14); }
+  100% { background:var(--bg2); }
+}
+.nw-item.nw-flashing { animation:nw-flash 1.8s ease-out; }
+
+.nw-top    { display:flex; align-items:center; gap:8px; justify-content:space-between; }
+.nw-meta   { display:flex; align-items:center; gap:5px; flex-wrap:wrap; min-width:0; }
+.nw-right  { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+
+.nw-new-pip {
+  display:inline-block; width:6px; height:6px; border-radius:50%;
+  background:var(--amber); flex-shrink:0; box-shadow:0 0 5px var(--amber);
+}
+.nw-score    { font-family:var(--mono); font-size:10px; font-weight:600; min-width:22px; text-align:right; }
+.nw-time     { font-family:var(--mono); font-size:9px; color:var(--text3); white-space:nowrap; }
+.nw-headline { font-size:12px; color:var(--text); line-height:1.5; }
+.nw-summary  { font-size:10px; color:var(--text3); line-height:1.5; margin-top:2px; }
+.nw-source   { font-family:var(--mono); font-size:9px; margin-top:1px; }
+.nw-src-t1   { color:var(--amber); }
+.nw-src-t2   { color:var(--text2); }
+.nw-src-t3   { color:var(--text3); }
+
+.nw-tag {
+  font-family:var(--mono); font-size:9px; letter-spacing:0.05em;
+  padding:1px 6px; border-radius:2px; text-transform:uppercase;
+  flex-shrink:0; white-space:nowrap;
+}
+.nw-tag-inst   { background:var(--blue-dim);               color:var(--blue);   }
+.nw-tag-cio    { background:var(--amber-dim);               color:var(--amber);  }
+.nw-tag-cfo    { background:rgba(124,111,205,0.12);         color:var(--purple); }
+.nw-tag-board  { background:rgba(58,184,168,0.10);          color:var(--teal);   }
+.nw-tag-staff  { background:rgba(255,255,255,0.06);         color:var(--text2);  }
+.nw-tag-person { background:rgba(76,175,130,0.10);          color:var(--green);  }
+
+.nw-bar {
+  display:flex; align-items:center; gap:10px;
+  font-family:var(--mono); font-size:9px; color:var(--text3);
+  padding:7px 24px 6px; border-bottom:1px solid var(--border);
+  background:var(--bg2); flex-shrink:0;
+}
+.nw-bar-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+
 /* ── FRED / Macro page ────────────────────────────────────────────────── */
 
 /* Fred main chart area */
@@ -1562,11 +1619,17 @@ a      { color: inherit; text-decoration: none; }
         <!-- NEWS & FLOWS -->
         <div class="nav-section collapsed" id="ns-news">
           <div class="nav-section-header" onclick="toggleSection('ns-news')">
-            <span>News &amp; Flows</span><span class="nav-section-arrow">▼</span>
+            <span>News</span><span class="nav-section-arrow">▼</span>
           </div>
           <div class="nav-items">
-            <div class="nav-item" onclick="showPage('news');newsBoot()" data-label="Market Intelligence">
-              <div class="nav-dot"></div>Market Intelligence<span class="nav-item-badge">NWS</span>
+            <div class="nav-item" onclick="nwNav('markets')" data-label="Markets News" data-nwtab="markets">
+              <div class="nav-dot"></div>Markets News<span class="nav-item-badge">MKT</span>
+            </div>
+            <div class="nav-item" onclick="nwNav('ai')" data-label="AI News" data-nwtab="ai">
+              <div class="nav-dot"></div>AI News<span class="nav-item-badge">AI</span>
+            </div>
+            <div class="nav-item" onclick="nwNav('endowment')" data-label="Endowment Staff &amp; Board" data-nwtab="endowment">
+              <div class="nav-dot"></div>Endowment Staff &amp; Board<span class="nav-item-badge">END</span>
             </div>
             <div class="nav-item" onclick="showPage('cot')" data-label="COT Positioning">
               <div class="nav-dot"></div>COT Positioning<span class="nav-item-badge">COT</span>
@@ -3168,29 +3231,38 @@ a      { color: inherit; text-decoration: none; }
       <!-- ════════════════════════════════════════
            PAGE: MARKET INTELLIGENCE (NEWS)
       ════════════════════════════════════════ -->
-      <div class="section-page" id="page-news">
-        <div class="page-header">
+      <!-- ════════════════════════════════════════
+           PAGE: NEWS HUB
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-news" style="flex-direction:column;overflow:hidden;">
+        <div class="page-header" style="flex-shrink:0;">
           <div class="page-title-group">
-            <div class="page-title">Market Intelligence <span class="page-title-badge">Alpha Vantage</span></div>
-            <div class="page-subtitle">Macro · monetary policy · financial markets · energy — top stories ranked by recency &amp; sentiment strength</div>
+            <div class="page-title">News <span class="page-title-badge">RSS · Daily</span></div>
+            <div class="page-subtitle" id="nw-subtitle">Stories ranked by recency &amp; source tier · refreshed daily via GitHub Actions</div>
           </div>
-          <div class="page-controls">
-            <div class="pill-group" id="news-topic-pills">
-              <div class="pill active" onclick="newsFilter('all',this)">All</div>
-              <div class="pill" onclick="newsFilter('Monetary Policy',this)">Monetary Policy</div>
-              <div class="pill" onclick="newsFilter('Financial Markets',this)">Markets</div>
-              <div class="pill" onclick="newsFilter('Economy - Macro',this)">Macro</div>
-              <div class="pill" onclick="newsFilter('Economy - Fiscal',this)">Fiscal</div>
-              <div class="pill" onclick="newsFilter('Energy & Transportation',this)">Energy</div>
-            </div>
+          <!-- AUM slider — visible only on Endowment tab -->
+          <div id="nw-aum-row" style="display:none;align-items:center;gap:10px;flex-shrink:0;">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;">Min AUM</span>
+            <input type="range" id="nw-aum-slider" min="0" max="4" step="1" value="0"
+                   oninput="nwSetAum(this.value)"
+                   style="width:110px;accent-color:var(--amber);cursor:pointer;">
+            <span id="nw-aum-val" style="font-family:var(--mono);font-size:11px;color:var(--amber);min-width:52px;font-weight:500;">All</span>
           </div>
         </div>
-        <div class="page-body" style="flex-direction:column;overflow-y:auto;">
-          <div id="news-refresh-bar" class="news-refresh-bar" style="display:none">
-            <div class="news-refresh-dot"></div>
-            <span id="news-refresh-label">—</span>
-          </div>
-          <div id="news-list" class="news-list"></div>
+        <!-- Tab bar -->
+        <div id="nw-tabs" style="display:flex;gap:0;padding:0 24px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;">
+          <button class="mk-tab active" data-nwtab="markets"   onclick="nwSetTab('markets',this)">Markets</button>
+          <button class="mk-tab"        data-nwtab="ai"         onclick="nwSetTab('ai',this)">AI News</button>
+          <button class="mk-tab"        data-nwtab="endowment"  onclick="nwSetTab('endowment',this)">Endowment Staff &amp; Board</button>
+        </div>
+        <!-- Refresh bar -->
+        <div class="nw-bar" id="nw-bar" style="display:none;">
+          <div class="nw-bar-dot"></div>
+          <span id="nw-bar-label">—</span>
+        </div>
+        <!-- Article list -->
+        <div style="flex:1;overflow-y:auto;min-height:0;">
+          <div id="nw-list" class="nw-list"></div>
         </div>
       </div>
 
@@ -9543,157 +9615,173 @@ bbLoadEditor = function(id) {
 };
 
 /* ══════════════════════════════════════════════════════════════════════
-   MARKET INTELLIGENCE — News & Sentiment
+   NEWS HUB — Markets · AI · Endowment Staff & Board
+   Data: news-data.json (generated daily by scrape_news.py via GitHub Actions)
 ══════════════════════════════════════════════════════════════════════ */
 
-const NEWS_DATA_URL = './news_data.json';
+const NW_AUM_STEPS  = [0, 100, 500, 1000, 5000];
+const NW_AUM_LABELS = ['All', '$100M+', '$500M+', '$1B+', '$5B+'];
 
-const newsState = {
-  articles:    [],
-  filter:      'all',
-  updatedAt:   null,
-  booted:      false,
-  refreshTimer: null,
+const nwState = {
+  data:       null,
+  tab:        'markets',
+  endoMinAum: 0,
+  lastSeen:   0,
+  booted:     false,
 };
 
-const NEWS_TOPIC_CSS = {
-  'Monetary Policy':         'news-tag-macro',
-  'Economy - Monetary':      'news-tag-macro',
-  'Economy - Fiscal':        'news-tag-macro',
-  'Economy - Macro':         'news-tag-rates',
-  'Financial Markets':       'news-tag-equity',
-  'Energy & Transportation': 'news-tag-energy',
-};
-
-function newsSentimentCls(label) {
-  const l = (label || '').toLowerCase();
-  if (l === 'bullish')           return 'news-sentiment-bull';
-  if (l === 'somewhat-bullish')  return 'news-sentiment-sbull';
-  if (l === 'bearish')           return 'news-sentiment-bear';
-  if (l === 'somewhat-bearish')  return 'news-sentiment-sbear';
-  return 'news-sentiment-neut';
+// Navigate from left nav (sets tab + active state)
+function nwNav(tab) {
+  showPage('news');
+  nwBoot();
+  nwSwitchTab(tab);
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll(`.nav-item[data-nwtab="${tab}"]`)
+    .forEach(el => el.classList.add('active'));
 }
 
-function newsSentimentLabel(label) {
-  return (label || 'Neutral').replace('Somewhat-', 'Swt. ');
+// Tab bar click
+function nwSetTab(tab, btn) {
+  nwSwitchTab(tab);
 }
 
-function newsTimeAgo(isoStr) {
-  if (!isoStr) return '—';
-  const diff = (Date.now() - new Date(isoStr)) / 1000;
-  if (diff < 60)   return 'just now';
-  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-  return Math.floor(diff / 86400) + 'd ago';
+function nwSwitchTab(tab) {
+  nwState.tab = tab;
+  document.querySelectorAll('#nw-tabs .mk-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.nwtab === tab)
+  );
+  const aumRow = document.getElementById('nw-aum-row');
+  if (aumRow) aumRow.style.display = tab === 'endowment' ? 'flex' : 'none';
+  nwRenderList();
 }
 
-function newsTopicTag(primaryTopic) {
-  const css = NEWS_TOPIC_CSS[primaryTopic] || 'news-tag-macro';
-  const label = (primaryTopic || 'General')
-    .replace('Economy - ', '')
-    .replace('Financial Markets', 'Markets')
-    .replace('Energy & Transportation', 'Energy');
-  return `<span class="news-tag ${css}">${label}</span>`;
+// AUM slider (endowment tab)
+function nwSetAum(step) {
+  nwState.endoMinAum = NW_AUM_STEPS[+step] || 0;
+  const el = document.getElementById('nw-aum-val');
+  if (el) el.textContent = NW_AUM_LABELS[+step] || 'All';
+  nwRenderList();
 }
 
-async function newsLoad() {
-  try {
-    const r = await fetch(NEWS_DATA_URL + '?_=' + Date.now());
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json();
-    newsState.articles  = j.articles || [];
-    newsState.updatedAt = j.updated_at || null;
-  } catch(e) {
-    console.warn('News data not loaded:', e.message);
-  }
-}
-
-function newsRender() {
-  const list = document.getElementById('news-list');
-  const bar  = document.getElementById('news-refresh-bar');
-  const lbl  = document.getElementById('news-refresh-label');
-  if (!list) return;
-
-  // Refresh bar
-  if (bar && lbl) {
-    if (newsState.updatedAt) {
-      bar.style.display = 'flex';
-      lbl.textContent = 'Last refreshed ' + newsTimeAgo(newsState.updatedAt)
-        + '  ·  Hourly · 8 AM–6 PM ET  ·  Alpha Vantage';
+async function nwBoot() {
+  if (nwState.booted) { nwRenderList(); return; }
+  nwState.booted  = true;
+  nwState.lastSeen = parseInt(localStorage.getItem('nw_last_seen') || '0');
+  nwRenderList();                // loading state
+  await nwLoad();
+  nwRenderList();
+  // Mark seen after 30s so next load won't re-flash
+  setTimeout(() => localStorage.setItem('nw_last_seen', Date.now()), 30000);
+  // Auto-refresh every 5 min while page is open
+  setInterval(async () => {
+    if (document.getElementById('page-news')?.classList.contains('active')) {
+      await nwLoad();
+      nwRenderList();
     }
+  }, 5 * 60 * 1000);
+}
+
+async function nwLoad() {
+  try {
+    const r = await fetch('./news-data.json?_=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    nwState.data = await r.json();
+    const gen = nwState.data?.meta?.generated;
+    const bar = document.getElementById('nw-bar');
+    const lbl = document.getElementById('nw-bar-label');
+    if (bar && lbl && gen) {
+      bar.style.display = 'flex';
+      lbl.textContent   = 'Last refreshed ' + nwTimeAgo(gen)
+                        + '  ·  Daily via GitHub Actions  ·  RSS feeds';
+    }
+  } catch(e) {
+    console.warn('News fetch failed:', e.message);
   }
+}
 
-  const articles = newsState.filter === 'all'
-    ? newsState.articles
-    : newsState.articles.filter(a =>
-        a.primary_topic === newsState.filter ||
-        (a.topics || []).includes(newsState.filter)
-      );
+function nwRenderList() {
+  const el = document.getElementById('nw-list');
+  if (!el) return;
 
-  if (!articles.length) {
-    list.innerHTML = `<div style="padding:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">
-      ${newsState.articles.length === 0
-        ? 'No news data loaded yet — check back after the next hourly refresh.'
-        : 'No articles match the selected filter.'}
-    </div>`;
+  if (!nwState.data) {
+    el.innerHTML = '<div class="nw-empty">Fetching news…</div>';
     return;
   }
 
-  list.innerHTML = articles.map(a => {
-    const sentCls   = newsSentimentCls(a.sentiment_label);
-    const sentLbl   = newsSentimentLabel(a.sentiment_label);
-    const score     = typeof a.sentiment_score === 'number'
-                        ? (a.sentiment_score >= 0 ? '+' : '') + a.sentiment_score.toFixed(3)
-                        : '';
-    const topicTag  = newsTopicTag(a.primary_topic);
-    const timeAgo   = newsTimeAgo(a.published);
-    const summary   = a.summary
-                        ? `<div class="news-summary">${a.summary.slice(0, 220)}${a.summary.length > 220 ? '…' : ''}</div>`
-                        : '';
-    return `<div class="news-item">
-      <div class="news-item-header">
-        <div class="news-meta">
-          ${topicTag}
-          <span class="news-sentiment ${sentCls}">${sentLbl}</span>
-          <span class="news-score">${score}</span>
-        </div>
-        <span class="news-time">${timeAgo}</span>
-      </div>
-      <div class="news-headline">
-        <a href="${a.url}" target="_blank" rel="noopener"
-           style="color:var(--text);text-decoration:none;"
-           onmouseover="this.style.color='var(--amber)'"
-           onmouseout="this.style.color='var(--text)'">${a.title}</a>
-      </div>
-      ${summary}
-      <div class="news-source">${a.source}</div>
-    </div>`;
-  }).join('');
-}
+  let articles = (nwState.data[nwState.tab] || []).slice();
 
-function newsFilter(topic, btn) {
-  newsState.filter = topic;
-  document.querySelectorAll('#news-topic-pills .pill').forEach(p => p.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  newsRender();
-}
-
-async function newsBoot() {
-  if (!newsState.booted) {
-    newsState.booted = true;
-    await newsLoad();
-    newsRender();
-    // Auto-refresh every 5 minutes while the page is open
-    newsState.refreshTimer = setInterval(async () => {
-      if (document.getElementById('page-news')?.classList.contains('active')) {
-        await newsLoad();
-        newsRender();
-      }
-    }, 5 * 60 * 1000);
-  } else {
-    // Re-render with latest data on each visit
-    newsRender();
+  if (nwState.tab === 'endowment' && nwState.endoMinAum > 0) {
+    articles = articles.filter(a => (a.institution_aum || 0) >= nwState.endoMinAum);
   }
+
+  if (!articles.length) {
+    el.innerHTML = '<div class="nw-empty">No articles available — check back after the next refresh.</div>';
+    return;
+  }
+
+  el.innerHTML = articles.map(a => nwItemHtml(a)).join('');
+
+  // Flash new items
+  setTimeout(() => {
+    el.querySelectorAll('.nw-item.nw-is-new').forEach(e => e.classList.add('nw-flashing'));
+    setTimeout(() =>
+      el.querySelectorAll('.nw-item.nw-flashing').forEach(e => e.classList.remove('nw-flashing'))
+    , 2000);
+  }, 80);
+}
+
+function nwItemHtml(a) {
+  const isNew  = a.published_ts && (a.published_ts * 1000 > nwState.lastSeen);
+  const score  = typeof a.score === 'number' ? Math.round(a.score) : null;
+  const scTxt  = score !== null ? score : '—';
+  const scClr  = score >= 70 ? 'var(--amber)' : score >= 40 ? 'var(--text2)' : 'var(--text3)';
+  const timeAgo = a.published_ts
+    ? nwTimeAgo(new Date(a.published_ts * 1000).toISOString())
+    : '—';
+  const srcCls = a.source_tier === 1 ? 'nw-src-t1'
+               : a.source_tier === 2 ? 'nw-src-t2' : 'nw-src-t3';
+
+  let tags = '';
+  if (a.institution) tags += `<span class="nw-tag nw-tag-inst">${a.institution}</span>`;
+  if (a.change_type && a.change_type !== 'general_endowment') {
+    const label = a.change_type.replace(/_/g,' ');
+    const cls   = a.change_type.startsWith('CIO')         ? 'nw-tag-cio'
+                : a.change_type.startsWith('CFO')         ? 'nw-tag-cfo'
+                : a.change_type.startsWith('board')       ? 'nw-tag-board'
+                : 'nw-tag-staff';
+    tags += `<span class="nw-tag ${cls}">${label}</span>`;
+  }
+  if (a.person_name) tags += `<span class="nw-tag nw-tag-person">${a.person_name}</span>`;
+
+  const pip     = isNew ? '<span class="nw-new-pip" title="New since last visit"></span>' : '';
+  const summary = a.summary
+    ? `<div class="nw-summary">${a.summary.slice(0,220)}${a.summary.length>220?'…':''}</div>`
+    : '';
+
+  return `<div class="nw-item${isNew ? ' nw-is-new' : ''}">
+  <div class="nw-top">
+    <div class="nw-meta">${pip}${tags}</div>
+    <div class="nw-right">
+      <span class="nw-score" style="color:${scClr}">${scTxt}</span>
+      <span class="nw-time">${timeAgo}</span>
+    </div>
+  </div>
+  <div class="nw-headline"><a href="${a.url}" target="_blank" rel="noopener"
+    onmouseover="this.style.color='var(--amber)'" onmouseout="this.style.color='var(--text)'"
+    style="color:var(--text);text-decoration:none;">${a.title}</a></div>
+  ${summary}
+  <div class="nw-source ${srcCls}">${a.source || '—'}</div>
+</div>`;
+}
+
+function nwTimeAgo(isoStr) {
+  if (!isoStr) return '—';
+  const diff = (Date.now() - new Date(isoStr)) / 1000;
+  if (diff < 60)        return 'just now';
+  if (diff < 3600)      return Math.floor(diff/60)    + 'm ago';
+  if (diff < 86400)     return Math.floor(diff/3600)  + 'h ago';
+  if (diff < 86400*7)   return Math.floor(diff/86400) + 'd ago';
+  return new Date(isoStr).toLocaleDateString('en-US',{month:'short',day:'numeric'});
 }
 
 /* ══════════════════════════════════════════════════════════════════════
