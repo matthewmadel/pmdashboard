@@ -2497,6 +2497,59 @@ a      { color: inherit; text-decoration: none; }
             -->
 
             <div class="cl-entry">
+              <div class="cl-version">May 29, 2026 — Markets Overview: Country Equity Return Heatmap</div>
+              <ul class="cl-list">
+                <li><strong>Country Equity Return Heatmap added:</strong> 45 country ETFs (23 Developed Markets, 22 Emerging Markets) with calendar-year total returns from 2011 through 2026 YTD — organized in two labeled groups with Highest/Lowest/% Countries Positive summary rows</li>
+                <li><strong>Live 2026 YTD:</strong> fetches 1Y of monthly adjclose from Yahoo Finance on first open to compute each country's year-to-date return vs. December 2025; 2011–2025 are hardcoded from source data</li>
+                <li><strong>Validation layer:</strong> live 2026 YTD values are compared against reference figures; cells diverging by more than 2pp are flagged with an amber border and dot — hover shows both values side-by-side</li>
+                <li><strong>NA cells:</strong> years where an ETF had no data (e.g. newer listings like KWT, QAT, KSA) are shown as neutral NA cells rather than blank or zero</li>
+                <li>Color scale calibrated for country-level volatility (max positive 80%, max negative 50%)</li>
+              </ul>
+            </div>
+
+            <div class="cl-entry">
+              <div class="cl-version">May 29, 2026 — Markets Overview: Asset Class Heatmap</div>
+              <ul class="cl-list">
+                <li><strong>Asset Class Heatmap added:</strong> 17 ETFs across equities, fixed income, real assets, and cash with calendar-year total returns from 2011 through 2026 YTD — accessible via new tab and left-nav item under Markets Overview</li>
+                <li><strong>Live 2026 YTD:</strong> fetches 1Y of monthly adjclose from Yahoo Finance on first open; computes YTD return as latest 2026 close vs. December 2025 close — 2011–2025 are hardcoded for instant rendering</li>
+                <li><strong>Validation:</strong> live 2026 values compared against original CSV reference; amber flag on cells diverging &gt;2pp with hover tooltip showing reference vs. live</li>
+                <li>Includes Highest Return, Lowest Return, and % Classes Positive summary rows — computed from live data for the 2026 column, hardcoded data for prior years</li>
+              </ul>
+            </div>
+
+            <div class="cl-entry">
+              <div class="cl-version">May 28, 2026 — Index Returns: Section reorganization &amp; benchmark relabeling</div>
+              <ul class="cl-list">
+                <li><strong>Return-type suffixes added</strong> to 12 benchmark names: MSCI indices now show (Net) or (Gross), Russell indices show (TR), and DJIA is now labeled "Dow Jones Industrial Average (TR)" — making the return methodology explicit</li>
+                <li><strong>US Equity section moved above Global Equity</strong> in all three views (trailing, calendar, custom)</li>
+                <li><strong>S&amp;P 500 renamed to S&amp;P500 (TR)</strong></li>
+                <li><strong>MSCI USA (Gross) moved</strong> from Global Equity into US Equity, immediately below S&amp;P500 (TR)</li>
+                <li>All references updated across Stress Tester default positions, Benchmark Builder defaults, and the name→ticker mapping — no functional changes to underlying data</li>
+              </ul>
+            </div>
+
+            <div class="cl-entry">
+              <div class="cl-version">May 27, 2026 — Data export buttons; 13F fund expansion</div>
+              <ul class="cl-list">
+                <li><strong>Macro "Full History ↓" export:</strong> downloads the complete inception-to-present time series for the active FRED series as a CSV — useful for offline charting and model inputs</li>
+                <li><strong>Index Returns "Export All Series ↓":</strong> wide-format CSV covering all benchmark return series with a shared date column — sparse cells for pre-inception periods</li>
+                <li><strong>13F Tracker expanded from 21 to 33 funds:</strong> added Akre Capital, Cantillon Capital, Egerton Capital, Valley Forge Capital, Triple Frond Partners, AltaRock Partners, Tiger Global, Semper Augustus, Himalaya Capital, Gates Foundation Trust, Scion Asset Management, and DME Capital</li>
+                <li><strong>ValueAct CIK corrected;</strong> Greenlight Capital replaced by DME Capital Management (CIK 0001489933)</li>
+              </ul>
+            </div>
+
+            <div class="cl-entry">
+              <div class="cl-version">May 26, 2026 — 13F Tracker: Options &amp; put/call data</div>
+              <ul class="cl-list">
+                <li><strong>Options positions now captured:</strong> the <code>putCall</code> field from 13F infotable XML is parsed by the scraper and surfaced throughout the UI — previously all positions were treated as equity regardless of type</li>
+                <li><strong>Filter pills added</strong> above each fund's holdings table: All / Equity / Calls / Puts — instantly narrows the table to the selected position type</li>
+                <li><strong>CALL / PUT badges</strong> displayed inline on each options row in both the Funds tab holdings table and the Cross-Fund commonly-held positions table</li>
+                <li><strong>Summary statistics corrected:</strong> AUM, position count, top-10 concentration, notable moves, and activity KPIs now reflect equity positions only — options are counted separately in the left-rail meta line</li>
+                <li><strong>Cross-fund grouping fixed:</strong> positions are keyed on CUSIP + putCall to prevent equity and options on the same underlying from being merged into a single cross-fund row</li>
+              </ul>
+            </div>
+
+            <div class="cl-entry">
               <div class="cl-version">May 25, 2026 — 13F Tracker: Cross-Fund Conviction Score</div>
               <ul class="cl-list">
                 <li><strong>Conviction score (0–100):</strong> each commonly held position in the Cross-Fund tab now carries a score composed of three components — breadth (how widely held across all active funds, 30 pts), net activity direction (weighted ADD/NEW vs TRIM/CLOSE signal QoQ, 40 pts), and average portfolio concentration across owning funds (30 pts)</li>
