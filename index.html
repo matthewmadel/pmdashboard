@@ -1022,6 +1022,39 @@ a      { color: inherit; text-decoration: none; }
 .f13-sum-section-title { font-size:9px; font-weight:500; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); font-family:var(--mono); margin-bottom:10px; }
 .f13-sparkbar { display:flex; align-items:flex-end; gap:4px; flex:1; border-bottom:1px solid var(--border); min-height:60px; }
 
+/* ── Endowment List ───────────────────────────────────────────────────── */
+.el-ctrl-bar { display:flex; gap:8px; align-items:center; padding:10px 16px; border-bottom:1px solid var(--border); flex-wrap:wrap; flex-shrink:0; background:var(--bg2); }
+.el-search { height:30px; padding:0 10px; font-size:11px; font-family:var(--mono); border-radius:var(--radius); border:1px solid var(--border2); background:var(--bg3); color:var(--text); width:220px; outline:none; transition:border-color .12s; }
+.el-search:focus { border-color:var(--amber); }
+.el-search::placeholder { color:var(--text3); }
+.el-sel { height:30px; padding:0 8px; font-size:11px; font-family:var(--mono); border-radius:var(--radius); border:1px solid var(--border2); background:var(--bg3); color:var(--text); cursor:pointer; outline:none; }
+.el-sel:focus { border-color:var(--amber); }
+.el-pill { height:26px; padding:0 11px; font-size:9px; font-family:var(--mono); letter-spacing:.06em; text-transform:uppercase; border-radius:20px; border:1px solid var(--border2); background:transparent; color:var(--text3); cursor:pointer; transition:all .12s; }
+.el-pill:hover { color:var(--text); }
+.el-pill.active { background:var(--bg4); color:var(--amber); border-color:var(--amber); }
+.el-count { font-size:10px; font-family:var(--mono); color:var(--text3); margin-left:auto; white-space:nowrap; }
+.el-table-wrap { flex:1; overflow-y:auto; min-height:0; }
+.el-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+.el-table thead th { position:sticky; top:0; z-index:10; background:var(--bg3); padding:8px 12px; font-family:var(--mono); font-size:9px; font-weight:500; color:var(--text3); letter-spacing:.08em; text-transform:uppercase; text-align:right; border-bottom:1px solid var(--border); white-space:nowrap; cursor:pointer; user-select:none; }
+.el-table thead th:hover { color:var(--text2); }
+.el-table thead th.el-sort-asc::after  { content:' \25B4'; color:var(--amber); }
+.el-table thead th.el-sort-desc::after { content:' \25BE'; color:var(--amber); }
+.el-table thead th:first-child, .el-table thead th:nth-child(2) { text-align:left; }
+.el-table tbody td { padding:7px 12px; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:11px; color:var(--text2); text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.el-table tbody td:first-child { color:var(--text3); font-size:10px; }
+.el-table tbody td:nth-child(2) { text-align:left; color:var(--text); font-weight:500; }
+.el-table tbody tr:hover td { background:var(--bg3); }
+.el-aum-known { color:var(--amber); }
+.el-tag { display:inline-block; padding:1px 6px; border-radius:20px; font-size:8px; font-weight:600; margin-right:3px; white-space:nowrap; }
+.el-tag-pub  { background:rgba(74,144,217,0.1); color:#93c5fd; border:1px solid rgba(74,144,217,0.25); }
+.el-tag-pvt  { background:rgba(124,111,205,0.1); color:#c4b5fd; border:1px solid rgba(124,111,205,0.25); }
+.el-tag-hbcu { background:rgba(76,175,130,0.1); color:#86efac; border:1px solid rgba(76,175,130,0.25); }
+.el-tag-tri  { background:rgba(58,184,168,0.1); color:#5eead4; border:1px solid rgba(58,184,168,0.25); }
+.el-tag-land { background:rgba(245,158,11,0.1); color:#fcd34d; border:1px solid rgba(245,158,11,0.25); }
+.el-link { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:3px; color:var(--text3); transition:color .12s; }
+.el-link:hover { color:var(--amber); }
+.el-empty { padding:60px 20px; text-align:center; color:var(--text3); font-family:var(--mono); font-size:12px; }
+
 /* ── Stress Tester ────────────────────────────────────────────────────── */
 .st-layout { display:grid; grid-template-columns:300px 1fr; flex:1; min-height:0; overflow:hidden; }
 .st-left { display:flex; flex-direction:column; border-right:1px solid var(--border); overflow-y:auto; min-height:0; }
@@ -1630,6 +1663,9 @@ a      { color: inherit; text-decoration: none; }
             </div>
             <div class="nav-item" onclick="nwNav('endowment')" data-label="Endowment Staff &amp; Board" data-nwtab="endowment">
               <div class="nav-dot"></div>Endowment Staff &amp; Board<span class="nav-item-badge">END</span>
+            </div>
+            <div class="nav-item" onclick="elNav()" data-label="Endowment List">
+              <div class="nav-dot"></div>Endowment List<span class="nav-item-badge">DB</span>
             </div>
             <div class="nav-item" onclick="showPage('cot')" data-label="COT Positioning">
               <div class="nav-dot"></div>COT Positioning<span class="nav-item-badge">COT</span>
@@ -3263,6 +3299,62 @@ a      { color: inherit; text-decoration: none; }
         <!-- Article list -->
         <div style="flex:1;overflow-y:auto;min-height:0;">
           <div id="nw-list" class="nw-list"></div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           PAGE: ENDOWMENT LIST
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-endowment-list" style="flex-direction:column;overflow:hidden;">
+        <div class="page-header" style="flex-shrink:0;">
+          <div class="page-title-group">
+            <div class="page-title">Endowment List <span class="page-title-badge">NCES + NACUBO</span></div>
+            <div class="page-subtitle">All US degree-granting nonprofit institutions · AUM from NACUBO annual study</div>
+          </div>
+        </div>
+        <!-- Controls -->
+        <div class="el-ctrl-bar">
+          <input  class="el-search"  id="el-search"  type="text"   placeholder="Search institution..."  oninput="elFilter()" autocomplete="off">
+          <select class="el-sel"     id="el-state"   onchange="elFilter()"><option value="">All States</option></select>
+          <select class="el-sel"     id="el-sort"    onchange="elFilter()">
+            <option value="rank">Sort: Rank</option>
+            <option value="aum">Sort: AUM</option>
+            <option value="name">Sort: Name</option>
+            <option value="state">Sort: State</option>
+          </select>
+          <button class="el-pill active" id="el-type-all" onclick="elSetType('all',this)">All</button>
+          <button class="el-pill"        id="el-type-pub" onclick="elSetType('public',this)">Public</button>
+          <button class="el-pill"        id="el-type-pvt" onclick="elSetType('private',this)">Private</button>
+          <button class="el-pill"        id="el-hbcu"     onclick="elToggle('hbcu',this)">HBCU</button>
+          <button class="el-pill"        id="el-tribal"   onclick="elToggle('tribal',this)">Tribal</button>
+          <span class="el-count" id="el-count">Loading...</span>
+        </div>
+        <!-- Table -->
+        <div class="el-table-wrap" id="el-table-wrap">
+          <table class="el-table" id="el-table">
+            <colgroup>
+              <col style="width:48px">
+              <col style="width:auto">
+              <col style="width:110px">
+              <col style="width:48px">
+              <col style="width:56px">
+              <col style="width:150px">
+              <col style="width:62px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th onclick="elSortCol('rank')"  id="elh-rank">#</th>
+                <th onclick="elSortCol('name')"  id="elh-name">Institution</th>
+                <th onclick="elSortCol('aum')"   id="elh-aum">AUM</th>
+                <th onclick="elSortCol('state')" id="elh-state">St</th>
+                <th>Type</th>
+                <th style="text-align:left">Tags</th>
+                <th>Links</th>
+              </tr>
+            </thead>
+            <tbody id="el-tbody"></tbody>
+          </table>
+          <div class="el-empty" id="el-empty" style="display:none;">No institutions match your filters.</div>
         </div>
       </div>
 
@@ -9782,6 +9874,134 @@ function nwTimeAgo(isoStr) {
   if (diff < 86400)     return Math.floor(diff/3600)  + 'h ago';
   if (diff < 86400*7)   return Math.floor(diff/86400) + 'd ago';
   return new Date(isoStr).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ENDOWMENT LIST — Full institution database
+   Data source: endowments.json (NACUBO AUM + NCES IPEDS institution data)
+══════════════════════════════════════════════════════════════════════ */
+const elState = { data: null, booted: false, type: 'all', hbcu: false, tribal: false, sortCol: 'rank', sortDir: 1 };
+
+function elNav() {
+  showPage('endowment-list');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelector('.nav-item[onclick^="elNav"]')?.classList.add('active');
+  elBoot();
+}
+
+async function elBoot() {
+  if (elState.booted) return;
+  elState.booted = true;
+  document.getElementById('el-count').textContent = 'Loading...';
+  try {
+    const r = await fetch('./endowments.json?_=' + Date.now());
+    elState.data = await r.json();
+    elPopulateStates();
+    elFilter();
+  } catch(e) {
+    document.getElementById('el-count').textContent = 'Error loading data';
+  }
+}
+
+function elPopulateStates() {
+  const sel = document.getElementById('el-state');
+  const states = [...new Set(elState.data.map(e => e.state).filter(Boolean))].sort();
+  states.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+}
+
+function elSetType(type, btn) {
+  elState.type = type;
+  document.querySelectorAll('#el-type-all,#el-type-pub,#el-type-pvt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  elFilter();
+}
+
+function elToggle(field, btn) {
+  elState[field] = !elState[field];
+  btn.classList.toggle('active', elState[field]);
+  elFilter();
+}
+
+function elSortCol(col) {
+  if (elState.sortCol === col) { elState.sortDir *= -1; }
+  else { elState.sortCol = col; elState.sortDir = col === 'name' || col === 'state' ? 1 : -1; }
+  document.getElementById('el-sort').value = col === 'rank' ? 'rank' : col === 'aum' ? 'aum' : col === 'name' ? 'name' : 'state';
+  elFilter();
+}
+
+function elFilter() {
+  if (!elState.data) return;
+  const q      = (document.getElementById('el-search').value || '').toLowerCase().trim();
+  const state  = document.getElementById('el-state').value;
+  const sortSel = document.getElementById('el-sort').value;
+  if (sortSel !== elState.sortCol) { elState.sortCol = sortSel; elState.sortDir = sortSel === 'name' || sortSel === 'state' ? 1 : -1; }
+
+  // Update sort header indicators
+  ['rank','aum','name','state'].forEach(c => {
+    const th = document.getElementById('elh-' + c);
+    if (!th) return;
+    th.classList.remove('el-sort-asc','el-sort-desc');
+    if (c === elState.sortCol) th.classList.add(elState.sortDir > 0 ? 'el-sort-asc' : 'el-sort-desc');
+  });
+
+  let rows = elState.data.filter(e => {
+    if (q && !e.name.toLowerCase().includes(q)) return false;
+    if (state && e.state !== state) return false;
+    if (elState.type === 'public'  && e.type !== 'public')  return false;
+    if (elState.type === 'private' && e.type !== 'private') return false;
+    if (elState.hbcu   && !e.hbcu)   return false;
+    if (elState.tribal && !e.tribal) return false;
+    return true;
+  });
+
+  const col = elState.sortCol, dir = elState.sortDir;
+  rows.sort((a, b) => {
+    if (col === 'rank')  return dir * (a.rank - b.rank);
+    if (col === 'aum')   return dir * ((b.aum || 0) - (a.aum || 0));
+    if (col === 'name')  return dir * a.name.localeCompare(b.name);
+    if (col === 'state') return dir * (a.state || '').localeCompare(b.state || '');
+    return 0;
+  });
+
+  const tbody  = document.getElementById('el-tbody');
+  const empty  = document.getElementById('el-empty');
+  if (rows.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = rows.map(e => {
+      const aum = e.aum > 0
+        ? `<span class="el-aum-known">${e.aum >= 1000 ? '$' + (e.aum/1000).toFixed(1) + 'B' : '$' + e.aum.toLocaleString() + 'M'}</span>`
+        : '<span style="color:var(--text3)">—</span>';
+      const typTag = e.type === 'public'
+        ? '<span class="el-tag el-tag-pub">Pub</span>'
+        : '<span class="el-tag el-tag-pvt">Pvt</span>';
+      const flags = (e.hbcu ? '<span class="el-tag el-tag-hbcu">HBCU</span>' : '')
+                  + (e.tribal ? '<span class="el-tag el-tag-tri">Tribal</span>' : '')
+                  + (e.land_grant ? '<span class="el-tag el-tag-land">Land Grant</span>' : '');
+      const webLink = e.website
+        ? `<a class="el-link" href="${e.website}" target="_blank" title="Website"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>`
+        : '<span style="width:20px;display:inline-block"></span>';
+      const ldpLink = e.leadership_url
+        ? `<a class="el-link" href="${e.leadership_url}" target="_blank" title="Leadership page"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></a>`
+        : '<span style="width:20px;display:inline-block"></span>';
+      return `<tr>
+        <td>${e.rank}</td>
+        <td title="${e.name}">${e.name}</td>
+        <td>${aum}</td>
+        <td>${e.state || '—'}</td>
+        <td style="text-align:center">${typTag}</td>
+        <td style="text-align:left">${flags}</td>
+        <td style="text-align:center">${webLink}${ldpLink}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const withAum = rows.filter(e => e.aum > 0).length;
+  document.getElementById('el-count').textContent =
+    rows.length.toLocaleString() + ' institutions' +
+    (withAum ? ' · ' + withAum.toLocaleString() + ' with AUM' : '');
 }
 
 /* ══════════════════════════════════════════════════════════════════════
