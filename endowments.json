@@ -5,7 +5,7 @@
     "aum": 50700,
     "state": "MA",
     "type": "private",
-    "leadership_url": "https://www.hmc.harvard.edu/about/leadership/",
+    "leadership_url": "https://www.hmc.harvard.edu/about/",
     "unitid": "",
     "ein": "042103580",
     "hbcu": false,
@@ -39,7 +39,7 @@
     "aum": 36300,
     "state": "CA",
     "type": "private",
-    "leadership_url": "https://sim.stanford.edu/about/",
+    "leadership_url": "https://www.stanford.edu/about/leadership/",
     "unitid": "",
     "ein": "941156365",
     "hbcu": false,
@@ -52,7 +52,7 @@
     "aum": 34100,
     "state": "NJ",
     "type": "private",
-    "leadership_url": "https://princetonendowment.princeton.edu/investment-office",
+    "leadership_url": "https://princo.princeton.edu/team/",
     "unitid": "",
     "ein": "210634501",
     "hbcu": false,
@@ -65,7 +65,7 @@
     "aum": 24600,
     "state": "MA",
     "type": "private",
-    "leadership_url": "https://mitimco.mit.edu/about/"
+    "leadership_url": "https://mitimco.org/"
   },
   {
     "rank": 7,
@@ -73,7 +73,7 @@
     "aum": 21400,
     "state": "PA",
     "type": "private",
-    "leadership_url": "https://www.upenn.edu/about/trustees",
+    "leadership_url": "https://secretary.upenn.edu/trustees-governance/trustees",
     "unitid": "",
     "ein": "231352685",
     "hbcu": false,
@@ -94,7 +94,7 @@
     "aum": 18000,
     "state": "IN",
     "type": "private",
-    "leadership_url": "https://investment.nd.edu/about/",
+    "leadership_url": "https://investment.nd.edu/",
     "unitid": "",
     "ein": "350868188",
     "hbcu": false,
@@ -107,7 +107,7 @@
     "aum": 17000,
     "state": "MI",
     "type": "public",
-    "leadership_url": "https://investments.umich.edu/about"
+    "leadership_url": ""
   },
   {
     "rank": 11,
