@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-scrape_news.py — Fetch, score, and write news-data.json
+scrape_news.py - Fetch, score, and write news-data.json
 Sections: markets | ai | endowment (staff & board changes)
 
 Run daily via GitHub Actions, or manually:
@@ -22,7 +22,7 @@ HEADERS = {
     'Accept-Encoding': 'gzip, deflate',
 }
 
-# ── Source tier registry ───────────────────────────────────────────────────────
+# -- Source tier registry --
 SOURCE_TIERS = {
     'pensions & investments': (1, 'Pensions & Investments'),
     'pionline':               (1, 'Pensions & Investments'),
@@ -61,7 +61,7 @@ def get_source_info(raw):
     return 3, (raw or 'Unknown')[:40]
 
 
-# ── Keyword detection ──────────────────────────────────────────────────────────
+# -- Keyword detection --
 _DEP  = ['resign', 'step down', 'depart', 'leav', 'retir', 'exit', 'successor', 'replac', 'fired', 'ousted']
 _HIRE = ['appoint', 'named', 'hire', 'join', 'welcom', 'elect', 'select', 'promot', 'tapped']
 
@@ -97,7 +97,7 @@ def extract_person(title, summary):
     return None
 
 
-# ── Scoring ────────────────────────────────────────────────────────────────────
+# -- Scoring --
 def recency_score(ts):
     if not ts:
         return 0
@@ -134,7 +134,7 @@ def score(article, section, aum=None):
         return round(r*0.60 + s*0.40, 1)
 
 
-# ── Deduplication ─────────────────────────────────────────────────────────────
+# -- Deduplication --
 def article_id(url):
     return hashlib.sha1((url or '').encode()).hexdigest()[:12]
 
@@ -143,7 +143,7 @@ def norm_title(t):
     return ' '.join(t.split())[:80]
 
 
-# ── RSS parsing ────────────────────────────────────────────────────────────────
+# -- RSS parsing --
 def parse_ts(entry):
     for key in ('published_parsed', 'updated_parsed'):
         t = entry.get(key)
@@ -182,7 +182,7 @@ def fetch_rss(url, max_items=40):
         return []
 
 
-# ── Institution matcher ────────────────────────────────────────────────────────
+# -- Institution matcher --
 def load_endowments():
     path = os.path.join(os.path.dirname(__file__), 'endowments.json')
     if os.path.exists(path):
@@ -204,7 +204,7 @@ def find_institution(title, summary, endowments):
     return best_name, best_aum
 
 
-# ── Snapshot diff (leadership pages) ──────────────────────────────────────────
+# -- Snapshot diff (leadership pages) --
 def check_snapshot(institution, url):
     """Returns True if the page has changed since the last run."""
     slug = re.sub(r'[^a-z0-9]', '_', institution.lower())[:40]
@@ -236,7 +236,7 @@ def check_snapshot(institution, url):
         return False
 
 
-# ── Feed lists ────────────────────────────────────────────────────────────────
+# -- Feed lists --
 GN = 'https://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q='
 
 MARKETS_FEEDS = [
@@ -279,7 +279,7 @@ def get_snapshot_targets(endowments):
             if e.get('leadership_url')]
 
 
-# ── Endowment keyword filter ───────────────────────────────────────────────────
+# -- Endowment keyword filter --
 _ENDO_KW = ['endowment','university','college','foundation','cio','cfo',
             'trustee','chief investment','chief financial','investment office',
             'board of trustees','board of regents']
@@ -289,7 +289,7 @@ def is_endowment_relevant(title, summary):
     return any(w in text for w in _ENDO_KW)
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# -- Main --
 MAX_PER = 100
 PAUSE   = 0.4
 
@@ -304,8 +304,8 @@ def main():
         'endowment': [],
     }
 
-    # ── Markets ────────────────────────────────────────────────────────────────
-    print('\n─── Markets feeds ───')
+    # -- Markets --
+    print('\n--- Markets feeds ---')
     seen = {}
     for url in MARKETS_FEEDS:
         print(f'  {url[:70]}')
@@ -324,10 +324,10 @@ def main():
 
     output['markets'].sort(key=lambda a: a['score'], reverse=True)
     output['markets'] = output['markets'][:MAX_PER]
-    print(f'  → {len(output["markets"])} articles')
+    print(f'  -> {len(output["markets"])} articles')
 
-    # ── AI News ────────────────────────────────────────────────────────────────
-    print('\n─── AI feeds ───')
+    # -- AI News --
+    print('\n--- AI feeds ---')
     seen = {}
     for url in AI_FEEDS:
         print(f'  {url[:70]}')
@@ -346,10 +346,10 @@ def main():
 
     output['ai'].sort(key=lambda a: a['score'], reverse=True)
     output['ai'] = output['ai'][:MAX_PER]
-    print(f'  → {len(output["ai"])} articles')
+    print(f'  -> {len(output["ai"])} articles')
 
-    # ── Endowment ──────────────────────────────────────────────────────────────
-    print('\n─── Endowment feeds ───')
+    # -- Endowment --
+    print('\n--- Endowment feeds ---')
     seen = {}
     for url in ENDOWMENT_FEEDS:
         print(f'  {url[:70]}')
@@ -377,8 +377,8 @@ def main():
             output['endowment'].append(item)
         time.sleep(PAUSE)
 
-    # ── Leadership page snapshots ──────────────────────────────────────────────
-    print('\n─── Leadership page snapshots ───')
+    # -- Leadership page snapshots --
+    print('\n--- Leadership page snapshots ---')
     now_ts = int(datetime.now(timezone.utc).timestamp())
     for inst, url in get_snapshot_targets(endowments):
         print(f'  {inst}...')
@@ -405,13 +405,13 @@ def main():
 
     output['endowment'].sort(key=lambda a: a['score'], reverse=True)
     output['endowment'] = output['endowment'][:MAX_PER]
-    print(f'  → {len(output["endowment"])} articles')
+    print(f'  -> {len(output["endowment"])} articles')
 
     out_path = os.path.join(os.path.dirname(__file__), 'news-data.json')
     with open(out_path, 'w') as f:
         json.dump(output, f, separators=(',', ':'))
 
-    print(f'\n✓ Wrote {out_path}')
+    print(f'\nOK Wrote {out_path}')
     print(f'  Markets:   {len(output["markets"])}')
     print(f'  AI:        {len(output["ai"])}')
     print(f'  Endowment: {len(output["endowment"])}')
