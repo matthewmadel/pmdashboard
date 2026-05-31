@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# ProPublica bulk data (large, generated locally -- not committed)
+ProPublica/org_data.json
+ProPublica/990s/
