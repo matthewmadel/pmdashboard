@@ -5,3 +5,4 @@ __pycache__/
 # ProPublica bulk data (large, generated locally -- not committed)
 ProPublica/org_data.json
 ProPublica/990s/
+ProPublica/24eoextract990.zip
