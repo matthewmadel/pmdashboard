@@ -39,7 +39,7 @@ except ImportError:
 HEADERS  = {'User-Agent': 'PM-Dashboard/2.0 matthewmadel@gmail.com'}
 BASE_URL = 'https://projects.propublica.org/nonprofits/api/v2/organizations'
 PAUSE    = 0.5   # seconds between requests -- be polite
-OUT      = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'endowments.json')
+OUT      = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'endowments.json')
 
 # Minimum net assets to store -- filters out data errors and near-zero values
 MIN_AUM_M = 0.5  # $500K in millions
