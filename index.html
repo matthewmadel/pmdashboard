@@ -135,6 +135,41 @@ a      { color: inherit; text-decoration: none; }
   border-right: 1px solid var(--border);
 }
 .header-logo span { color: var(--text3); font-weight: 300; margin-left: 6px; }
+.header-logo-sub {
+  display: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+html[data-theme="cream"] .header-logo-sub { display: block; }
+html[data-theme="cream"] .header-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1.2;
+}
+html[data-theme="cream"] .nav-item { color: #4a3f30; }
+html[data-theme="cream"] .nav-section-header,
+html[data-theme="cream"] .nav-sub-header { color: #4a3f30; }
+html[data-theme="cream"] .stat-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+html[data-theme="cream"] .page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
 .header-tickers {
   display: flex; align-items: center;
   flex: 1; overflow: hidden;
@@ -1309,7 +1344,7 @@ a      { color: inherit; text-decoration: none; }
 
   <!-- HEADER -->
   <div id="header">
-    <div class="header-logo">PM Dashboard</div>
+    <div class="header-logo">PM Dashboard<span class="header-logo-sub">portfolio intelligence</span></div>
     <div class="header-tickers">
       <div class="htick">
         <div class="htick-label">Fed Funds</div>
@@ -3315,12 +3350,11 @@ a      { color: inherit; text-decoration: none; }
 
 <script>
 /* ══════════════════════════════════════════════════════════════════════
-   THEME SWITCHER  dark → cream → white → dark
+   THEME SWITCHER  dark ↔ light
 ══════════════════════════════════════════════════════════════════════ */
 const THEMES = [
-  { key: 'dark',  label: 'DARK',  icon: 'moon'  },
-  { key: 'cream', label: 'CREAM', icon: 'sun'   },
-  { key: 'white', label: 'WHITE', icon: 'sun'   },
+  { key: 'dark',  label: 'DARK',  icon: 'moon' },
+  { key: 'light', label: 'LIGHT', icon: 'sun'  },
 ];
 const MOON_PATH = '<circle cx="12" cy="12" r="5"/><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" fill="currentColor" opacity=".08"/><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
 const SUN_PATH  = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
@@ -3332,7 +3366,7 @@ function themeApply(idx) {
   if (t.key === 'dark') {
     document.documentElement.removeAttribute('data-theme');
   } else {
-    document.documentElement.setAttribute('data-theme', t.key);
+    document.documentElement.setAttribute('data-theme', 'cream');
   }
   const lbl  = document.getElementById('theme-label');
   const icon = document.getElementById('theme-icon');
