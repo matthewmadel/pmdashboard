@@ -170,6 +170,12 @@ html[data-theme="cream"] .page-title {
   font-weight: 600;
   letter-spacing: 0.01em;
 }
+html[data-theme="cream"] .fred-grid-line      { stroke: rgba(0,0,0,0.07); }
+html[data-theme="cream"] .fred-zero-line       { stroke: rgba(0,0,0,0.20); }
+html[data-theme="cream"] .fred-crosshair       { stroke: rgba(0,0,0,0.15); }
+html[data-theme="cream"] .fred-annotation-line { stroke: rgba(0,0,0,0.20); }
+html[data-theme="cream"] .fred-recession-band  { fill:   rgba(0,0,0,0.04); }
+html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
 .header-tickers {
   display: flex; align-items: center;
   flex: 1; overflow: hidden;
@@ -3373,6 +3379,39 @@ function themeApply(idx) {
   if (lbl)  lbl.textContent = t.label;
   if (icon) icon.innerHTML  = t.icon === 'moon' ? MOON_PATH : SUN_PATH;
   localStorage.setItem('pm_theme', t.key);
+  if (typeof fredRedraw === 'function') fredRedraw();
+  if (typeof mkRedrawActive === 'function') mkRedrawActive();
+}
+
+function chartColor(key) {
+  const light = document.documentElement.dataset.theme === 'cream';
+  const map = {
+    line:       light ? '#1a5cc0'              : 'var(--amber)',
+    lineHex:    light ? '#1a5cc0'              : '#d4a44c',
+    area:       light ? 'rgba(26,92,192,0.10)' : 'rgba(212,164,76,0.12)',
+    grid:       light ? 'rgba(0,0,0,0.07)'     : 'rgba(255,255,255,0.05)',
+    zero:       light ? 'rgba(0,0,0,0.20)'     : 'rgba(255,255,255,0.15)',
+    crosshair:  light ? 'rgba(0,0,0,0.15)'     : 'rgba(255,255,255,0.15)',
+    axis:       light ? 'rgba(0,0,0,0.08)'     : 'rgba(255,255,255,0.08)',
+    tickText:   light ? 'rgba(0,0,0,0.40)'     : 'rgba(255,255,255,0.30)',
+    tooltipVal: light ? '#1a5cc0'              : 'var(--amber)',
+    refLine:    light ? 'rgba(0,0,0,0.20)'     : 'rgba(255,255,255,0.20)',
+    refText:    light ? 'rgba(0,0,0,0.30)'     : 'rgba(255,255,255,0.30)',
+    recession:  light ? 'rgba(0,0,0,0.04)'     : 'rgba(255,255,255,0.03)',
+  };
+  return map[key];
+}
+
+function fredRedraw() {
+  if (document.getElementById('page-fred-series')?.classList.contains('active')) {
+    fredRenderChart(fredState.active);
+  }
+}
+
+function mkRedrawActive() {
+  if (!document.getElementById('page-markets')?.classList.contains('active')) return;
+  const active = MK_PANELS.find(p => document.getElementById(`mk-panel-${p}`)?.classList.contains('active'));
+  if (active) mkRenderChart(active);
 }
 
 function themeNext() {
@@ -4059,8 +4098,8 @@ function fredDrawLineChart(data, seriesId, recessions) {
   // Gradient
   const defs = svg.append('defs');
   const grad = defs.append('linearGradient').attr('id','fred-amber-grad').attr('x1',0).attr('x2',0).attr('y1',0).attr('y2',1);
-  grad.append('stop').attr('offset','0%').attr('stop-color','#d4a44c');
-  grad.append('stop').attr('offset','100%').attr('stop-color','#d4a44c').attr('stop-opacity',0);
+  grad.append('stop').attr('offset','0%').attr('stop-color',chartColor('lineHex'));
+  grad.append('stop').attr('offset','100%').attr('stop-color',chartColor('lineHex')).attr('stop-opacity',0);
 
   // Area
   const area = d3.area().x(d=>xScale(d.date)).y0(ih).y1(d=>yScale(d.value)).defined(d=>!isNaN(d.value)).curve(d3.curveMonotoneX);
@@ -4068,7 +4107,7 @@ function fredDrawLineChart(data, seriesId, recessions) {
 
   // Line
   const line = d3.line().x(d=>xScale(d.date)).y(d=>yScale(d.value)).defined(d=>!isNaN(d.value)).curve(d3.curveMonotoneX);
-  g.append('path').datum(parsed).attr('d',line).attr('class','fred-chart-line').attr('stroke','#d4a44c');
+  g.append('path').datum(parsed).attr('d',line).attr('class','fred-chart-line').attr('stroke',chartColor('line'));
 
   // Hover
   const crossV = g.append('line').attr('class','fred-crosshair').attr('y1',0).attr('y2',ih).style('opacity',0);
@@ -4295,8 +4334,8 @@ function ycDrawChart(curves) {
   if (vmin<=0) g.append('line').attr('class','fred-zero-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(0)).attr('y2',yScale(0));
 
   g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).tickSize(4))
-    .select('.domain').attr('stroke','rgba(255,255,255,0.08)');
-  g.selectAll('.tick line').attr('stroke','rgba(255,255,255,0.08)');
+    .select('.domain').attr('stroke',chartColor('axis'));
+  g.selectAll('.tick line').attr('stroke',chartColor('axis'));
   g.selectAll('.tick text').attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','10').attr('dy','1.2em');
 
   g.append('g').attr('transform',`translate(${iw+8},0)`)
@@ -4614,7 +4653,7 @@ function drawMiniMultiLineChart(wrap, series, annotLabels, annotVals) {
   if (annotVals) annotVals.forEach((av,i)=>{
     const ay = yScale(av);
     g.append('line').attr('x1',0).attr('x2',iw).attr('y1',ay).attr('y2',ay)
-      .attr('stroke','rgba(255,255,255,0.2)').attr('stroke-width',1).attr('stroke-dasharray','4 3');
+      .attr('stroke',chartColor('refLine')).attr('stroke-width',1).attr('stroke-dasharray','4 3');
     if (annotLabels&&annotLabels[i]) {
       g.append('text').attr('x',iw+4).attr('y',ay+3).text(annotLabels[i])
         .attr('fill','#4a5068').attr('font-family',"'IBM Plex Mono'").attr('font-size','8');
@@ -5196,7 +5235,7 @@ function mkRenderChart(panel) {
         ? dates[i].toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
         : dates[i].toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
       tooltip.style.opacity = 1;
-      tooltip.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${dateStr}</div><div style="color:var(--amber);font-size:14px;font-weight:500">${mkFmtPrice(h.prices[i], item?.d||2, item?.yield||false)}</div>`;
+      tooltip.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${dateStr}</div><div style="color:${chartColor('tooltipVal')};font-size:14px;font-weight:500">${mkFmtPrice(h.prices[i], item?.d||2, item?.yield||false)}</div>`;
       const bx = wrap.getBoundingClientRect();
       const ex = event.clientX - bx.left;
       tooltip.style.left = (ex > W/2 ? ex - tooltip.offsetWidth - 10 : ex + 10) + 'px';
@@ -6132,7 +6171,7 @@ function cryptoRenderChart() {
 
   g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).ticks(5).tickSize(3).tickFormat(d3.timeFormat('%b %y'))).select('.domain').remove();
   g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','10').attr('font-family',"'IBM Plex Mono'");
-  g.selectAll('.tick line').attr('stroke','rgba(255,255,255,0.08)');
+  g.selectAll('.tick line').attr('stroke',chartColor('axis'));
 
   g.append('g').attr('transform',`translate(${iw+8},0)`).call(d3.axisRight(yScale).ticks(4).tickFormat(v => '$'+(v>=1000?Math.round(v/1000)+'K':Math.round(v))).tickSize(0)).select('.domain').remove();
   g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','10').attr('font-family',"'IBM Plex Mono'");
@@ -6160,7 +6199,7 @@ function cryptoRenderChart() {
     const dateStr = dates[i].toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     const priceLabel = '$' + prices[i].toLocaleString('en-US',{minimumFractionDigits:item?.d||2,maximumFractionDigits:item?.d||2});
     tt.style.opacity = '1';
-    tt.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${dateStr}</div><div style="color:var(--amber);font-size:14px;font-weight:500">${priceLabel}</div>`;
+    tt.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${dateStr}</div><div style="color:${chartColor('tooltipVal')};font-size:14px;font-weight:500">${priceLabel}</div>`;
     const bx = wrap.getBoundingClientRect();
     const ex = event.clientX - bx.left;
     tt.style.left = (ex > W/2 ? ex - tt.offsetWidth - 10 : ex + 10) + 'px';
@@ -6674,25 +6713,27 @@ function mcDrawFanChart(fanData, startVal, target, floor, horizon) {
     g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(val)).attr('y2',yScale(val))
       .attr('stroke',color).attr('stroke-width',1).attr('stroke-dasharray',dash).attr('opacity',0.6);
   };
-  refLine(startVal, 'rgba(255,255,255,0.2)');
+  refLine(startVal, chartColor('refLine'));
   if (target > 0) refLine(target, 'var(--green)');
   if (floor > 0)  refLine(floor,  'var(--red)');
 
   // Band: 5–95
+  const light = document.documentElement.dataset.theme === 'cream';
+  const bandBase = light ? '26,92,192' : '212,164,76';
   const area595 = d3.area().x(d=>xScale(d.t)).y0(d=>yScale(d.p5)).y1(d=>yScale(d.p95)).curve(d3.curveMonotoneX);
-  g.append('path').datum(fanData).attr('d',area595).attr('fill','rgba(212,164,76,0.08)');
+  g.append('path').datum(fanData).attr('d',area595).attr('fill',`rgba(${bandBase},0.08)`);
 
   // Band: 25–75
   const area2575 = d3.area().x(d=>xScale(d.t)).y0(d=>yScale(d.p25)).y1(d=>yScale(d.p75)).curve(d3.curveMonotoneX);
-  g.append('path').datum(fanData).attr('d',area2575).attr('fill','rgba(212,164,76,0.16)');
+  g.append('path').datum(fanData).attr('d',area2575).attr('fill',`rgba(${bandBase},0.16)`);
 
   // Band: 10–90
   const area1090 = d3.area().x(d=>xScale(d.t)).y0(d=>yScale(d.p10)).y1(d=>yScale(d.p90)).curve(d3.curveMonotoneX);
-  g.append('path').datum(fanData).attr('d',area1090).attr('fill','rgba(212,164,76,0.05)');
+  g.append('path').datum(fanData).attr('d',area1090).attr('fill',`rgba(${bandBase},0.05)`);
 
   // Median line
   const medLine = d3.line().x(d=>xScale(d.t)).y(d=>yScale(d.p50)).curve(d3.curveMonotoneX);
-  g.append('path').datum(fanData).attr('d',medLine).attr('fill','none').attr('stroke','var(--amber)').attr('stroke-width',2);
+  g.append('path').datum(fanData).attr('d',medLine).attr('fill','none').attr('stroke',chartColor('line')).attr('stroke-width',2);
 
   // Axes
   g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).ticks(Math.min(horizon,10)).tickFormat(d => 'Yr '+d).tickSize(3)).select('.domain').remove();
@@ -6717,7 +6758,7 @@ function mcDrawFanChart(fanData, startVal, target, floor, horizon) {
     vline.attr('x1',x).attr('x2',x).style('display',null);
     fanTT.style.opacity = '1';
     fanTT.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:6px">Year ${d.t}</div>`
-      + [['95th', d.p95,'var(--text2)'],['75th', d.p75,'var(--text2)'],['50th (median)', d.p50,'var(--amber)'],['25th', d.p25,'var(--text2)'],['5th', d.p5,'var(--text2)']]
+      + [['95th', d.p95,'var(--text2)'],['75th', d.p75,'var(--text2)'],['50th (median)', d.p50,chartColor('tooltipVal')],['25th', d.p25,'var(--text2)'],['5th', d.p5,'var(--text2)']]
         .map(([lbl,val,col]) => `<div style="display:flex;justify-content:space-between;gap:20px"><span style="color:${col}">${lbl}</span><span style="color:${col};font-weight:500">${mcFmtDollar(val)}</span></div>`).join('');
     const bx = wrap.getBoundingClientRect();
     const ex = event.clientX - bx.left;
@@ -6760,10 +6801,10 @@ function mcDrawHistogram(terminal, startVal, target, floor) {
     g.append('line').attr('x1',x).attr('x2',x).attr('y1',0).attr('y2',ih).attr('stroke',color).attr('stroke-width',1.5).attr('stroke-dasharray','4 3');
     g.append('text').attr('x',x+3).attr('y',10).attr('fill',color).attr('font-size',9).attr('font-family',"'IBM Plex Mono'").text(lbl);
   };
-  vRef(startVal, 'rgba(255,255,255,0.3)', 'Start');
+  vRef(startVal, chartColor('refText'), 'Start');
   if (target > 0) vRef(target, 'var(--green)', 'Target');
   if (floor > 0)  vRef(floor,  'var(--red)', 'Floor');
-  vRef(mcPercentile([...terminal],50), 'var(--amber)', 'P50');
+  vRef(mcPercentile([...terminal],50), chartColor('line'), 'P50');
 
   g.append('g').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xScale).ticks(4).tickFormat(v=>mcFmtDollar(v)).tickSize(3)).select('.domain').remove();
   g.selectAll('.tick text').attr('fill','#4a5068').attr('font-size','9').attr('font-family',"'IBM Plex Mono'");
@@ -7589,7 +7630,7 @@ function feDrawAttribution(rows) {
     g.append('line').attr('class','fred-grid-line').attr('x1',xScale(t)).attr('x2',xScale(t)).attr('y1',0).attr('y2',ih);
   });
   g.append('line').attr('x1',zero).attr('x2',zero).attr('y1',0).attr('y2',ih)
-    .attr('stroke','rgba(255,255,255,0.15)').attr('stroke-width',1);
+    .attr('stroke',chartColor('zero')).attr('stroke-width',1);
 
   // Bars
   g.selectAll('rect').data(rows).join('rect')
@@ -7656,7 +7697,7 @@ function feDrawRollingBetas(res) {
     g.append('line').attr('class','fred-grid-line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t));
   });
   g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(0)).attr('y2',yScale(0))
-    .attr('stroke','rgba(255,255,255,0.15)').attr('stroke-width',1).attr('stroke-dasharray','4 3');
+    .attr('stroke',chartColor('zero')).attr('stroke-width',1).attr('stroke-dasharray','4 3');
 
   res.activeFacs.forEach((f, fi) => {
     const lineGen = d3.line().x((_,i)=>xScale(dates[i])).y((_,i)=>yScale(rollBetas[fi][i])).curve(d3.curveMonotoneX).defined((_,i)=>rollBetas[fi][i]!=null);
@@ -8246,14 +8287,14 @@ function corrRenderRolling() {
   // Grid lines
   yScale.ticks(6).forEach(t => {
     g.append('line').attr('x1', 0).attr('x2', iw).attr('y1', yScale(t)).attr('y2', yScale(t))
-      .attr('stroke', 'rgba(255,255,255,0.04)').attr('stroke-width', 1);
+      .attr('stroke', chartColor('grid')).attr('stroke-width', 1);
   });
 
   // Zero line
   const yd = yScale.domain();
   if (yd[0] <= 0 && yd[1] >= 0) {
     g.append('line').attr('x1', 0).attr('x2', iw).attr('y1', yScale(0)).attr('y2', yScale(0))
-      .attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 1).attr('stroke-dasharray', '4 3');
+      .attr('stroke', chartColor('zero')).attr('stroke-width', 1).attr('stroke-dasharray', '4 3');
   }
 
   // Shaded areas above/below zero
@@ -8261,7 +8302,7 @@ function corrRenderRolling() {
   const defFn = d => !isNaN(d);
   g.append('path').datum(rCorr)
     .attr('d', d3.area().x((_, k) => xScale(dateObjs[k])).y0(zeroY).y1(d => yScale(Math.max(0, isNaN(d) ? 0 : d))).curve(d3.curveMonotoneX).defined(defFn))
-    .attr('fill', 'rgba(212,164,76,0.12)');
+    .attr('fill', chartColor('area'));
   g.append('path').datum(rCorr)
     .attr('d', d3.area().x((_, k) => xScale(dateObjs[k])).y0(zeroY).y1(d => yScale(Math.min(0, isNaN(d) ? 0 : d))).curve(d3.curveMonotoneX).defined(defFn))
     .attr('fill', 'rgba(74,144,217,0.12)');
@@ -8269,7 +8310,7 @@ function corrRenderRolling() {
   // Correlation line
   g.append('path').datum(rCorr)
     .attr('d', d3.line().x((_, k) => xScale(dateObjs[k])).y(d => yScale(d)).curve(d3.curveMonotoneX).defined(defFn))
-    .attr('fill', 'none').attr('stroke', 'var(--amber)').attr('stroke-width', 1.5);
+    .attr('fill', 'none').attr('stroke', chartColor('line')).attr('stroke-width', 1.5);
 
   // Axes
   g.append('g').attr('transform', `translate(0,${ih})`).call(
@@ -8283,8 +8324,8 @@ function corrRenderRolling() {
   // Hover
   wrap.style.position = 'relative';
   const vline = g.append('line').attr('y1', 0).attr('y2', ih)
-    .attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 1).style('display', 'none');
-  const dot = g.append('circle').attr('r', 3).attr('fill', 'var(--amber)').style('display', 'none');
+    .attr('stroke', chartColor('crosshair')).attr('stroke-width', 1).style('display', 'none');
+  const dot = g.append('circle').attr('r', 3).attr('fill', chartColor('line')).style('display', 'none');
   const htip = (() => {
     const el = document.createElement('div');
     Object.assign(el.style, { position:'absolute', pointerEvents:'none', opacity:'0', background:'var(--bg4)', border:'1px solid var(--border2)', padding:'8px 12px', borderRadius:'4px', fontFamily:"'IBM Plex Mono'", fontSize:'11px', zIndex:'60', whiteSpace:'nowrap', transition:'opacity 0.1s', boxShadow:'0 4px 20px rgba(0,0,0,0.5)', lineHeight:'1.7' });
@@ -8301,7 +8342,7 @@ function corrRenderRolling() {
     vline.attr('x1', cx).attr('x2', cx).style('display', null);
     if (!isNaN(rv)) { dot.attr('cx', cx).attr('cy', yScale(rv)).style('display', null); }
     htip.style.opacity = '1';
-    htip.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${rDates[idx]}</div><div style="font-size:14px;font-weight:500;color:${!isNaN(rv) && rv >= 0 ? 'var(--amber)' : '#4a90d9'}">${isNaN(rv) ? 'n/a' : (rv >= 0 ? '+' : '') + rv.toFixed(3)}</div>`;
+    htip.innerHTML = `<div style="color:var(--text3);font-size:10px;margin-bottom:4px">${rDates[idx]}</div><div style="font-size:14px;font-weight:500;color:${!isNaN(rv) && rv >= 0 ? chartColor('tooltipVal') : 'var(--blue)'}">${isNaN(rv) ? 'n/a' : (rv >= 0 ? '+' : '') + rv.toFixed(3)}</div>`;
     const bx = wrap.getBoundingClientRect();
     const ex = event.clientX - bx.left;
     htip.style.left = (ex > TW / 2 ? ex - htip.offsetWidth - 10 : ex + 10) + 'px';
@@ -8815,14 +8856,14 @@ function stDrawNavChart(series, endDate) {
   // Grid lines
   yScale.ticks(5).forEach(t => {
     g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(t)).attr('y2',yScale(t))
-      .attr('stroke','rgba(255,255,255,0.04)').attr('stroke-width',1);
+      .attr('stroke',chartColor('grid')).attr('stroke-width',1);
   });
   // HWM reference line at 100
   if (yScale.domain()[0] <= 100 && yScale.domain()[1] >= 100) {
     g.append('line').attr('x1',0).attr('x2',iw).attr('y1',yScale(100)).attr('y2',yScale(100))
-      .attr('stroke','rgba(255,255,255,0.2)').attr('stroke-width',1).attr('stroke-dasharray','4 3');
+      .attr('stroke',chartColor('refLine')).attr('stroke-width',1).attr('stroke-dasharray','4 3');
     g.append('text').attr('x', iw - 2).attr('y', yScale(100) - 3)
-      .attr('text-anchor','end').attr('fill','rgba(255,255,255,0.3)').attr('font-size',7).attr('font-family',"'IBM Plex Mono'")
+      .attr('text-anchor','end').attr('fill',chartColor('refText')).attr('font-size',7).attr('font-family',"'IBM Plex Mono'")
       .text('HWM 100');
   }
 
