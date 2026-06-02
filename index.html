@@ -40,6 +40,58 @@
   --radius:    4px;
 }
 
+/* ── Light Theme: Cream (warm financial report) ───────────────────────── */
+html[data-theme="cream"] {
+  --bg:        #f4efe6;
+  --bg2:       #ede8de;
+  --bg3:       #e5dfd3;
+  --bg4:       #dbd4c6;
+  --bg5:       #d0c8b8;
+  --border:    rgba(0,0,0,0.09);
+  --border2:   rgba(0,0,0,0.15);
+  --border3:   rgba(0,0,0,0.22);
+  --text:      #18130c;
+  --text2:     #5c5040;
+  --text3:     #9a8c76;
+  --amber:     #b8892e;
+  --amber2:    #c8982e;
+  --amber-dim: rgba(184,137,46,0.14);
+  --blue:      #2060b0;
+  --blue-dim:  rgba(32,96,176,0.1);
+  --green:     #1e7a4c;
+  --green-dim: rgba(30,122,76,0.1);
+  --red:       #c42828;
+  --red-dim:   rgba(196,40,40,0.1);
+  --purple:    #5040b8;
+  --teal:      #1e8880;
+}
+
+/* ── Light Theme: White (clean modern) ────────────────────────────────── */
+html[data-theme="white"] {
+  --bg:        #ffffff;
+  --bg2:       #f5f6f8;
+  --bg3:       #edf0f4;
+  --bg4:       #e3e7ef;
+  --bg5:       #d8dde8;
+  --border:    rgba(0,0,0,0.08);
+  --border2:   rgba(0,0,0,0.13);
+  --border3:   rgba(0,0,0,0.20);
+  --text:      #0a0e17;
+  --text2:     #505868;
+  --text3:     #8a96a8;
+  --amber:     #b87c18;
+  --amber2:    #c8902a;
+  --amber-dim: rgba(184,124,24,0.1);
+  --blue:      #1a5cc0;
+  --blue-dim:  rgba(26,92,192,0.1);
+  --green:     #167040;
+  --green-dim: rgba(22,112,64,0.1);
+  --red:       #bf2020;
+  --red-dim:   rgba(191,32,32,0.1);
+  --purple:    #4830b0;
+  --teal:      #167878;
+}
+
 html, body {
   height: 100%; overflow: hidden;
   background: var(--bg);
@@ -1297,6 +1349,17 @@ a      { color: inherit; text-decoration: none; }
     </div>
     <div class="header-right">
       <div class="header-ts" id="header-ts">LIVE · —</div>
+      <button id="theme-btn" onclick="themeNext()" title="Switch theme"
+        style="height:100%;padding:0 14px;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em;transition:color .12s;"
+        onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">
+        <svg id="theme-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <span id="theme-label">DARK</span>
+      </button>
       <button class="btn-login" onclick="doLogout()">
         <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
         Sign Out
@@ -1622,9 +1685,6 @@ a      { color: inherit; text-decoration: none; }
             </div>
             <div class="nav-item" onclick="nwNav('ai')" data-label="AI News" data-nwtab="ai">
               <div class="nav-dot"></div>AI News<span class="nav-item-badge">AI</span>
-            </div>
-            <div class="nav-item" onclick="showPage('cot')" data-label="COT Positioning">
-              <div class="nav-dot"></div>COT Positioning<span class="nav-item-badge">COT</span>
             </div>
           </div>
         </div>
@@ -3249,37 +3309,50 @@ a      { color: inherit; text-decoration: none; }
         </div>
       </div>
 
-      <!-- ════════════════════════════════════════
-           PAGE: COT POSITIONING
-      ════════════════════════════════════════ -->
-      <div class="section-page" id="page-cot">
-        <div class="page-header">
-          <div class="page-title-group">
-            <div class="page-title">COT Positioning <span class="page-title-badge">CFTC Data</span></div>
-            <div class="page-subtitle">Commitment of Traders · speculative positioning</div>
-          </div>
-        </div>
-        <div class="page-body">
-          <div class="data-table-wrap">
-            <table class="data-table">
-              <thead><tr><th>Contract</th><th>Net Spec.</th><th>Chg WoW</th><th>% of OI</th><th>Bias</th></tr></thead>
-              <tbody>
-                <tr><td>S&amp;P 500 Futures</td><td class="td-up">+142,480</td><td class="td-up">+8,200</td><td>18.4%</td><td class="td-up">Long</td></tr>
-                <tr><td>10Y T-Note</td><td class="td-dn">-412,800</td><td class="td-dn">-22,400</td><td>-12.8%</td><td class="td-dn">Short</td></tr>
-                <tr><td>EUR/USD</td><td class="td-dn">-48,200</td><td class="td-dn">-4,100</td><td>-8.2%</td><td class="td-dn">Short</td></tr>
-                <tr><td>Gold</td><td class="td-up">+218,400</td><td class="td-up">+12,800</td><td>28.4%</td><td class="td-up">Long</td></tr>
-                <tr><td>WTI Crude</td><td class="td-up">+184,200</td><td class="td-dn">-8,400</td><td>22.1%</td><td class="td-up">Long</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
     </main><!-- /main -->
   </div><!-- /body -->
 </div><!-- /app -->
 
 <script>
+/* ══════════════════════════════════════════════════════════════════════
+   THEME SWITCHER  dark → cream → white → dark
+══════════════════════════════════════════════════════════════════════ */
+const THEMES = [
+  { key: 'dark',  label: 'DARK',  icon: 'moon'  },
+  { key: 'cream', label: 'CREAM', icon: 'sun'   },
+  { key: 'white', label: 'WHITE', icon: 'sun'   },
+];
+const MOON_PATH = '<circle cx="12" cy="12" r="5"/><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" fill="currentColor" opacity=".08"/><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+const SUN_PATH  = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+
+let themeIdx = 0;
+
+function themeApply(idx) {
+  const t = THEMES[idx];
+  if (t.key === 'dark') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', t.key);
+  }
+  const lbl  = document.getElementById('theme-label');
+  const icon = document.getElementById('theme-icon');
+  if (lbl)  lbl.textContent = t.label;
+  if (icon) icon.innerHTML  = t.icon === 'moon' ? MOON_PATH : SUN_PATH;
+  localStorage.setItem('pm_theme', t.key);
+}
+
+function themeNext() {
+  themeIdx = (themeIdx + 1) % THEMES.length;
+  themeApply(themeIdx);
+}
+
+(function themeInit() {
+  const saved = localStorage.getItem('pm_theme') || 'dark';
+  themeIdx = THEMES.findIndex(t => t.key === saved);
+  if (themeIdx < 0) themeIdx = 0;
+  themeApply(themeIdx);
+})();
+
 /* ══════════════════════════════════════════════════════════════════════
    SHELL CONTROLS
 ══════════════════════════════════════════════════════════════════════ */
