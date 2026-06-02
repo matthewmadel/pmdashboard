@@ -3410,6 +3410,7 @@ function fredRedraw() {
 
 function mkRedrawActive() {
   if (!document.getElementById('page-markets')?.classList.contains('active')) return;
+  if (typeof MK_PANELS === 'undefined') return;
   const active = MK_PANELS.find(p => document.getElementById(`mk-panel-${p}`)?.classList.contains('active'));
   if (active) mkRenderChart(active);
 }
