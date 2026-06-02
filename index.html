@@ -171,21 +171,6 @@ html[data-theme="cream"] .fred-crosshair       { stroke: rgba(0,0,0,0.15); }
 html[data-theme="cream"] .fred-annotation-line { stroke: rgba(0,0,0,0.20); }
 html[data-theme="cream"] .fred-recession-band  { fill:   rgba(0,0,0,0.04); }
 html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
-.header-tickers {
-  display: flex; align-items: center;
-  flex: 1; overflow: hidden;
-  padding: 0 16px; gap: 0;
-}
-.htick {
-  display: flex; flex-direction: column; gap: 2px;
-  padding: 0 16px;
-  border-right: 1px solid var(--border);
-  min-width: 100px;
-}
-.htick:first-child { padding-left: 0; }
-.htick-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
-.htick-val   { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--text); }
-.htick-chg   { font-family: var(--mono); font-size: 10px; }
 .up   { color: var(--green); }
 .dn   { color: var(--red); }
 .flat { color: var(--text2); }
@@ -1313,7 +1298,6 @@ html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .grid-2, .grid-3, .grid-2-1, .grid-1-2 { grid-template-columns: 1fr; }
-  .header-tickers { display: none; }
   :root { --nav-w: 200px; }
   .fred-nav { width: 180px; }
 }
@@ -1346,43 +1330,6 @@ html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
   <!-- HEADER -->
   <div id="header">
     <div class="header-logo">PM Dashboard<span class="header-logo-sub">portfolio intelligence</span></div>
-    <div class="header-tickers">
-      <div class="htick">
-        <div class="htick-label">Fed Funds</div>
-        <div class="htick-val" id="ht-ff">—</div>
-        <div class="htick-chg flat" id="ht-ff-c">—</div>
-      </div>
-      <div class="htick">
-        <div class="htick-label">10Y UST</div>
-        <div class="htick-val" id="ht-10y">—</div>
-        <div class="htick-chg flat" id="ht-10y-c">—</div>
-      </div>
-      <div class="htick">
-        <div class="htick-label">2Y UST</div>
-        <div class="htick-val" id="ht-2y">—</div>
-        <div class="htick-chg flat" id="ht-2y-c">—</div>
-      </div>
-      <div class="htick">
-        <div class="htick-label">10Y–2Y</div>
-        <div class="htick-val" id="ht-sp">—</div>
-        <div class="htick-chg flat" id="ht-sp-c">—</div>
-      </div>
-      <div class="htick">
-        <div class="htick-label">CPI YoY</div>
-        <div class="htick-val" id="ht-cpi">—</div>
-        <div class="htick-chg flat" id="ht-cpi-c">—</div>
-      </div>
-      <div class="htick">
-        <div class="htick-label">Unemp.</div>
-        <div class="htick-val" id="ht-ur">—</div>
-        <div class="htick-chg flat" id="ht-ur-c">—</div>
-      </div>
-      <div class="htick">
-        <div class="htick-label">VIX</div>
-        <div class="htick-val" id="ht-vix">—</div>
-        <div class="htick-chg flat" id="ht-vix-c">—</div>
-      </div>
-    </div>
     <div class="header-right">
       <div class="header-ts" id="header-ts">LIVE · —</div>
       <button id="theme-btn" onclick="themeNext()" title="Switch theme"
@@ -4756,43 +4703,6 @@ function fredExportPNG(wrapperId, name) {
   img.src = 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(s)));
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   HEADER TICKERS (live from FRED data)
-══════════════════════════════════════════════════════════════════════ */
-async function fredLoadHeaderTickers() {
-  const start = fredPeriodStart('1Y');
-  const pairs = [
-    ['FEDFUNDS','ht-ff','ht-ff-c','rate'],
-    ['DGS10','ht-10y','ht-10y-c','rate'],
-    ['DGS2','ht-2y','ht-2y-c','rate'],
-    ['T10Y2Y','ht-sp','ht-sp-c','rate'],
-    ['CPIAUCSL','ht-cpi','ht-cpi-c','yoy'],
-    ['UNRATE','ht-ur','ht-ur-c','pct'],
-    ['VIXCLS','ht-vix','ht-vix-c','idx'],
-  ];
-  await Promise.all(pairs.map(async ([id,valId,chgId,fmt]) => {
-    const pts = await fredFetchSeries(id,start);
-    if (!pts.length) return;
-    const latest=pts[pts.length-1], prev=pts[pts.length-2];
-    let displayVal = latest.value;
-    if (fmt==='yoy'&&prev) {
-      const yr=new Date(latest.date+'T00:00:00'); yr.setFullYear(yr.getFullYear()-1);
-      const yrStr=yr.toISOString().slice(0,10);
-      const yearAgo=[...pts].reverse().find(p=>p.date<=yrStr);
-      if (yearAgo) displayVal=((latest.value-yearAgo.value)/yearAgo.value)*100;
-    }
-    const chg=prev?latest.value-prev.value:null;
-    const el=document.getElementById(valId);
-    const ce=document.getElementById(chgId);
-    if (el) el.textContent=fmt==='rate'?displayVal.toFixed(2)+'%':fmt==='yoy'?displayVal.toFixed(1)+'%':fmt==='pct'?displayVal.toFixed(1)+'%':displayVal.toFixed(1);
-    if (ce&&chg!=null) {
-      ce.textContent=(chg>=0?'▲':' ▼')+' '+Math.abs(chg).toFixed(2);
-      ce.className='htick-chg '+(chg>0?'up':chg<0?'dn':'flat');
-    }
-  }));
-
-  updateTimestamp(); // keep live clock accurate after FRED load
-}
 
 /* ══════════════════════════════════════════════════════════════════════
    BOOT
@@ -6018,7 +5928,6 @@ async function fredBoot() {
     console.warn('FRED data not loaded:', e.message);
   }
 
-  fredLoadHeaderTickers();
 }
 
 /* ══════════════════════════════════════════════════════════════════════
