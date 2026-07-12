@@ -576,6 +576,9 @@ html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
 .br-panel .data-table-wrap { flex:1; overflow:auto; }
 .br-footnote { font-family:var(--mono); font-size:9px; color:var(--text3); padding:6px 0 10px; flex-shrink:0; }
 
+/* ── Index Sector Weights & Returns ────────────────────────────────── */
+.isr-total-row td { background: var(--bg3) !important; font-weight: 600; border-bottom: 2px solid var(--border) !important; }
+
 /* ── Changelog ─────────────────────────────────────────────────────── */
 .cl-entry { padding: 20px 0; border-bottom: 1px solid var(--border); }
 .cl-entry:last-child { border-bottom: none; }
@@ -1561,6 +1564,9 @@ html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
             </div>
             <div class="nav-item" onclick="showPage('benchmark-returns');brBoot()" data-label="Index Returns">
               <div class="nav-dot"></div>Index Returns<span class="nav-item-badge">IDX</span>
+            </div>
+            <div class="nav-item" onclick="showPage('index-sector-returns');isrBoot()" data-label="Index Sector Weights & Returns">
+              <div class="nav-dot"></div>Sector Weights &amp; Returns<span class="nav-item-badge">MSCI</span>
             </div>
             <div class="nav-item" onclick="showPage('benchmark-builder');bbBoot()" data-label="Benchmark Builder">
               <div class="nav-dot"></div>Benchmark Builder<span class="nav-item-badge">BB</span>
@@ -3003,6 +3009,36 @@ html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
 
         </div>
       </div><!-- /page-benchmark-returns -->
+
+      <!-- ════════════════════════════════════════
+           PAGE: INDEX SECTOR WEIGHTS & RETURNS
+      ════════════════════════════════════════ -->
+      <div class="section-page" id="page-index-sector-returns">
+        <div class="page-header">
+          <div class="page-title-group">
+            <div class="page-title">Index Sector Weights &amp; Returns <span class="page-title-badge">MSCI</span></div>
+            <div class="page-subtitle" id="isr-subtitle">loading…</div>
+          </div>
+          <div class="page-controls" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div class="pill-group" id="isr-index-pills"></div>
+            <div class="pill-group" id="isr-quarter-pills"></div>
+          </div>
+        </div>
+        <div class="page-body" style="flex-direction:column;overflow:hidden;">
+          <div class="data-table-wrap" style="overflow-x:auto;flex:1;">
+            <table class="data-table" style="min-width:640px;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;min-width:190px">Sector</th>
+                  <th>Weight</th><th>1Q</th><th>YTD</th><th>1Y</th><th>3Y (ann.)</th><th>5Y (ann.)</th>
+                </tr>
+              </thead>
+              <tbody id="isr-tbody"></tbody>
+            </table>
+          </div>
+          <div class="br-footnote">Sectors sorted by end-of-period weight, largest first. Total row reflects the full index/ETF return. 3Y/5Y returns annualized. Source: MSCI sector attribution data, quarterly.</div>
+        </div>
+      </div><!-- /page-index-sector-returns -->
 
       <!-- ════════════════════════════════════════
            PAGE: BENCHMARK BUILDER
@@ -9006,6 +9042,101 @@ function brRenderCalendar() {
 
   wrap.innerHTML = `<table class="data-table" style="min-width:${170 + years.length * 58}px;">
     <thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   INDEX SECTOR WEIGHTS & RETURNS
+══════════════════════════════════════════════════════════════════════ */
+
+const ISR_DATA_URL = './index_sector_returns.json';
+let isrData = null, isrBooted = false, isrActiveIndex = 'acwi', isrActiveQuarter = null;
+
+async function isrBoot() {
+  if (isrBooted) return;
+  isrBooted = true;
+  const sub = document.getElementById('isr-subtitle');
+  try {
+    const r = await fetch(ISR_DATA_URL + '?_=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    isrData = await r.json();
+  } catch (e) {
+    console.error('Index sector returns load failed:', e);
+    if (sub) sub.textContent = 'Failed to load data';
+    return;
+  }
+  const first = isrData.indices.find(i => i.id === isrActiveIndex) || isrData.indices[0];
+  isrActiveIndex = first.id;
+  isrActiveQuarter = first.quarters[first.quarters.length - 1].date;
+  isrRenderIndexPills();
+  isrRenderQuarterPills();
+  isrRender();
+}
+
+function isrRenderIndexPills() {
+  const el = document.getElementById('isr-index-pills');
+  if (!el) return;
+  el.innerHTML = isrData.indices.map(idx =>
+    `<div class="pill${idx.id === isrActiveIndex ? ' active' : ''}" onclick="isrSelectIndex('${idx.id}',this)">${idx.label}</div>`
+  ).join('');
+}
+
+function isrSelectIndex(id, btn) {
+  isrActiveIndex = id;
+  document.querySelectorAll('#isr-index-pills .pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const idx = isrData.indices.find(i => i.id === id);
+  if (!idx.quarters.some(q => q.date === isrActiveQuarter)) {
+    isrActiveQuarter = idx.quarters[idx.quarters.length - 1].date;
+  }
+  isrRenderQuarterPills();
+  isrRender();
+}
+
+function isrRenderQuarterPills() {
+  const idx = isrData.indices.find(i => i.id === isrActiveIndex);
+  const el = document.getElementById('isr-quarter-pills');
+  if (!el) return;
+  el.innerHTML = idx.quarters.map(q =>
+    `<div class="pill${q.date === isrActiveQuarter ? ' active' : ''}" onclick="isrSelectQuarter('${q.date}',this)">${q.label}</div>`
+  ).join('');
+}
+
+function isrSelectQuarter(date, btn) {
+  isrActiveQuarter = date;
+  document.querySelectorAll('#isr-quarter-pills .pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  isrRender();
+}
+
+function isrFmt(v) {
+  if (v == null) return `<span style="color:var(--text3);font-size:9px">NA</span>`;
+  const cls = v > 0.05 ? 'td-up' : v < -0.05 ? 'td-dn' : 'td-flat';
+  return `<span class="${cls}">${v >= 0 ? '+' : ''}${v.toFixed(2)}%</span>`;
+}
+
+function isrRender() {
+  const idx = isrData.indices.find(i => i.id === isrActiveIndex);
+  const q = idx.quarters.find(qq => qq.date === isrActiveQuarter);
+  const sub = document.getElementById('isr-subtitle');
+  if (sub) sub.textContent = `${idx.fundName} (${idx.ticker}) · ${q.label} · as of ${q.date}`;
+
+  const sorted = [...q.sectors].sort((a, b) => b.weight - a.weight);
+  let html = `<tr class="isr-total-row">
+      <td style="text-align:left;padding-left:10px">${idx.label} (Total)</td>
+      <td>${q.total.weight.toFixed(2)}%</td>
+      <td>${isrFmt(q.total.q1)}</td><td>${isrFmt(q.total.ytd)}</td><td>${isrFmt(q.total.y1)}</td>
+      <td>${isrFmt(q.total.y3)}</td><td>${isrFmt(q.total.y5)}</td>
+    </tr>`;
+  for (const s of sorted) {
+    html += `<tr class="mk-row">
+      <td style="text-align:left;padding-left:10px">${s.name}</td>
+      <td>${s.weight.toFixed(2)}%</td>
+      <td>${isrFmt(s.q1)}</td><td>${isrFmt(s.ytd)}</td><td>${isrFmt(s.y1)}</td>
+      <td>${isrFmt(s.y3)}</td><td>${isrFmt(s.y5)}</td>
+    </tr>`;
+  }
+  const tbody = document.getElementById('isr-tbody');
+  if (tbody) tbody.innerHTML = html;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
