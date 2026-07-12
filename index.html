@@ -3021,20 +3021,44 @@ html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
           </div>
           <div class="page-controls" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
             <div class="pill-group" id="isr-index-pills"></div>
-            <div class="pill-group" id="isr-quarter-pills"></div>
           </div>
         </div>
-        <div class="page-body" style="flex-direction:column;overflow:hidden;">
-          <div class="data-table-wrap" style="overflow-x:auto;flex:1;">
-            <table class="data-table" style="min-width:640px;">
-              <thead>
-                <tr>
-                  <th style="text-align:left;min-width:190px">Sector</th>
-                  <th>Weight</th><th>1Q</th><th>YTD</th><th>1Y</th><th>3Y (ann.)</th><th>5Y (ann.)</th>
-                </tr>
-              </thead>
-              <tbody id="isr-tbody"></tbody>
-            </table>
+        <div class="f13-ctrl-bar">
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <span style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.07em;">Quarter</span>
+            <select class="f13-select" id="isr-quarter-sel" aria-label="Quarter"></select>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="grid-2-1" style="align-items:start;">
+            <div class="chart-container">
+              <div class="chart-container-header">
+                <div class="chart-container-title">Sector Detail</div>
+              </div>
+              <div class="data-table-wrap" style="overflow-x:auto;border:none;border-radius:0;">
+                <table class="data-table" style="min-width:640px;">
+                  <thead>
+                    <tr>
+                      <th style="text-align:left;min-width:190px">Sector</th>
+                      <th>Weight</th><th>1Q</th><th>YTD</th><th>1Y</th><th>3Y (ann.)</th><th>5Y (ann.)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="isr-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="chart-container">
+              <div class="chart-container-header">
+                <div class="chart-container-title">Sector Weights</div>
+              </div>
+              <div class="pm-chart-wrap" id="isr-pie-wrap" style="height:320px;"></div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-container-header">
+              <div class="chart-container-title">Sector Weights Over Time</div>
+            </div>
+            <div class="pm-chart-wrap" id="isr-trend-wrap" style="height:280px;"></div>
           </div>
           <div class="br-footnote">Sectors sorted by end-of-period weight, largest first. Total row reflects the full index/ETF return. 3Y/5Y returns annualized. Source: MSCI sector attribution data, quarterly.</div>
         </div>
@@ -9051,6 +9075,24 @@ function brRenderCalendar() {
 const ISR_DATA_URL = './index_sector_returns.json';
 let isrData = null, isrBooted = false, isrActiveIndex = 'acwi', isrActiveQuarter = null;
 
+const ISR_SECTOR_COLORS = {
+  'Energy':                    '#d4a44c',
+  'Financials':                '#4a90d9',
+  'Health Care':                '#3ab8a8',
+  'Industrials':                '#7c6fcd',
+  'Information Technology':     '#e0955a',
+  'Materials':                  '#9bbf5e',
+  'Real Estate':                '#d46ba3',
+  'Utilities':                  '#5ec2e0',
+  'Communication Services':     '#c9a0ff',
+  'Consumer Discretionary':     '#e0c25a',
+  'Consumer Staples':           '#b08968',
+  'Not Classified':             '#6b7280',
+};
+function isrSectorColor(name) {
+  return ISR_SECTOR_COLORS[name] || CHART.color.lineAlt[0];
+}
+
 async function isrBoot() {
   if (isrBooted) return;
   isrBooted = true;
@@ -9068,7 +9110,7 @@ async function isrBoot() {
   isrActiveIndex = first.id;
   isrActiveQuarter = first.quarters[first.quarters.length - 1].date;
   isrRenderIndexPills();
-  isrRenderQuarterPills();
+  isrPopulateQuarterSelect();
   isrRender();
 }
 
@@ -9088,24 +9130,22 @@ function isrSelectIndex(id, btn) {
   if (!idx.quarters.some(q => q.date === isrActiveQuarter)) {
     isrActiveQuarter = idx.quarters[idx.quarters.length - 1].date;
   }
-  isrRenderQuarterPills();
+  isrPopulateQuarterSelect();
   isrRender();
 }
 
-function isrRenderQuarterPills() {
+function isrPopulateQuarterSelect() {
   const idx = isrData.indices.find(i => i.id === isrActiveIndex);
-  const el = document.getElementById('isr-quarter-pills');
-  if (!el) return;
-  el.innerHTML = idx.quarters.map(q =>
-    `<div class="pill${q.date === isrActiveQuarter ? ' active' : ''}" onclick="isrSelectQuarter('${q.date}',this)">${q.label}</div>`
+  const sel = document.getElementById('isr-quarter-sel');
+  if (!idx || !sel) return;
+  const quartersDesc = [...idx.quarters].reverse(); // newest first
+  sel.innerHTML = quartersDesc.map((q, i) =>
+    `<option value="${q.date}"${q.date === isrActiveQuarter ? ' selected' : ''}>${q.label}${i === 0 ? ' (latest)' : ''}</option>`
   ).join('');
-}
-
-function isrSelectQuarter(date, btn) {
-  isrActiveQuarter = date;
-  document.querySelectorAll('#isr-quarter-pills .pill').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  isrRender();
+  sel.onchange = () => {
+    isrActiveQuarter = sel.value;
+    isrRender();
+  };
 }
 
 function isrFmt(v) {
@@ -9129,7 +9169,7 @@ function isrRender() {
     </tr>`;
   for (const s of sorted) {
     html += `<tr class="mk-row">
-      <td style="text-align:left;padding-left:10px">${s.name}</td>
+      <td style="text-align:left;padding-left:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${isrSectorColor(s.name)};margin-right:7px;vertical-align:middle;"></span>${s.name}</td>
       <td>${s.weight.toFixed(2)}%</td>
       <td>${isrFmt(s.q1)}</td><td>${isrFmt(s.ytd)}</td><td>${isrFmt(s.y1)}</td>
       <td>${isrFmt(s.y3)}</td><td>${isrFmt(s.y5)}</td>
@@ -9137,6 +9177,48 @@ function isrRender() {
   }
   const tbody = document.getElementById('isr-tbody');
   if (tbody) tbody.innerHTML = html;
+
+  isrRenderPie(idx, q);
+  isrRenderTrend(idx);
+}
+
+function isrRenderPie(idx, q) {
+  const wrap = document.getElementById('isr-pie-wrap');
+  if (!wrap) return;
+  const data = q.sectors
+    .filter(s => s.weight > 0)
+    .map(s => ({ label: s.name, value: s.weight, color: isrSectorColor(s.name) }));
+  drawPieChart(wrap, data, {
+    height: 320,
+    donut: true,
+    centerLabel: { value: idx.label.replace('MSCI ', ''), label: q.label },
+  });
+}
+
+function isrRenderTrend(idx) {
+  const wrap = document.getElementById('isr-trend-wrap');
+  if (!wrap) return;
+  const quartersAsc = [...idx.quarters].reverse();
+  const sectorNames = quartersAsc[quartersAsc.length - 1].sectors
+    .map(s => s.name)
+    .filter(n => n !== 'Not Classified');
+  const series = sectorNames.map(name => ({
+    label: name,
+    color: isrSectorColor(name),
+    data: quartersAsc.map(q => {
+      const s = q.sectors.find(x => x.name === name);
+      return { date: q.date, value: s ? s.weight : null };
+    }),
+  }));
+  drawLineChart(wrap, series, {
+    multiSeries: true,
+    showLegend: true,
+    showArea: false,
+    height: 280,
+    period: '2',
+    yFormat: v => v.toFixed(0) + '%',
+    tooltipFormat: v => v.toFixed(2) + '%',
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════════════

@@ -469,6 +469,110 @@ function drawBarChart(container, data, options = {}) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   CONVENIENCE: drawPieChart(container, data, options)
+   data    : [{ label, value, color }]
+   options : {
+     height      : Number (px)
+     donut       : Boolean (default true)
+     innerRatio  : Number 0-1 (donut hole size, default 0.6)
+     showLegend  : Boolean (default true)
+     centerLabel : { value, label } — shown in the donut hole
+     format      : function(value) → string (defaults to % of total)
+   }
+════════════════════════════════════════════════════════════════════════ */
+function drawPieChart(container, data, options = {}) {
+  injectChartCSS();
+  if (!container) return;
+  container.innerHTML = '';
+
+  const clean = (data || []).filter(d => d && isFinite(d.value) && d.value > 0);
+  if (!clean.length) {
+    container.innerHTML = '<div class="pm-no-data" style="height:100%">No data available</div>';
+    return;
+  }
+
+  const W = container.clientWidth || 320;
+  const H = options.height || container.clientHeight || 260;
+  const showLegend = options.showLegend !== false;
+  const legendW = showLegend ? Math.max(120, Math.min(190, W * 0.42)) : 0;
+  const plotW = Math.max(120, W - legendW);
+  const radius = Math.max(20, Math.min(plotW, H) / 2 - 10);
+  const isDonut = options.donut !== false;
+  const innerRadius = isDonut ? radius * (options.innerRatio ?? 0.6) : 0;
+
+  const outer = document.createElement('div');
+  outer.style.cssText = 'display:flex;align-items:center;height:100%;width:100%;';
+  container.appendChild(outer);
+
+  const tt = document.createElement('div');
+  tt.className = 'pm-tooltip';
+  tt.innerHTML = `<div class="pm-tt-date"></div><div class="pm-tt-val"></div>`;
+  container.appendChild(tt);
+
+  const svgHolder = document.createElement('div');
+  svgHolder.style.cssText = `width:${plotW}px;height:${H}px;flex-shrink:0;`;
+  outer.appendChild(svgHolder);
+
+  const svg = d3.select(svgHolder).append('svg').attr('width', plotW).attr('height', H);
+  const g   = svg.append('g').attr('transform', `translate(${plotW / 2},${H / 2})`);
+
+  const pieGen      = d3.pie().value(d => d.value).sort(null);
+  const arcGen      = d3.arc().innerRadius(innerRadius).outerRadius(radius);
+  const arcHoverGen = d3.arc().innerRadius(innerRadius).outerRadius(radius + 5);
+
+  const total  = d3.sum(clean, d => d.value);
+  const pctFmt = v => (total ? (v / total * 100) : 0).toFixed(1) + '%';
+  const valFmt = options.format || pctFmt;
+
+  g.selectAll('path').data(pieGen(clean)).enter().append('path')
+    .attr('d', arcGen)
+    .attr('fill', d => d.data.color || CHART.color.line)
+    .attr('stroke', '#0e1117')
+    .attr('stroke-width', 1.5)
+    .style('cursor', 'pointer')
+    .on('mousemove', function(event, d) {
+      d3.select(this).attr('d', arcHoverGen);
+      const [mx, my] = d3.pointer(event, container);
+      tt.querySelector('.pm-tt-date').textContent = d.data.label;
+      const valEl = tt.querySelector('.pm-tt-val');
+      valEl.textContent = valFmt(d.data.value);
+      valEl.style.color = d.data.color || CHART.color.line;
+      tt.style.left = (mx + 12) + 'px';
+      tt.style.top  = (my - 30) + 'px';
+      tt.style.opacity = 1;
+    })
+    .on('mouseleave', function() {
+      d3.select(this).attr('d', arcGen);
+      tt.style.opacity = 0;
+    });
+
+  if (isDonut && options.centerLabel) {
+    g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.15em')
+      .attr('font-family', CHART.font.mono).attr('font-size', 18).attr('font-weight', 600)
+      .attr('fill', '#e8e2d9')
+      .text(options.centerLabel.value ?? '');
+    g.append('text').attr('text-anchor', 'middle').attr('dy', '1.3em')
+      .attr('font-family', CHART.font.mono).attr('font-size', 9).attr('letter-spacing', '0.06em')
+      .attr('fill', CHART.color.axis)
+      .text((options.centerLabel.label ?? '').toUpperCase());
+  }
+
+  if (showLegend) {
+    const legend = document.createElement('div');
+    legend.style.cssText = 'display:flex;flex-direction:column;gap:8px;padding:4px 14px;overflow-y:auto;max-height:100%;flex:1;';
+    clean.slice().sort((a, b) => b.value - a.value).forEach(d => {
+      const item = document.createElement('div');
+      item.style.cssText = 'display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;';
+      item.innerHTML = `<div style="width:9px;height:9px;border-radius:2px;background:${d.color || CHART.color.line};flex-shrink:0;"></div>
+        <span style="flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.label}</span>
+        <span style="color:var(--text);font-weight:500;">${pctFmt(d.value)}</span>`;
+      legend.appendChild(item);
+    });
+    outer.appendChild(legend);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    CONVENIENCE: drawHeatmap(container, matrix, rowLabels, colLabels)
    For correlation matrix
 ════════════════════════════════════════════════════════════════════════ */
