@@ -395,7 +395,7 @@ function drawBarChart(container, data, options = {}) {
   container.innerHTML = '';
   const W  = container.clientWidth || 800;
   const H  = options.height || 200;
-  const m  = { top: 14, right: 64, bottom: 48, left: 16 };
+  const m  = { top: 14, right: 64, bottom: options.labelRotate ? 74 : 48, left: 16 };
   const iw = W - m.left - m.right;
   const ih = H - m.top  - m.bottom;
 
@@ -426,6 +426,7 @@ function drawBarChart(container, data, options = {}) {
 
   // Bars
   const valFmt = options.format || (v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%');
+  const ttFmt  = options.tooltipFormat || valFmt;
   data.forEach(d => {
     const color = d.value >= 0 ? CHART.color.up : CHART.color.dn;
     const barH  = Math.abs(yScale(d.value) - yScale(0));
@@ -440,7 +441,7 @@ function drawBarChart(container, data, options = {}) {
       const [mx, my] = d3.pointer(event, container);
       tt.querySelector('.pm-tt-date').textContent = d.label;
       const valEl = tt.querySelector('.pm-tt-val');
-      valEl.textContent = valFmt(d.value);
+      valEl.textContent = ttFmt(d.value, d);
       valEl.style.color = color;
       tt.style.left = (mx + 12) + 'px';
       tt.style.top  = (my - 40) + 'px';
@@ -449,14 +450,24 @@ function drawBarChart(container, data, options = {}) {
   });
 
   // X axis labels
-  g.append('g').attr('transform', `translate(0,${ih + 8})`)
+  const xAxisG = g.append('g').attr('transform', `translate(0,${ih + 8})`)
     .call(d3.axisBottom(xScale).tickSize(0))
-    .call(a => a.select('.domain').remove())
-    .selectAll('text')
-    .attr('fill', CHART.color.axis)
-    .attr('font-family', CHART.font.mono)
-    .attr('font-size', 10)
-    .attr('text-anchor', 'middle');
+    .call(a => a.select('.domain').remove());
+  if (options.labelRotate) {
+    xAxisG.selectAll('text')
+      .attr('fill', CHART.color.axis)
+      .attr('font-family', CHART.font.mono)
+      .attr('font-size', 9.5)
+      .attr('text-anchor', 'end')
+      .attr('transform', 'rotate(-30)')
+      .attr('dx', '-0.3em').attr('dy', '0.4em');
+  } else {
+    xAxisG.selectAll('text')
+      .attr('fill', CHART.color.axis)
+      .attr('font-family', CHART.font.mono)
+      .attr('font-size', 10)
+      .attr('text-anchor', 'middle');
+  }
 
   // Y axis
   g.append('g').attr('transform', `translate(${iw + 8},0)`)
@@ -570,6 +581,136 @@ function drawPieChart(container, data, options = {}) {
     });
     outer.appendChild(legend);
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CONVENIENCE: drawStackedAreaChart(container, series, options)
+   For composition-over-time (e.g. sector weights summing to ~100%)
+   series  : [{ label, color, data: [{ date: 'YYYY-MM-DD', value: Number }] }]
+             all series must share the same set/order of dates
+   options : {
+     height     : Number (px)
+     xLabels    : { 'YYYY-MM-DD': 'display label' }  — axis + tooltip labels
+     yFormat    : function(v) → string (y-axis tick formatter, default '%')
+   }
+   Hover shows a full per-series breakdown tooltip for the nearest date.
+════════════════════════════════════════════════════════════════════════ */
+function drawStackedAreaChart(container, series, options = {}) {
+  injectChartCSS();
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!series || !series.length || !series[0].data?.length) {
+    container.innerHTML = '<div class="pm-no-data" style="height:100%">No data available</div>';
+    return;
+  }
+
+  const W  = container.clientWidth || 800;
+  const H  = options.height || 300;
+  const m  = { top: 16, right: 56, bottom: 28, left: 8 };
+  const iw = W - m.left - m.right;
+  const ih = H - m.top  - m.bottom;
+
+  const dates = series[0].data.map(d => d.date);
+  const keys  = series.map(s => s.label);
+  const colorOf = Object.fromEntries(series.map(s => [s.label, s.color]));
+
+  const rows = dates.map((date, i) => {
+    const row = { date };
+    series.forEach(s => { row[s.label] = s.data[i]?.value ?? 0; });
+    return row;
+  });
+
+  const stackGen = d3.stack().keys(keys).order(d3.stackOrderNone).offset(d3.stackOffsetNone);
+  const stacked  = stackGen(rows);
+
+  const xScale = d3.scalePoint().domain(dates).range([0, iw]).padding(0.02);
+  const yMax   = d3.max(stacked, layer => d3.max(layer, d => d[1])) || 100;
+  const yScale = d3.scaleLinear().domain([0, yMax]).range([ih, 0]).nice();
+
+  const svg = d3.select(container).append('svg').attr('width', W).attr('height', H);
+  const g   = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
+
+  // Grid
+  yScale.ticks(5).forEach(t => {
+    g.append('line').attr('class', 'pm-grid-line')
+      .attr('x1', 0).attr('x2', iw).attr('y1', yScale(t)).attr('y2', yScale(t));
+  });
+
+  const areaGen = d3.area()
+    .x(d => xScale(d.data.date))
+    .y0(d => yScale(d[0]))
+    .y1(d => yScale(d[1]))
+    .curve(d3.curveMonotoneX);
+
+  g.selectAll('path.pm-stack-layer').data(stacked).enter().append('path')
+    .attr('class', 'pm-stack-layer')
+    .attr('d', areaGen)
+    .attr('fill', layer => colorOf[layer.key] || CHART.color.line)
+    .attr('opacity', 0.88)
+    .attr('stroke', '#0e1117')
+    .attr('stroke-width', 0.75);
+
+  // X axis
+  const xLabelOf = d => (options.xLabels && options.xLabels[d]) || d;
+  g.append('g').attr('transform', `translate(0,${ih + 8})`)
+    .selectAll('text').data(dates).enter().append('text')
+    .attr('x', d => xScale(d)).attr('y', 0).attr('text-anchor', 'middle')
+    .attr('font-family', CHART.font.mono).attr('font-size', 9.5)
+    .attr('fill', CHART.color.axis)
+    .text(xLabelOf);
+
+  // Y axis
+  const yFmt = options.yFormat || (v => v.toFixed(0) + '%');
+  g.append('g').attr('transform', `translate(${iw + 8},0)`)
+    .call(d3.axisRight(yScale).ticks(5).tickFormat(yFmt).tickSize(0))
+    .call(a => a.select('.domain').remove())
+    .selectAll('text')
+    .attr('fill', CHART.color.axis)
+    .attr('font-family', CHART.font.mono)
+    .attr('font-size', 10);
+
+  // Hover — full breakdown tooltip snapped to nearest quarter
+  const tt = document.createElement('div');
+  tt.className = 'pm-tooltip';
+  tt.style.maxWidth = '230px';
+  container.appendChild(tt);
+
+  const crossV = g.append('line').attr('class', 'pm-crosshair').attr('y1', 0).attr('y2', ih).style('opacity', 0);
+  const step = dates.length > 1 ? iw / (dates.length - 1) : iw;
+
+  svg.append('rect')
+    .attr('width', iw).attr('height', ih)
+    .attr('transform', `translate(${m.left},${m.top})`)
+    .attr('fill', 'transparent')
+    .on('mousemove', function(event) {
+      const [mx] = d3.pointer(event, this);
+      let idx = Math.round(mx / step);
+      idx = Math.max(0, Math.min(dates.length - 1, idx));
+      const date = dates[idx];
+      const px = xScale(date);
+      crossV.attr('x1', px).attr('x2', px).style('opacity', 1);
+
+      const rowVals = series
+        .map(s => ({ label: s.label, color: s.color, value: s.data[idx]?.value ?? 0 }))
+        .sort((a, b) => b.value - a.value);
+      const rowsHtml = rowVals.map(r => `
+        <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
+          <div style="width:7px;height:7px;border-radius:2px;background:${r.color};flex-shrink:0;"></div>
+          <span style="flex:1;color:var(--text2);font-size:10px;white-space:nowrap;">${r.label}</span>
+          <span style="color:var(--text);font-weight:500;font-size:10px;margin-left:10px;">${r.value.toFixed(1)}%</span>
+        </div>`).join('');
+      tt.innerHTML = `<div class="pm-tt-date" style="margin-bottom:5px;">${xLabelOf(date)}</div>${rowsHtml}`;
+
+      const rx = m.left + px + 14;
+      tt.style.left = (rx + 230 > W ? rx - 244 : rx) + 'px';
+      tt.style.top  = m.top + 'px';
+      tt.style.opacity = 1;
+    })
+    .on('mouseleave', () => {
+      crossV.style('opacity', 0);
+      tt.style.opacity = 0;
+    });
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

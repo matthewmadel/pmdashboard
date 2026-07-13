@@ -3064,11 +3064,37 @@ html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
           </div>
 
           <div id="isr-view-trends" style="display:none;">
-            <div class="chart-container">
-              <div class="chart-container-header">
-                <div class="chart-container-title">Sector Weights Over Time</div>
+            <div class="pill-group" id="isr-trend-subtabs" style="align-self:flex-start;flex-shrink:0;margin-bottom:12px;">
+              <div class="pill active" onclick="isrTrendSubTab('all',this)">All Quarters</div>
+              <div class="pill" onclick="isrTrendSubTab('compare',this)">Compare Two Quarters</div>
+            </div>
+
+            <div id="isr-trend-all">
+              <div class="chart-container">
+                <div class="chart-container-header">
+                  <div class="chart-container-title">Sector Weight Composition</div>
+                </div>
+                <div class="pm-chart-wrap" id="isr-trend-wrap" style="height:340px;"></div>
               </div>
-              <div class="pm-chart-wrap" id="isr-trend-wrap" style="height:340px;"></div>
+              <div class="br-footnote">Hover any quarter for the full sector breakdown. Each band's thickness is that sector's weight; the stack sums to the index's total weight.</div>
+            </div>
+
+            <div id="isr-trend-compare" style="display:none;">
+              <div class="chart-container">
+                <div class="chart-container-header" style="flex-wrap:wrap;gap:10px;">
+                  <div>
+                    <div class="chart-container-title">Weight Change by Sector</div>
+                    <div id="isr-cmp-caption" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;"></div>
+                  </div>
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <select class="f13-select" id="isr-cmp-from" aria-label="From quarter"></select>
+                    <span style="color:var(--text3);font-family:var(--mono);font-size:11px;">&rarr;</span>
+                    <select class="f13-select" id="isr-cmp-to" aria-label="To quarter"></select>
+                  </div>
+                </div>
+                <div class="pm-chart-wrap" id="isr-cmp-wrap" style="height:340px;"></div>
+              </div>
+              <div class="br-footnote">Bars show the change in sector weight (percentage points) between the two selected quarters, largest movers first. Hover a bar for the full from &rarr; to detail.</div>
             </div>
           </div>
 
@@ -9105,6 +9131,23 @@ function isrSectorColor(name) {
   return ISR_SECTOR_COLORS[name] || CHART.color.lineAlt[0];
 }
 
+const ISR_SECTOR_SHORT = {
+  'Energy':                    'Energy',
+  'Financials':                'Financials',
+  'Health Care':                'Health Care',
+  'Industrials':                'Industrials',
+  'Information Technology':     'Info Tech',
+  'Materials':                  'Materials',
+  'Real Estate':                'Real Estate',
+  'Utilities':                  'Utilities',
+  'Communication Services':     'Comm Svcs',
+  'Consumer Discretionary':     'Cons Disc',
+  'Consumer Staples':           'Cons Staples',
+  'Not Classified':             'Other',
+};
+
+let isrTrendView = 'all'; // 'all' | 'compare'
+
 async function isrBoot() {
   if (isrBooted) return;
   isrBooted = true;
@@ -9144,6 +9187,7 @@ function isrSelectIndex(id, btn) {
   }
   isrPopulateQuarterSelect();
   isrRender();
+  if (isrActiveView === 'trends') isrRenderActiveTrend();
 }
 
 function isrPopulateQuarterSelect() {
@@ -9191,7 +9235,6 @@ function isrRender() {
   if (tbody) tbody.innerHTML = html;
 
   isrRenderPie(idx, q);
-  if (isrActiveView === 'trends') isrRenderTrend(idx);
 }
 
 function isrViewTab(view, btn) {
@@ -9200,8 +9243,27 @@ function isrViewTab(view, btn) {
   if (btn) btn.classList.add('active');
   document.getElementById('isr-view-snapshot').style.display = view === 'snapshot' ? '' : 'none';
   document.getElementById('isr-view-trends').style.display   = view === 'trends'   ? '' : 'none';
+  if (view === 'trends') isrRenderActiveTrend();
+}
+
+function isrTrendSubTab(view, btn) {
+  isrTrendView = view;
+  document.querySelectorAll('#isr-trend-subtabs .pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('isr-trend-all').style.display     = view === 'all'     ? '' : 'none';
+  document.getElementById('isr-trend-compare').style.display = view === 'compare' ? '' : 'none';
+  isrRenderActiveTrend();
+}
+
+function isrRenderActiveTrend() {
   if (!isrData) return;
-  if (view === 'trends') isrRenderTrend(isrData.indices.find(i => i.id === isrActiveIndex));
+  const idx = isrData.indices.find(i => i.id === isrActiveIndex);
+  if (isrTrendView === 'all') {
+    isrRenderTrend(idx);
+  } else {
+    isrPopulateCompareSelects(idx);
+    isrRenderCompare(idx);
+  }
 }
 
 function isrRenderPie(idx, q) {
@@ -9221,26 +9283,72 @@ function isrRenderTrend(idx) {
   const wrap = document.getElementById('isr-trend-wrap');
   if (!wrap) return;
   const quartersAsc = [...idx.quarters].reverse();
-  const sectorNames = quartersAsc[quartersAsc.length - 1].sectors
-    .map(s => s.name)
-    .filter(n => n !== 'Not Classified');
+  const sectorNames = quartersAsc[quartersAsc.length - 1].sectors.map(s => s.name);
   const series = sectorNames.map(name => ({
     label: name,
     color: isrSectorColor(name),
     data: quartersAsc.map(q => {
       const s = q.sectors.find(x => x.name === name);
-      return { date: q.date, value: s ? s.weight : null };
+      return { date: q.date, value: s ? s.weight : 0 };
     }),
   }));
-  drawLineChart(wrap, series, {
-    multiSeries: true,
-    showLegend: true,
-    showArea: false,
-    height: 280,
-    period: '2',
+  const xLabels = Object.fromEntries(quartersAsc.map(q => [q.date, q.label]));
+  drawStackedAreaChart(wrap, series, {
+    height: 340,
+    xLabels,
     yFormat: v => v.toFixed(0) + '%',
-    tooltipFormat: v => v.toFixed(2) + '%',
   });
+}
+
+function isrPopulateCompareSelects(idx) {
+  const fromSel = document.getElementById('isr-cmp-from');
+  const toSel   = document.getElementById('isr-cmp-to');
+  if (!fromSel || !toSel) return;
+  const quartersDesc = [...idx.quarters].reverse(); // newest first
+  const opts = quartersDesc.map(q => `<option value="${q.date}">${q.label}</option>`).join('');
+  const prevFrom = fromSel.value, prevTo = toSel.value;
+  fromSel.innerHTML = opts;
+  toSel.innerHTML = opts;
+  const validDates = new Set(quartersDesc.map(q => q.date));
+  toSel.value   = validDates.has(prevTo)   ? prevTo   : quartersDesc[0].date;
+  fromSel.value = validDates.has(prevFrom) ? prevFrom : quartersDesc[Math.min(4, quartersDesc.length - 1)].date;
+  fromSel.onchange = () => isrRenderCompare(idx);
+  toSel.onchange   = () => isrRenderCompare(idx);
+}
+
+function isrRenderCompare(idx) {
+  const wrap = document.getElementById('isr-cmp-wrap');
+  const fromSel = document.getElementById('isr-cmp-from');
+  const toSel   = document.getElementById('isr-cmp-to');
+  if (!wrap || !fromSel?.value || !toSel?.value) return;
+  const fromQ = idx.quarters.find(q => q.date === fromSel.value);
+  const toQ   = idx.quarters.find(q => q.date === toSel.value);
+  if (!fromQ || !toQ) return;
+
+  const rows = toQ.sectors.map(s => {
+    const prior = fromQ.sectors.find(x => x.name === s.name);
+    const fromW = prior ? prior.weight : 0;
+    return { name: s.name, from: fromW, to: s.weight, delta: s.weight - fromW };
+  }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+
+  const data = rows.map(r => ({
+    label: ISR_SECTOR_SHORT[r.name] || r.name,
+    value: r.delta,
+    _row: r,
+  }));
+
+  drawBarChart(wrap, data, {
+    height: 340,
+    labelRotate: true,
+    format: v => (v >= 0 ? '+' : '') + v.toFixed(1) + 'pp',
+    tooltipFormat: (v, d) => {
+      const r = d._row;
+      return `${r.from.toFixed(1)}% → ${r.to.toFixed(1)}%  (${v >= 0 ? '+' : ''}${v.toFixed(2)}pp)`;
+    },
+  });
+
+  const cap = document.getElementById('isr-cmp-caption');
+  if (cap) cap.textContent = `${fromQ.label} → ${toQ.label} · weight change in percentage points, largest movers first`;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
