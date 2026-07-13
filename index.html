@@ -9241,27 +9241,29 @@ function isrRenderTrendTable(idx) {
   const sub   = document.getElementById('isr-trend-subtitle');
   if (!thead || !tbody) return;
 
-  const quartersAsc = idx.quarters.slice(-8); // idx.quarters is already oldest -> newest; take the most recent 8
-  if (sub) sub.textContent = `${idx.label} · ${quartersAsc[0].label} – ${quartersAsc[quartersAsc.length - 1].label}`;
+  // idx.quarters is stored oldest -> newest; take the most recent 8, newest first (left)
+  const quartersDesc = idx.quarters.slice(-8).reverse();
+  if (sub) sub.textContent = `${idx.label} · ${quartersDesc[0].label} – ${quartersDesc[quartersDesc.length - 1].label}`;
 
   thead.innerHTML = `<tr>
     <th style="text-align:left;min-width:190px">Sector</th>
-    ${quartersAsc.map(q => `<th>${q.label}</th>`).join('')}
+    ${quartersDesc.map(q => `<th>${q.label}</th>`).join('')}
   </tr>`;
 
-  const latest = quartersAsc[quartersAsc.length - 1];
+  const latest = quartersDesc[0];
   const sectorNames = [...latest.sectors].sort((a, b) => b.weight - a.weight).map(s => s.name);
 
+  // Column i's "prior quarter" is index i+1 (array is newest -> oldest)
   let html = `<tr class="isr-total-row">
     <td style="text-align:left;padding-left:10px">${idx.label} (Total)</td>
-    ${quartersAsc.map((q, i) => isrTrendCell(q.total.weight, i > 0 ? quartersAsc[i - 1].total.weight : null)).join('')}
+    ${quartersDesc.map((q, i) => isrTrendCell(q.total.weight, i < quartersDesc.length - 1 ? quartersDesc[i + 1].total.weight : null)).join('')}
   </tr>`;
 
   for (const name of sectorNames) {
-    const rowVals = quartersAsc.map(q => q.sectors.find(s => s.name === name)?.weight ?? 0);
+    const rowVals = quartersDesc.map(q => q.sectors.find(s => s.name === name)?.weight ?? 0);
     html += `<tr class="mk-row">
       <td style="text-align:left;padding-left:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${isrSectorColor(name)};margin-right:7px;vertical-align:middle;"></span>${name}</td>
-      ${rowVals.map((w, i) => isrTrendCell(w, i > 0 ? rowVals[i - 1] : null)).join('')}
+      ${rowVals.map((w, i) => isrTrendCell(w, i < rowVals.length - 1 ? rowVals[i + 1] : null)).join('')}
     </tr>`;
   }
 
@@ -9298,17 +9300,17 @@ function isrExportSnapshotCSV(idx) {
 }
 
 function isrExportTrendCSV(idx) {
-  const quartersAsc = idx.quarters.slice(-8);
-  const sectorNames = [...quartersAsc[quartersAsc.length - 1].sectors]
+  const quartersDesc = idx.quarters.slice(-8).reverse(); // newest first, matches on-screen order
+  const sectorNames = [...quartersDesc[0].sectors]
     .sort((a, b) => b.weight - a.weight).map(s => s.name);
-  const header = ['Sector', ...quartersAsc.map(q => q.label)];
-  const totalRow = [`${idx.label} (Total)`, ...quartersAsc.map(q => q.total.weight)];
+  const header = ['Sector', ...quartersDesc.map(q => q.label)];
+  const totalRow = [`${idx.label} (Total)`, ...quartersDesc.map(q => q.total.weight)];
   const sectorRows = sectorNames.map(name => [
     name,
-    ...quartersAsc.map(q => q.sectors.find(s => s.name === name)?.weight ?? ''),
+    ...quartersDesc.map(q => q.sectors.find(s => s.name === name)?.weight ?? ''),
   ]);
   const rows = [
-    `# ${idx.label} Sector Weights Over Time — ${quartersAsc[0].label} to ${quartersAsc[quartersAsc.length - 1].label}. Values in % weight.`,
+    `# ${idx.label} Sector Weights Over Time — ${quartersDesc[0].label} to ${quartersDesc[quartersDesc.length - 1].label}. Values in % weight.`,
     header.join(','),
     totalRow.join(','),
     ...sectorRows.map(r => r.join(',')),
