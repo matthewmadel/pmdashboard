@@ -9240,7 +9240,7 @@ function isrRenderTrendTable(idx) {
   const sub   = document.getElementById('isr-trend-subtitle');
   if (!thead || !tbody) return;
 
-  const quartersAsc = [...idx.quarters].reverse().slice(-8); // oldest -> newest, most recent 8
+  const quartersAsc = idx.quarters.slice(-8); // idx.quarters is already oldest -> newest; take the most recent 8
   if (sub) sub.textContent = `${idx.label} · ${quartersAsc[0].label} – ${quartersAsc[quartersAsc.length - 1].label}`;
 
   thead.innerHTML = `<tr>
