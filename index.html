@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="chart-style.js"></script>
 <style>
 /* ── Reset & Base ─────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -3030,36 +3031,47 @@ html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
           </div>
         </div>
         <div class="page-body">
-          <div class="grid-2-1" style="align-items:start;">
-            <div class="chart-container">
-              <div class="chart-container-header">
-                <div class="chart-container-title">Sector Detail</div>
+          <div class="pill-group" id="isr-view-pills" style="align-self:flex-start;flex-shrink:0;">
+            <div class="pill active" onclick="isrViewTab('snapshot',this)">Snapshot</div>
+            <div class="pill" onclick="isrViewTab('trends',this)">Weights Over Time</div>
+          </div>
+
+          <div id="isr-view-snapshot">
+            <div class="grid-2-1" style="align-items:start;">
+              <div class="chart-container">
+                <div class="chart-container-header">
+                  <div class="chart-container-title">Sector Detail</div>
+                </div>
+                <div class="data-table-wrap" style="overflow-x:auto;border:none;border-radius:0;">
+                  <table class="data-table" style="min-width:640px;">
+                    <thead>
+                      <tr>
+                        <th style="text-align:left;min-width:190px">Sector</th>
+                        <th>Weight</th><th>1Q</th><th>YTD</th><th>1Y</th><th>3Y (ann.)</th><th>5Y (ann.)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="isr-tbody"></tbody>
+                  </table>
+                </div>
               </div>
-              <div class="data-table-wrap" style="overflow-x:auto;border:none;border-radius:0;">
-                <table class="data-table" style="min-width:640px;">
-                  <thead>
-                    <tr>
-                      <th style="text-align:left;min-width:190px">Sector</th>
-                      <th>Weight</th><th>1Q</th><th>YTD</th><th>1Y</th><th>3Y (ann.)</th><th>5Y (ann.)</th>
-                    </tr>
-                  </thead>
-                  <tbody id="isr-tbody"></tbody>
-                </table>
+              <div class="chart-container">
+                <div class="chart-container-header">
+                  <div class="chart-container-title">Sector Weights</div>
+                </div>
+                <div class="pm-chart-wrap" id="isr-pie-wrap" style="height:320px;"></div>
               </div>
-            </div>
-            <div class="chart-container">
-              <div class="chart-container-header">
-                <div class="chart-container-title">Sector Weights</div>
-              </div>
-              <div class="pm-chart-wrap" id="isr-pie-wrap" style="height:320px;"></div>
             </div>
           </div>
-          <div class="chart-container">
-            <div class="chart-container-header">
-              <div class="chart-container-title">Sector Weights Over Time</div>
+
+          <div id="isr-view-trends" style="display:none;">
+            <div class="chart-container">
+              <div class="chart-container-header">
+                <div class="chart-container-title">Sector Weights Over Time</div>
+              </div>
+              <div class="pm-chart-wrap" id="isr-trend-wrap" style="height:340px;"></div>
             </div>
-            <div class="pm-chart-wrap" id="isr-trend-wrap" style="height:280px;"></div>
           </div>
+
           <div class="br-footnote">Sectors sorted by end-of-period weight, largest first. Total row reflects the full index/ETF return. 3Y/5Y returns annualized. Source: MSCI sector attribution data, quarterly.</div>
         </div>
       </div><!-- /page-index-sector-returns -->
@@ -9073,7 +9085,7 @@ function brRenderCalendar() {
 ══════════════════════════════════════════════════════════════════════ */
 
 const ISR_DATA_URL = './index_sector_returns.json';
-let isrData = null, isrBooted = false, isrActiveIndex = 'acwi', isrActiveQuarter = null;
+let isrData = null, isrBooted = false, isrActiveIndex = 'acwi', isrActiveQuarter = null, isrActiveView = 'snapshot';
 
 const ISR_SECTOR_COLORS = {
   'Energy':                    '#d4a44c',
@@ -9179,7 +9191,17 @@ function isrRender() {
   if (tbody) tbody.innerHTML = html;
 
   isrRenderPie(idx, q);
-  isrRenderTrend(idx);
+  if (isrActiveView === 'trends') isrRenderTrend(idx);
+}
+
+function isrViewTab(view, btn) {
+  isrActiveView = view;
+  document.querySelectorAll('#isr-view-pills .pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('isr-view-snapshot').style.display = view === 'snapshot' ? '' : 'none';
+  document.getElementById('isr-view-trends').style.display   = view === 'trends'   ? '' : 'none';
+  if (!isrData) return;
+  if (view === 'trends') isrRenderTrend(isrData.indices.find(i => i.id === isrActiveIndex));
 }
 
 function isrRenderPie(idx, q) {
