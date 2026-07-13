@@ -3021,6 +3021,7 @@ html[data-theme="cream"] .fred-hover-dot       { stroke: #ffffff; }
             <div class="page-subtitle" id="isr-subtitle">loading…</div>
           </div>
           <div class="page-controls" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <button class="fred-export-btn" onclick="isrExportCSV()" style="white-space:nowrap;">Export ↓</button>
             <div class="pill-group" id="isr-index-pills"></div>
           </div>
         </div>
@@ -9265,6 +9266,54 @@ function isrRenderTrendTable(idx) {
   }
 
   tbody.innerHTML = html;
+}
+
+function isrCsvDownload(filename, rows) {
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function isrExportCSV() {
+  if (!isrData) { alert('Sector data not loaded'); return; }
+  const idx = isrData.indices.find(i => i.id === isrActiveIndex);
+  if (!idx) return;
+  if (isrActiveView === 'trends') isrExportTrendCSV(idx);
+  else isrExportSnapshotCSV(idx);
+}
+
+function isrExportSnapshotCSV(idx) {
+  const q = idx.quarters.find(qq => qq.date === isrActiveQuarter);
+  if (!q) return;
+  const sorted = [...q.sectors].sort((a, b) => b.weight - a.weight);
+  const rows = [
+    `# ${idx.label} Sector Detail — ${q.label} (as of ${q.date}). Weight and return values in %.`,
+    'Sector,Weight,1Q,YTD,1Y,3Y (ann.),5Y (ann.)',
+    [`${idx.label} (Total)`, q.total.weight, q.total.q1, q.total.ytd, q.total.y1, q.total.y3, q.total.y5].join(','),
+    ...sorted.map(s => [s.name, s.weight, s.q1, s.ytd, s.y1, s.y3, s.y5].join(',')),
+  ];
+  isrCsvDownload(`isr_snapshot_${idx.id}_${q.date}.csv`, rows);
+}
+
+function isrExportTrendCSV(idx) {
+  const quartersAsc = idx.quarters.slice(-8);
+  const sectorNames = [...quartersAsc[quartersAsc.length - 1].sectors]
+    .sort((a, b) => b.weight - a.weight).map(s => s.name);
+  const header = ['Sector', ...quartersAsc.map(q => q.label)];
+  const totalRow = [`${idx.label} (Total)`, ...quartersAsc.map(q => q.total.weight)];
+  const sectorRows = sectorNames.map(name => [
+    name,
+    ...quartersAsc.map(q => q.sectors.find(s => s.name === name)?.weight ?? ''),
+  ]);
+  const rows = [
+    `# ${idx.label} Sector Weights Over Time — ${quartersAsc[0].label} to ${quartersAsc[quartersAsc.length - 1].label}. Values in % weight.`,
+    header.join(','),
+    totalRow.join(','),
+    ...sectorRows.map(r => r.join(',')),
+  ];
+  isrCsvDownload(`isr_weights_over_time_${idx.id}.csv`, rows);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
